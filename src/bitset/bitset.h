@@ -11,31 +11,29 @@
 #include <stdint.h>
 
 // Base type for storing the bits.
-#define BITSET_BASE_TYPE	unsigned long int
+#define BITSET_BASE_TYPE	uint64_t
 // Number of bytes in the base type.
 #define BITSET_BASE_SIZE	(8*sizeof(BITSET_BASE_TYPE))
 
-typedef struct bitset BitSet;
-
-struct bitset {
-	// The number of bits in the bitset.
-	int size;
-	// Array for storing the bits.
-	BITSET_BASE_TYPE* array;
-};
+// A BitSet is an array of BITSET_BASE_TYPE
+// Size is not stored here
+typedef BITSET_BASE_TYPE *BitSet;
 
 // Create an empty bitset of the given size and return the address.
-BitSet* create_bitset(int size);
+BitSet create_bitset(int size);
 
 // Print the given bitset
-void print_bitset(BitSet *bs);
+void print_bitset(BitSet bs, int size);
 
 // Caution: The below methods do not check the index k !
 // Set bit at index k
-#define SET_BIT(bs,k)     ( bs->array[(k)/BITSET_BASE_SIZE] |= (1ULL << ((k)%BITSET_BASE_SIZE)) )
+ #define SET_BIT(bs,k)     ( bs[(k)/BITSET_BASE_SIZE] |= (1UL << ((k)%BITSET_BASE_SIZE)) )
 // Reset bit at index k
-#define RESET_BIT(bs,k)   ( b->arrays[(k)/BITSET_BASE_SIZE] &= ~(1ULL << ((k)%BITSET_BASE_SIZE)) )
+#define RESET_BIT(bs,k)   ( bs[(k)/BITSET_BASE_SIZE] &= ~(1UL << ((k)%BITSET_BASE_SIZE)) )
 // Test bit at index k
-#define TEST_BIT(bs,k)    ( bs->array[(k)/BITSET_BASE_SIZE] & (1ULL << ((k)%BITSET_BASE_SIZE)) )
+#define TEST_BIT(bs,k)    ( bs[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
+
+// Return 1 if bs1 is subset of bs2, otherwise 0.
+char is_subset(BitSet bs1, BitSet bs2);
 
 #endif /* BITSET_BITSET_H_ */

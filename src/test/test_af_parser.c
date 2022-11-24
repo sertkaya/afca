@@ -32,6 +32,8 @@ int main(int argc, char *argv[]) {
 
 	read_af(af, c);
 
+	print_context(c);
+
 	return(0);
 }
 

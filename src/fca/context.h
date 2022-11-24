@@ -16,7 +16,7 @@ typedef struct context Context;
 // are just indices. So a formal context is an array of bitsets.
 struct context {
 	int size;
-	BitSet** a;
+	BitSet* a;
 };
 
 // Create an empty context with the given size.
@@ -26,9 +26,11 @@ Context* create_context();
 void init_context(Context* c, int size);
 
 // Add attribute at index i to object at index j in the context c.
-#define ADD_ATTRIBUTE(c,i,j)		SET_BIT(c->a[j],i)
+#define ADD_ATTRIBUTE(c,i,j)		SET_BIT(c->a[j-1],i-1)
 
 // Remove attribute at index i from object at index j in the context c.
-#define REMOVE_ATTRIBUTE(c,i,j)		RESET_BIT(c->a[j], i)
+#define REMOVE_ATTRIBUTE(c,i,j)		RESET_BIT(c->a[j-1], i-1)
+
+void print_context(Context* c);
 
 #endif /* FCA_CONTEXT_H_ */
