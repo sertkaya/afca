@@ -40,3 +40,18 @@ void print_context(Context* c) {
 		printf("\n");
 	}
 }
+
+void derivation_attr_obj(Context* c, BitSet* bs, BitSet* r) {
+	int i;
+
+	// First fill r
+	// TODO: Improve efficiency?
+	for (i = 0; i < r->size; ++i)
+		SET_BIT(r, i);
+
+	for (i = 0; i < c->size; ++i) {
+		if (is_subset(bs, c->a[i])) {
+			intersection(r, c->a[i], r);
+		}
+	}
+}

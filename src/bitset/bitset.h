@@ -39,6 +39,10 @@ void print_bitset(BitSet* bs);
 #define TEST_BIT(bs,k)    ( bs->a[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
 
 // Return 1 if bs1 is subset of bs2, otherwise 0.
+// Caution: The methods below do not check and compare the sizes of bs1 and bs2
 char is_subset(BitSet* bs1, BitSet* bs2);
+
+// Intersect bs1 and bs2, store the result in r
+void intersection(BitSet* bs1, BitSet* bs2, BitSet* r);
 
 #endif /* BITSET_BITSET_H_ */

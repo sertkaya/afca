@@ -34,6 +34,20 @@ int main(int argc, char *argv[]) {
 
 	print_context(c);
 
+	int size = c->size;
+	BitSet* bs = create_bitset(size);
+	BitSet* r = create_bitset(size);
+
+	SET_BIT(bs, 4);
+	printf("bs: ");
+	print_bitset(bs);
+	printf("\n");
+
+	derivation_attr_obj(c, bs, r);
+	printf("r: ");
+	print_bitset(r);
+	printf("\n");
+
 	return(0);
 }
 

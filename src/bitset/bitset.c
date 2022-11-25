@@ -37,9 +37,18 @@ void print_bitset(BitSet* bs) {
 			printf("%d", 0);
 }
 
-// TODO
 char is_subset(BitSet* bs1, BitSet* bs2) {
 	int i;
 
-	return(0);
+	for (i = 0; i < bs1->base_count; ++i)
+		if (bs1->a[i] != (bs1->a[i] & bs2->a[i]))
+			return(0);
+	return(1);
 }
+
+void intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		r->a[i] = bs1->a[i] & bs2->a[i];
+}
+

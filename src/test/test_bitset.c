@@ -25,5 +25,27 @@ int main(int argc, char *argv[]) {
 		printf("\n");
 	}
 
+
+	BitSet* bs1 = create_bitset(size);
+	BitSet* bs2 = create_bitset(size);
+
+	SET_BIT(bs1, 0);
+	SET_BIT(bs1, 3);
+	SET_BIT(bs1, 11);
+	SET_BIT(bs1, 19);
+
+	SET_BIT(bs2, 0);
+	SET_BIT(bs2, 3);
+	SET_BIT(bs2, 10);
+	SET_BIT(bs2, 15);
+	SET_BIT(bs2, 19);
+
+	printf("is_subset: %d\n", is_subset(bs1, bs2));
+
+	BitSet* r = create_bitset(size);
+	intersection(bs1, bs2, r);
+	printf("r: ");
+	print_bitset(r);
+
 	return(0);
 }
