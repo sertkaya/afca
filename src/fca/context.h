@@ -16,7 +16,7 @@ typedef struct context Context;
 // are just indices. So a formal context is an array of bitsets.
 struct context {
 	int size;
-	BitSet* a;
+	BitSet** a;
 };
 
 // Create an empty context with the given size.

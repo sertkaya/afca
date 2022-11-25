@@ -24,7 +24,7 @@ Context* create_context() {
 
 void init_context(Context* c, int size) {
 	c->size = size;
-	c->a = calloc(size, sizeof(BitSet));
+	c->a = (BitSet**) calloc(size, sizeof(BitSet*));
 	assert(c->a != NULL);
 	int i;
 	for (i = 0; i < size; ++i) {
@@ -36,7 +36,7 @@ void print_context(Context* c) {
 	int i;
 
 	for (i = 0; i < c->size; ++i) {
-		print_bitset(c->a[i], c->size);
+		print_bitset(c->a[i]);
 		printf("\n");
 	}
 }
