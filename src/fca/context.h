@@ -33,7 +33,7 @@ void init_context(Context* c, int size);
 
 void print_context(Context* c);
 
-// Compute the prime of the attribute set bs and put the result in r
-void derivation_attr_obj(Context* c, BitSet* bs, BitSet* r);
+// Compute the double prime of the attribute set bs and put the result in r
+void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r);
 
 #endif /* FCA_CONTEXT_H_ */

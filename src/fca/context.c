@@ -41,7 +41,7 @@ void print_context(Context* c) {
 	}
 }
 
-void derivation_attr_obj(Context* c, BitSet* bs, BitSet* r) {
+void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
 	int i;
 
 	// First fill r
