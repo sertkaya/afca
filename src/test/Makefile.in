@@ -88,7 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = test_af_parser$(EXEEXT) test_bitset$(EXEEXT)
+bin_PROGRAMS = test_af_parser$(EXEEXT) test_bitset$(EXEEXT) \
+	test_context$(EXEEXT)
 subdir = src/test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -108,6 +109,10 @@ test_af_parser_DEPENDENCIES = ../parser/lib_af_parser.a \
 test_bitset_SOURCES = test_bitset.c
 test_bitset_OBJECTS = test_bitset.$(OBJEXT)
 test_bitset_DEPENDENCIES = ../bitset/lib_bitset.a
+test_context_SOURCES = test_context.c
+test_context_OBJECTS = test_context.$(OBJEXT)
+test_context_DEPENDENCIES = ../parser/lib_af_parser.a ../fca/lib_fca.a \
+	../bitset/lib_bitset.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -124,7 +129,7 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/test_af_parser.Po \
-	./$(DEPDIR)/test_bitset.Po
+	./$(DEPDIR)/test_bitset.Po ./$(DEPDIR)/test_context.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -138,8 +143,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = test_af_parser.c test_bitset.c
-DIST_SOURCES = test_af_parser.c test_bitset.c
+SOURCES = test_af_parser.c test_bitset.c test_context.c
+DIST_SOURCES = test_af_parser.c test_bitset.c test_context.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -268,6 +273,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 test_af_parser_LDADD = ../parser/lib_af_parser.a ../fca/lib_fca.a ../bitset/lib_bitset.a
 test_bitset_LDADD = ../bitset/lib_bitset.a
+test_context_LDADD = ../parser/lib_af_parser.a ../fca/lib_fca.a ../bitset/lib_bitset.a
 DISTCLEANFILES = .deps Makefile
 all: all-am
 
@@ -353,6 +359,10 @@ test_bitset$(EXEEXT): $(test_bitset_OBJECTS) $(test_bitset_DEPENDENCIES) $(EXTRA
 	@rm -f test_bitset$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_bitset_OBJECTS) $(test_bitset_LDADD) $(LIBS)
 
+test_context$(EXEEXT): $(test_context_OBJECTS) $(test_context_DEPENDENCIES) $(EXTRA_test_context_DEPENDENCIES) 
+	@rm -f test_context$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_context_OBJECTS) $(test_context_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -361,6 +371,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_af_parser.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_bitset.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_context.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -511,6 +522,7 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/test_af_parser.Po
 	-rm -f ./$(DEPDIR)/test_bitset.Po
+	-rm -f ./$(DEPDIR)/test_context.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -558,6 +570,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/test_af_parser.Po
 	-rm -f ./$(DEPDIR)/test_bitset.Po
+	-rm -f ./$(DEPDIR)/test_context.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

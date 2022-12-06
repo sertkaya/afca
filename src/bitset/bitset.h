@@ -42,7 +42,12 @@ void print_bitset(BitSet* bs);
 // Caution: The methods below do not check and compare the sizes of bs1 and bs2
 char is_subset(BitSet* bs1, BitSet* bs2);
 
+char is_set_equal(BitSet* bs1, BitSet* bs2);
+
 // Intersect bs1 and bs2, store the result in r
 void intersection(BitSet* bs1, BitSet* bs2, BitSet* r);
+
+// Negate bitset (flip the bits) bs and store the result in r.
+void negate_bitset(BitSet* bs, BitSet* r);
 
 #endif /* BITSET_BITSET_H_ */

@@ -46,9 +46,23 @@ char is_subset(BitSet* bs1, BitSet* bs2) {
 	return(1);
 }
 
+char is_set_equal(BitSet* bs1, BitSet* bs2) {
+	int i;
+
+	for (i = 0; i < bs1->base_count; ++i)
+		if (bs1->a[i] != bs2->a[i])
+			return(0);
+	return(1);
+}
+
 void intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
 	for (i = 0; i < bs1->base_count; ++i)
 		r->a[i] = bs1->a[i] & bs2->a[i];
 }
 
+void negate_bitset(BitSet* bs, BitSet* r) {
+	int i;
+	for (i = 0; i < bs->base_count; ++i)
+		r->a[i] = ~(bs->a[i]);
+}

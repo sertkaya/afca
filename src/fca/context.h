@@ -17,6 +17,8 @@ typedef struct context Context;
 struct context {
 	int size;
 	BitSet** a;
+	// BitSet masks for efficiently removing attributes in next-closure
+	BitSet** mask;
 };
 
 // Create an empty context with the given size.
@@ -35,5 +37,9 @@ void print_context(Context* c);
 
 // Compute the double prime of the attribute set bs and put the result in r
 void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r);
+
+// Negate the incidence relation (just flip the bits) and return pointer
+// to the new context.
+Context* negate_context(Context* c);
 
 #endif /* FCA_CONTEXT_H_ */
