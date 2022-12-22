@@ -1,5 +1,5 @@
 /*
- * The AF FCA
+ * AFCA - argumentation framework using closed sets
  *
  * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
  *

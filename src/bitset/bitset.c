@@ -1,13 +1,25 @@
 /*
- * bitarray.c
+ * AFCA - argumentation framework using closed sets
  *
- *  Created on: 20.11.2022
- *      Author: bs
+ * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include "bitset.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdio.h>
 #include <assert.h>
 
@@ -65,4 +77,41 @@ void negate_bitset(BitSet* bs, BitSet* r) {
 	int i;
 	for (i = 0; i < bs->base_count; ++i)
 		r->a[i] = ~(bs->a[i]);
+}
+
+void set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		r->a[i] = bs1->a[i] & ~(bs2->a[i]);
+}
+
+void copy_bitset(BitSet* bs1, BitSet* bs2) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		bs2->a[i] = bs1->a[i];
+}
+
+// TODO: optimize!
+char is_fullset(BitSet* bs) {
+	int i;
+	for (i = 0; i < bs->size; ++i)
+		if (!(TEST_BIT(bs, i)))
+			return 0;
+	return(1);
+}
+
+char is_emptyset(BitSet* bs) {
+	int i;
+
+	for (i = 0; i < bs->base_count; ++i)
+		if (bs->a[i] != 0UL)
+			return(0);
+	return(1);
+}
+
+void reset_bitset(BitSet* bs) {
+	int i;
+
+	for (i = 0; i < bs->base_count; ++i)
+		bs->a[i] = 0UL;
 }

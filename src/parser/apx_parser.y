@@ -1,7 +1,7 @@
-/* 
- * The AF FCA
- * 
- * Copyright (C) Baris Sertkaya (sertkaya.baris@gmail.com)
+/*
+ * AFCA - argumentation framework using closed sets
+ *
+ * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 
 %{
 	#include <stdio.h>

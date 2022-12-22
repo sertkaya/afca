@@ -1,8 +1,19 @@
 /*
- * context.c
+ * AFCA - argumentation framework using closed sets
  *
- *  Created on: 22.11.2022
- *      Author: bs
+ * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <stdlib.h>
@@ -19,7 +30,7 @@ Context* create_context() {
 	c->size = 0;
 	c->a = NULL;
 
-	c->mask = NULL;
+	c->singletons = NULL;
 
 	return(c);
 }
@@ -33,13 +44,11 @@ void init_context(Context* c, int size) {
 		c->a[i] = create_bitset(size);
 	}
 
-	c->mask = (BitSet**) calloc(size, sizeof(BitSet*));
-	assert(c->mask != NULL);
-	int j;
+	c->singletons = (BitSet**) calloc(size, sizeof(BitSet*));
+	assert(c->singletons != NULL);
 	for (i = 0; i < size; ++i) {
-		c->mask[i] = create_bitset(size);
-		for (j = 0; j < size - i - 1 ; ++j)
-			SET_BIT(c->mask[i], j);
+		c->singletons[i] = create_bitset(size);
+		SET_BIT(c->singletons[i], i);
 	}
 }
 
@@ -51,9 +60,9 @@ void print_context(Context* c) {
 		printf("\n");
 	}
 
-	printf("\nMask:\n");
+	printf("\nSingletons:\n");
 	for (i = 0; i < c->size; ++i) {
-		print_bitset(c->mask[i]);
+		print_bitset(c->singletons[i]);
 		printf("\n");
 	}
 }
@@ -71,6 +80,19 @@ void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
 			intersection(r, c->a[i], r);
 		}
 	}
+}
+
+void prime_obj_attr(Context* c, BitSet* bs, BitSet* r) {
+	int i;
+
+	// First fill r
+	// TODO: Improve efficiency?
+	for (i = 0; i < r->size; ++i)
+		SET_BIT(r, i);
+
+	for (i = 0; i < c->size; ++i)
+		if (TEST_BIT(bs, i))
+			intersection(r, c->a[i], r);
 }
 
 Context* negate_context(Context*c ){

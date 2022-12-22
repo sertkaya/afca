@@ -104,7 +104,7 @@ PROGRAMS = $(bin_PROGRAMS)
 affca_SOURCES = affca.c
 affca_OBJECTS = affca-affca.$(OBJEXT)
 affca_DEPENDENCIES = parser/lib_af_parser.a bitset/lib_bitset.a \
-	fca/lib_fca.a
+	fca/lib_fca.a af/lib_af.a
 affca_LINK = $(CCLD) $(affca_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -269,7 +269,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 affca_CFLAGS = -O2 -Wall
-affca_LDADD = parser/lib_af_parser.a bitset/lib_bitset.a fca/lib_fca.a
+affca_LDADD = parser/lib_af_parser.a bitset/lib_bitset.a fca/lib_fca.a af/lib_af.a
 DISTCLEANFILES = .deps Makefile
 all: all-am
 

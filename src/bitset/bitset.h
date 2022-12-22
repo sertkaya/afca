@@ -1,8 +1,19 @@
 /*
- * bitarray.h
+ * AFCA - argumentation framework using closed sets
  *
- *  Created on: 20.11.2022
- *      Author: bs
+ * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #ifndef BITSET_BITSET_H_
@@ -50,4 +61,18 @@ void intersection(BitSet* bs1, BitSet* bs2, BitSet* r);
 // Negate bitset (flip the bits) bs and store the result in r.
 void negate_bitset(BitSet* bs, BitSet* r);
 
+// Compute set difference bs1 \ bs2, store it in r.
+void set_minus(BitSet* bs1, BitSet* bs2, BitSet* r);
+
+// Return true if all bits are set, otherwise false
+char is_fullset(BitSet* bs);
+
+// Return true if all bits are 0, otherwise false
+char is_emptyset(BitSet* bs);
+
+// Copy bs1 into bs2
+void copy_bitset(BitSet* bs1, BitSet* bs2);
+
+// Clear all bits
+void reset_bitset(BitSet* bs);
 #endif /* BITSET_BITSET_H_ */
