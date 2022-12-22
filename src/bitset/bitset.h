@@ -32,7 +32,7 @@ typedef struct bitset BitSet;
 struct bitset {
 	int base_count;
 	int size;
-	BITSET_BASE_TYPE* a;
+	BITSET_BASE_TYPE* elements;
 };
 
 // Create an empty bitset of the given size and return the address.
@@ -43,32 +43,32 @@ void print_bitset(BitSet* bs);
 
 // Caution: The below methods do not check the index k !
 // Set bit at index k
- #define SET_BIT(bs,k)     ( bs->a[(k)/BITSET_BASE_SIZE] |= (1UL << ((k)%BITSET_BASE_SIZE)) )
+ #define SET_BIT(bs,k)     ( bs->elements[(k)/BITSET_BASE_SIZE] |= (1UL << ((k)%BITSET_BASE_SIZE)) )
 // Reset bit at index k
-#define RESET_BIT(bs,k)   ( bs->a[(k)/BITSET_BASE_SIZE] &= ~(1UL << ((k)%BITSET_BASE_SIZE)) )
+#define RESET_BIT(bs,k)   ( bs->elements[(k)/BITSET_BASE_SIZE] &= ~(1UL << ((k)%BITSET_BASE_SIZE)) )
 // Test bit at index k
-#define TEST_BIT(bs,k)    ( bs->a[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
+#define TEST_BIT(bs,k)    ( bs->elements[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
 
 // Return 1 if bs1 is subset of bs2, otherwise 0.
 // Caution: The methods below do not check and compare the sizes of bs1 and bs2
-char is_subset(BitSet* bs1, BitSet* bs2);
+char bitset_is_subset(BitSet* bs1, BitSet* bs2);
 
-char is_set_equal(BitSet* bs1, BitSet* bs2);
+char bitset_is_equal(BitSet* bs1, BitSet* bs2);
 
 // Intersect bs1 and bs2, store the result in r
-void intersection(BitSet* bs1, BitSet* bs2, BitSet* r);
+void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r);
 
 // Negate bitset (flip the bits) bs and store the result in r.
 void negate_bitset(BitSet* bs, BitSet* r);
 
 // Compute set difference bs1 \ bs2, store it in r.
-void set_minus(BitSet* bs1, BitSet* bs2, BitSet* r);
+void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r);
 
 // Return true if all bits are set, otherwise false
-char is_fullset(BitSet* bs);
+char bitset_is_fullset(BitSet* bs);
 
 // Return true if all bits are 0, otherwise false
-char is_emptyset(BitSet* bs);
+char bitset_is_emptyset(BitSet* bs);
 
 // Copy bs1 into bs2
 void copy_bitset(BitSet* bs1, BitSet* bs2);

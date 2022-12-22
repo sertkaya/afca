@@ -34,7 +34,7 @@ void next_intent(Context* c, BitSet* s, BitSet* ni) {
 			double_prime_attr_obj(c, s, ni);
 			RESET_BIT(s, i);
 			// TODO: optimize!
-			set_minus(ni, s, tmp);
+			bitset_set_minus(ni, s, tmp);
 			char flag = 0;
 			for (j = 0; j < i; ++j)
 				if (TEST_BIT(tmp, j)) {
@@ -43,10 +43,6 @@ void next_intent(Context* c, BitSet* s, BitSet* ni) {
 				}
 			if (!flag)
 				return;
-			// if (tmp <= c->singletons[i]) {
-			// 	printf("\nyes\n");
-			// 	return;
-			// }
 		}
 	}
 }
@@ -56,7 +52,7 @@ void all_intents(Context* c) {
 	BitSet* bs = create_bitset(c->size);
 	BitSet* ni = create_bitset(c->size);
 
-	while (!is_fullset(bs)) {
+	while (!bitset_is_fullset(bs)) {
 		next_intent(c, bs, ni);
 		print_bitset(ni);
 		copy_bitset(ni, bs);

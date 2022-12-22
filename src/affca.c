@@ -80,10 +80,8 @@ int main(int argc, char *argv[]) {
 	read_af(input_af, context);
 
 	// read and parse the graph
-	// read_kb(input_graph, kb);
 	fclose(input_af);
 
-	// display graph information
 	if (verbose_flag) {
 		// print_short_stats(kb);
 	}
@@ -94,21 +92,6 @@ int main(int argc, char *argv[]) {
 
 	// close the output file
 	fclose(output);
-
-	// display information
-	/*
-	if (verbose_flag) {
-		printf("\n------ Saturation statistics ------\n");
-		printf( "Arguments.................: %d\n"
-				"Attacks...................: %d\n",
-				arguments_count,
-				attacks_count);
-	}
-	*/
-
-	// free the kb
-	// int freed_bytes = free_kb(kb);
-	// printf("Freed bytes:%d\n", freed_bytes);
 
 	return 0;
 }

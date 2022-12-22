@@ -30,9 +30,6 @@ void read_af(FILE* af, Context* c) {
 	struct timeval start_time, stop_time;
 	int arg_count = 0, att_count = 0;
 
-	// printf("Reading af.........................: ");
-	// fflush(stdout);
-
 	START_TIMER(start_time);
 	int rc = fscanf(af, "p af %d", &arg_count);
 
@@ -54,13 +51,6 @@ void read_af(FILE* af, Context* c) {
 	} while (rc != EOF);
 	STOP_TIMER(stop_time);
 
-	/*
-	if (parser != 0) {
-		print_short_stats(kb);
-		fprintf(stderr,"aborting\n");
-		exit(-1);
-	}
-	*/
 	printf("AF read in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	printf("Argument count: %d\n", arg_count);
 	printf("Attacks count : %d\n", att_count);

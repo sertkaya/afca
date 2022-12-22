@@ -30,9 +30,9 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* s, BitSet* 
 		if (TEST_BIT(s, i))
 			RESET_BIT(s, i);
 		else {
-			intersection(s, attacks->a[i], tmp);
+			bitset_intersection(s, attacks->a[i], tmp);
 			// check if argument i attacks the set s
-			if (!is_emptyset(tmp))
+			if (!bitset_is_emptyset(tmp))
 				continue;
 			// check if s attacks i
 			char flag = 0;
@@ -51,7 +51,7 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* s, BitSet* 
 			double_prime_attr_obj(not_attacks, s, ni);
 			RESET_BIT(s, i);
 			// TODO: optimize!
-			set_minus(ni, s, tmp);
+			bitset_set_minus(ni, s, tmp);
 			flag = 0;
 			for (j = 0; j < i; ++j)
 				if (TEST_BIT(tmp, j)) {
@@ -82,7 +82,7 @@ void all_stable_extensions(Context* attacks) {
 		if (!next_cf_closure(not_attacks, attacks, bs, ni))
 			break;
 		prime_obj_attr(not_attacks, ni, tmp);
-		if (is_set_equal(ni, tmp)) {
+		if (bitset_is_equal(ni, tmp)) {
 			print_bitset(ni);
 			printf("\n");
 		}

@@ -76,8 +76,8 @@ void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
 		SET_BIT(r, i);
 
 	for (i = 0; i < c->size; ++i) {
-		if (is_subset(bs, c->a[i])) {
-			intersection(r, c->a[i], r);
+		if (bitset_is_subset(bs, c->a[i])) {
+			bitset_intersection(r, c->a[i], r);
 		}
 	}
 }
@@ -92,7 +92,7 @@ void prime_obj_attr(Context* c, BitSet* bs, BitSet* r) {
 
 	for (i = 0; i < c->size; ++i)
 		if (TEST_BIT(bs, i))
-			intersection(r, c->a[i], r);
+			bitset_intersection(r, c->a[i], r);
 }
 
 Context* negate_context(Context*c ){

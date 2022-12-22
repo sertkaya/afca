@@ -34,8 +34,8 @@ BitSet* create_bitset(int size) {
 
 	bs->base_count = base_count;
 	bs->size = size;
-	bs->a = (BITSET_BASE_TYPE*) calloc(base_count,  BITSET_BASE_SIZE / 8);
-	assert(bs->a != NULL);
+	bs->elements = (BITSET_BASE_TYPE*) calloc(base_count,  BITSET_BASE_SIZE / 8);
+	assert(bs->elements != NULL);
 
 	return(bs);
 }
@@ -49,50 +49,50 @@ void print_bitset(BitSet* bs) {
 			printf("%d", 0);
 }
 
-char is_subset(BitSet* bs1, BitSet* bs2) {
+char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
 	int i;
 
 	for (i = 0; i < bs1->base_count; ++i)
-		if (bs1->a[i] != (bs1->a[i] & bs2->a[i]))
+		if (bs1->elements[i] != (bs1->elements[i] & bs2->elements[i]))
 			return(0);
 	return(1);
 }
 
-char is_set_equal(BitSet* bs1, BitSet* bs2) {
+char bitset_is_equal(BitSet* bs1, BitSet* bs2) {
 	int i;
 
 	for (i = 0; i < bs1->base_count; ++i)
-		if (bs1->a[i] != bs2->a[i])
+		if (bs1->elements[i] != bs2->elements[i])
 			return(0);
 	return(1);
 }
 
-void intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
+void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
 	for (i = 0; i < bs1->base_count; ++i)
-		r->a[i] = bs1->a[i] & bs2->a[i];
+		r->elements[i] = bs1->elements[i] & bs2->elements[i];
 }
 
 void negate_bitset(BitSet* bs, BitSet* r) {
 	int i;
 	for (i = 0; i < bs->base_count; ++i)
-		r->a[i] = ~(bs->a[i]);
+		r->elements[i] = ~(bs->elements[i]);
 }
 
-void set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
+void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
 	for (i = 0; i < bs1->base_count; ++i)
-		r->a[i] = bs1->a[i] & ~(bs2->a[i]);
+		r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
 }
 
 void copy_bitset(BitSet* bs1, BitSet* bs2) {
 	int i;
 	for (i = 0; i < bs1->base_count; ++i)
-		bs2->a[i] = bs1->a[i];
+		bs2->elements[i] = bs1->elements[i];
 }
 
 // TODO: optimize!
-char is_fullset(BitSet* bs) {
+char bitset_is_fullset(BitSet* bs) {
 	int i;
 	for (i = 0; i < bs->size; ++i)
 		if (!(TEST_BIT(bs, i)))
@@ -100,11 +100,11 @@ char is_fullset(BitSet* bs) {
 	return(1);
 }
 
-char is_emptyset(BitSet* bs) {
+char bitset_is_emptyset(BitSet* bs) {
 	int i;
 
 	for (i = 0; i < bs->base_count; ++i)
-		if (bs->a[i] != 0UL)
+		if (bs->elements[i] != 0UL)
 			return(0);
 	return(1);
 }
@@ -113,5 +113,5 @@ void reset_bitset(BitSet* bs) {
 	int i;
 
 	for (i = 0; i < bs->base_count; ++i)
-		bs->a[i] = 0UL;
+		bs->elements[i] = 0UL;
 }

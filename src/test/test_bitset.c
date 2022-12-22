@@ -51,10 +51,10 @@ int main(int argc, char *argv[]) {
 	SET_BIT(bs2, 15);
 	SET_BIT(bs2, 19);
 
-	printf("is_subset: %d\n", is_subset(bs1, bs2));
+	printf("is_subset: %d\n", bitset_is_subset(bs1, bs2));
 
 	BitSet* r = create_bitset(size);
-	intersection(bs1, bs2, r);
+	bitset_intersection(bs1, bs2, r);
 	printf("r: ");
 	print_bitset(r);
 
