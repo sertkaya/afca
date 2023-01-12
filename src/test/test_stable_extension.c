@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
 	Context* c = create_context();
 	read_af(af, c);
-	print_context(c);
+	// print_context(c);
 
 	all_stable_extensions(c);
 

@@ -22,22 +22,23 @@
 #include "../fca/context.h"
 #include "../bitset/bitset.h"
 
-char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* s, BitSet* ni) {
+// Compute the next conflict-free closure coming after "current" and store it in "next"
+char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, BitSet* next) {
 	int i,j;
-	BitSet* tmp = create_bitset(s->size);
+	BitSet* tmp = create_bitset(current->size);
 
 	for (i = not_attacks->size - 1; i >= 0; --i) {
-		if (TEST_BIT(s, i))
-			RESET_BIT(s, i);
+		if (TEST_BIT(current, i))
+			RESET_BIT(current, i);
 		else {
-			bitset_intersection(s, attacks->a[i], tmp);
-			// check if argument i attacks the set s
+			bitset_intersection(current, attacks->a[i], tmp);
+			// check if argument i attacks the set current
 			if (!bitset_is_emptyset(tmp))
 				continue;
-			// check if s attacks i
+			// check if current attacks i
 			char flag = 0;
-			for (j = 0; j < s->size; ++j) {
-				if (TEST_BIT(s,j) && TEST_BIT(attacks->a[j], i)) {
+			for (j = 0; j < current->size; ++j) {
+				if (TEST_BIT(current,j) && TEST_BIT(attacks->a[j], i)) {
 					flag = 1;
 					break;
 				}
@@ -47,11 +48,11 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* s, BitSet* 
 
 
 			reset_bitset(tmp);
-			SET_BIT(s, i);
-			double_prime_attr_obj(not_attacks, s, ni);
-			RESET_BIT(s, i);
+			SET_BIT(current, i);
+			double_prime_attr_obj(not_attacks, current, next);
+			RESET_BIT(current, i);
 			// TODO: optimize!
-			bitset_set_minus(ni, s, tmp);
+			bitset_set_minus(next, current, tmp);
 			flag = 0;
 			for (j = 0; j < i; ++j)
 				if (TEST_BIT(tmp, j)) {
@@ -60,10 +61,6 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* s, BitSet* 
 				}
 			if (!flag)
 				return(1);
-			// if (tmp <= c->singletons[i]) {
-			// 	printf("\nyes\n");
-			// 	return;
-			// }
 		}
 	}
 	return(0);
