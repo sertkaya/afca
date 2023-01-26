@@ -74,7 +74,7 @@ void all_stable_extensions(Context* attacks) {
 
 	Context* not_attacks = negate_context(attacks);
 
-	printf("Conflict-free closures:\n");
+	printf("Stable Extensions:\n");
 	while (1) {
 		if (!next_cf_closure(not_attacks, attacks, bs, ni))
 			break;
