@@ -95,6 +95,20 @@ void prime_obj_attr(Context* c, BitSet* bs, BitSet* r) {
 			bitset_intersection(r, c->a[i], r);
 }
 
+void prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
+	int i;
+
+	// First reset r
+	// TODO: Improve efficiency?
+
+	for (i = 0; i < r->size; ++i)
+		RESET_BIT(r, i);
+
+	for (i = 0; i < c->size; ++i)
+		if (bitset_is_subset(bs, c->a[i]))
+			SET_BIT(r, i);
+}
+
 Context* negate_context(Context*c ){
 	Context* nc = create_context();
 	init_context(nc, c->size);
