@@ -55,8 +55,10 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 			SET_BIT(current, i);
 
 			prime_attr_obj(not_attacks, current, tmp);
-			if (!bitset_is_subset(current, tmp))
+			if (!bitset_is_subset(current, tmp)) {
+				RESET_BIT(current, i);
 				continue;
+			}
 
 			double_prime_attr_obj(not_attacks, current, next);
 			RESET_BIT(current, i);
@@ -87,8 +89,12 @@ void all_stable_extensions(Context* attacks) {
 	while (1) {
 		if (!next_cf_closure(not_attacks, attacks, bs, ni))
 			break;
+		printf("*");
+		print_bitset(ni);
+		printf("\n");
 		prime_obj_attr(not_attacks, ni, tmp);
 		if (bitset_is_equal(ni, tmp)) {
+			printf(" ");
 			print_bitset(ni);
 			printf("\n");
 		}
