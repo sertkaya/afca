@@ -34,6 +34,10 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 		else {
 			char flag = 0;
 
+			// check if i attacks i
+			if (TEST_BIT(attacks->a[i], i))
+					continue;
+
 			// check if argument i attacks the set current
 			bitset_intersection(current, attacks->a[i], tmp);
 			if (!bitset_is_emptyset(tmp))
