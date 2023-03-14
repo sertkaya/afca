@@ -25,21 +25,20 @@
 // Compute the next conflict-free closure coming after "current" and store it in "next"
 char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, BitSet* next) {
 	int i,j;
-	BitSet* current_up = create_bitset(current->size);
-	BitSet* current_down = create_bitset(current->size);
+	BitSet* tmp = create_bitset(current->size);
 
 	for (i = not_attacks->size - 1; i >= 0; --i) {
 		// printf("i: %d\n",i);
 		if (TEST_BIT(current, i))
 			RESET_BIT(current, i);
 		else {
-			BitSet* tmp = create_bitset(current->size);
+			char flag = 0;
+			/*
 			bitset_intersection(current, attacks->a[i], tmp);
 			// check if argument i attacks the set current
 			if (!bitset_is_emptyset(tmp))
 				continue;
 			// check if current attacks i
-			char flag = 0;
 			for (j = 0; j < current->size; ++j) {
 				if (TEST_BIT(current,j) && TEST_BIT(attacks->a[j], i)) {
 					flag = 1;
@@ -48,27 +47,28 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 			}
 			if (flag)
 				continue;
+				*/
 
 			/*
-			BitSet *current_down = create_bitset(current->size);
-			prime_attr_obj(not_attacks, current, current_down);
-			if (!TEST_BIT(current_down,i))
+			BitSet *tmp = create_bitset(current->size);
+			prime_attr_obj(not_attacks, current, tmp);
+			if (!TEST_BIT(tmp,i))
 				// i is not a candidate bit
 				continue;
 
-			prime_obj_attr(not_attacks, current, current_up);
-			if (!TEST_BIT(current_up,i))
+			prime_obj_attr(not_attacks, current, tmp);
+			if (!TEST_BIT(tmp,i))
 				// i is not a candidate bit
 				continue;
 				*/
 
-			reset_bitset(current_down);
+			reset_bitset(tmp);
 			SET_BIT(current, i);
 
 			// TODO: Check whether this case is already handled by
 			// the above two conditions
-			prime_attr_obj(not_attacks, current, current_down);
-			if (!bitset_is_subset(current, current_down)) {
+			prime_attr_obj(not_attacks, current, tmp);
+			if (!bitset_is_subset(current, tmp)) {
 				// current attacks itself
 				RESET_BIT(current, i);
 				continue;
@@ -77,10 +77,10 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 			double_prime_attr_obj(not_attacks, current, next);
 			RESET_BIT(current, i);
 			// TODO: optimize!
-			bitset_set_minus(next, current, current_down);
+			bitset_set_minus(next, current, tmp);
 			flag = 0;
 			for (j = 0; j < i; ++j)
-				if (TEST_BIT(current_down, j)) {
+				if (TEST_BIT(tmp, j)) {
 					flag = 1;
 					break;
 				}
