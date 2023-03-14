@@ -33,53 +33,25 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 			RESET_BIT(current, i);
 		else {
 			char flag = 0;
-			/*
-			bitset_intersection(current, attacks->a[i], tmp);
-			// check if argument i attacks the set current
-			if (!bitset_is_emptyset(tmp))
-				continue;
-			// check if current attacks i
-			for (j = 0; j < current->size; ++j) {
-				if (TEST_BIT(current,j) && TEST_BIT(attacks->a[j], i)) {
-					flag = 1;
-					break;
-				}
-			}
-			if (flag)
-				continue;
-				*/
-
-			/*
-			BitSet *tmp = create_bitset(current->size);
-			prime_attr_obj(not_attacks, current, tmp);
-			if (!TEST_BIT(tmp,i))
-				// i is not a candidate bit
-				continue;
-
-			prime_obj_attr(not_attacks, current, tmp);
-			if (!TEST_BIT(tmp,i))
-				// i is not a candidate bit
-				continue;
-				*/
 
 			reset_bitset(tmp);
 			SET_BIT(current, i);
 
-			// TODO: Check whether this case is already handled by
-			// the above two conditions
+			// check if current attacks itself
 			prime_attr_obj(not_attacks, current, tmp);
 			if (!bitset_is_subset(current, tmp)) {
-				// current attacks itself
 				RESET_BIT(current, i);
 				continue;
 			}
 
+			// compute next
 			double_prime_attr_obj(not_attacks, current, next);
 			RESET_BIT(current, i);
 			// TODO: optimize!
 			bitset_set_minus(next, current, tmp);
 			flag = 0;
 			for (j = 0; j < i; ++j)
+				// check if next \ current contains a bit larger than i
 				if (TEST_BIT(tmp, j)) {
 					flag = 1;
 					break;
@@ -101,12 +73,12 @@ void all_stable_extensions(Context* attacks) {
 
 	printf("Stable Extensions:\n");
 	while (1) {
-		++closure_count;
 		if (!next_cf_closure(not_attacks, attacks, bs, ni))
 			break;
-		// printf("*");
-		// print_bitset(ni);
-		// printf("\n");
+		++closure_count;
+		printf("*");
+		print_bitset(ni);
+		printf("\n");
 		prime_obj_attr(not_attacks, ni, tmp);
 		if (bitset_is_equal(ni, tmp)) {
 			++stable_extension_count;
