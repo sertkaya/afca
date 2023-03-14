@@ -34,15 +34,23 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 		else {
 			char flag = 0;
 
+			// check if argument i attacks the set current
+			bitset_intersection(current, attacks->a[i], tmp);
+			if (!bitset_is_emptyset(tmp))
+				continue;
+
+			// check if current attacks i
+			for (j = 0; j < current->size; ++j) {
+				if (TEST_BIT(current,j) && TEST_BIT(attacks->a[j], i)) {
+					flag = 1;
+					break;
+				}
+			}
+			if (flag)
+				continue;
+
 			reset_bitset(tmp);
 			SET_BIT(current, i);
-
-			// check if current attacks itself
-			prime_attr_obj(not_attacks, current, tmp);
-			if (!bitset_is_subset(current, tmp)) {
-				RESET_BIT(current, i);
-				continue;
-			}
 
 			// compute next
 			double_prime_attr_obj(not_attacks, current, next);

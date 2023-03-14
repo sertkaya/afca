@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 	read_af(input_af, context);
 
 	STOP_TIMER(stop_time);
-	printf("AF read in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	printf("Parsed in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// read and parse the graph
 	fclose(input_af);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
 	all_stable_extensions(context, output);
 
 	STOP_TIMER(stop_time);
-	printf("Stable extensions in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	printf("Enumerated in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
 	fclose(output);
