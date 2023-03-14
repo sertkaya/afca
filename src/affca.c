@@ -26,6 +26,9 @@
 
 #include "parser/af_parser.h"
 #include "fca/context.h"
+#include "af/stable_extension.h"
+#include "utils/timer.h"
+
 
 void usage(char* program) {
 	fprintf(stderr, "Usage: %s -i input-file -o output-file -c\n", program);
@@ -38,6 +41,7 @@ int main(int argc, char *argv[]) {
 	int c, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
 	char *af_file_name = "", *output_file = "";
 	static char usage[] = "Usage: %s -i graph -o output\n";
+
 	while ((c = getopt(argc, argv, "i:o:v")) != -1)
 		switch (c) {
 		case 'i':
@@ -76,8 +80,14 @@ int main(int argc, char *argv[]) {
 	// Create an empty context.
 	Context* context = create_context();
 
+	struct timeval start_time, stop_time;
+	START_TIMER(start_time);
+
 	// Read the af into the context.
 	read_af(input_af, context);
+
+	STOP_TIMER(stop_time);
+	printf("AF read in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// read and parse the graph
 	fclose(input_af);
@@ -89,6 +99,14 @@ int main(int argc, char *argv[]) {
 	// open the output file
 	output = fopen(output_file, "w");
 	assert(output != NULL);
+
+	START_TIMER(start_time);
+
+	// compute the stable extensions
+	all_stable_extensions(context, output);
+
+	STOP_TIMER(stop_time);
+	printf("Stable extensions in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
 	fclose(output);

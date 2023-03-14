@@ -40,12 +40,12 @@ int main(int argc, char *argv[]) {
 
 	SET_BIT(bs, 4);
 	printf("bs: ");
-	print_bitset(bs);
+	print_bitset(bs, stdout);
 	printf("\n");
 
 	double_prime_attr_obj(c, bs, r);
 	printf("r: ");
-	print_bitset(r);
+	print_bitset(r, stdout);
 	printf("\n");
 
 	return(0);

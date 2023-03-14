@@ -40,13 +40,13 @@ BitSet* create_bitset(int size) {
 	return(bs);
 }
 
-void print_bitset(BitSet* bs) {
+void print_bitset(BitSet* bs, FILE *outfile) {
 	int i;
 	for (i = 0; i < bs->size; ++i)
 		if (TEST_BIT(bs, i))
-			printf("%d", 1);
+			fprintf(outfile, "%d", 1);
 		else
-			printf("%d", 0);
+			fprintf(outfile, "%d", 0);
 }
 
 char bitset_is_subset(BitSet* bs1, BitSet* bs2) {

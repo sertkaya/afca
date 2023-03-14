@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 	int i;
 	for (i = 0; i < size; ++i) {
 		SET_BIT(bs,i);
-		print_bitset(bs);
+		print_bitset(bs, stdout);
 		printf("\n");
 	}
 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 	BitSet* r = create_bitset(size);
 	bitset_intersection(bs1, bs2, r);
 	printf("r: ");
-	print_bitset(r);
+	print_bitset(r, stdout);
 
 	return(0);
 }

@@ -19,6 +19,6 @@
 #ifndef AF_STABLE_EXTENSION_H_
 #define AF_STABLE_EXTENSION_H_
 
-void all_stable_extensions(Context* c);
+void all_stable_extensions(Context* c, FILE *f);
 
 #endif /* AF_STABLE_EXTENSION_H_ */

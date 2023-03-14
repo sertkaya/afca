@@ -56,13 +56,13 @@ void print_context(Context* c) {
 	int i;
 
 	for (i = 0; i < c->size; ++i) {
-		print_bitset(c->a[i]);
+		print_bitset(c->a[i], stdout);
 		printf("\n");
 	}
 
 	printf("\nSingletons:\n");
 	for (i = 0; i < c->size; ++i) {
-		print_bitset(c->singletons[i]);
+		print_bitset(c->singletons[i], stdout);
 		printf("\n");
 	}
 }

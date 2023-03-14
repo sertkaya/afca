@@ -54,7 +54,7 @@ void all_intents(Context* c) {
 
 	while (!bitset_is_fullset(bs)) {
 		next_intent(c, bs, ni);
-		print_bitset(ni);
+		print_bitset(ni, stdout);
 		copy_bitset(ni, bs);
 		printf("\n");
 	}

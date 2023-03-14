@@ -62,7 +62,8 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 	}
 	return(0);
 }
-void all_stable_extensions(Context* attacks) {
+
+void all_stable_extensions(Context* attacks, FILE *outfile) {
 	Context* not_attacks = negate_context(attacks);
 
 	BitSet* bs = create_bitset(attacks->size);
@@ -71,23 +72,22 @@ void all_stable_extensions(Context* attacks) {
 
 	int closure_count = 0, stable_extension_count = 0;
 
-	printf("Stable Extensions:\n");
 	while (1) {
 		if (!next_cf_closure(not_attacks, attacks, bs, ni))
 			break;
 		++closure_count;
-		printf("*");
-		print_bitset(ni);
-		printf("\n");
+		// printf("*");
+		// print_bitset(ni);
+		// printf("\n");
 		prime_obj_attr(not_attacks, ni, tmp);
 		if (bitset_is_equal(ni, tmp)) {
 			++stable_extension_count;
-			printf(" ");
-			print_bitset(ni);
-			printf("\n");
+			// printf(" ");
+			print_bitset(ni, outfile);
+			fprintf(outfile, "\n");
 		}
 		copy_bitset(ni, bs);
 	}
-	printf("Number of closures: %d\n", closure_count);
+	printf("Number of closures generated: %d\n", closure_count);
 	printf("Number of stable extensions: %d\n", stable_extension_count);
 }

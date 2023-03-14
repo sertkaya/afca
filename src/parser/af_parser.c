@@ -24,13 +24,10 @@
 
 #include "../bitset/bitset.h"
 #include "../fca/context.h"
-#include "../utils/timer.h"
 
 void read_af(FILE* af, Context* c) {
-	struct timeval start_time, stop_time;
 	int arg_count = 0, att_count = 0;
 
-	START_TIMER(start_time);
 	int rc = fscanf(af, "p af %d", &arg_count);
 
 	// Allocate space for the context
@@ -49,9 +46,7 @@ void read_af(FILE* af, Context* c) {
 			ADD_ATTRIBUTE(c, arg2, arg1);
 		}
 	} while (rc != EOF);
-	STOP_TIMER(stop_time);
 
-	printf("AF read in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	printf("Argument count: %d\n", arg_count);
 	printf("Attacks count : %d\n", att_count);
 }

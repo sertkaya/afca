@@ -19,6 +19,7 @@
 #ifndef BITSET_BITSET_H_
 #define BITSET_BITSET_H_
 
+#include <stdio.h>
 #include <stdint.h>
 
 // Base type for storing the bits.
@@ -39,7 +40,7 @@ struct bitset {
 BitSet* create_bitset(int size);
 
 // Print the given bitset
-void print_bitset(BitSet* bs);
+void print_bitset(BitSet* bs, FILE *f);
 
 // Caution: The below methods do not check the index k !
 // Set bit at index k
