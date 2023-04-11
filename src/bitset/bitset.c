@@ -40,6 +40,11 @@ BitSet* create_bitset(int size) {
 	return(bs);
 }
 
+void free_bitset(BitSet* bs) {
+	free(bs->elements);
+	free(bs);
+}
+
 void print_bitset(BitSet* bs, FILE *outfile) {
 	int i;
 	for (i = 0; i < bs->size; ++i)

@@ -39,6 +39,9 @@ struct bitset {
 // Create an empty bitset of the given size and return the address.
 BitSet* create_bitset(int size);
 
+// Free the memory allocated for the bitset bs.
+void free_bitset(BitSet* bs);
+
 // Print the given bitset
 void print_bitset(BitSet* bs, FILE *f);
 

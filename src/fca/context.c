@@ -52,6 +52,18 @@ void init_context(Context* c, int size) {
 	}
 }
 
+void free_context(Context* c) {
+	int i;
+	for (i = 0; i < c->size; ++i) {
+		free_bitset(c->a[i]);
+		free_bitset(c->singletons[i]);
+	}
+	free(c->a);
+	free(c->singletons);
+	free(c);
+}
+
+
 void print_context(Context* c) {
 	int i;
 

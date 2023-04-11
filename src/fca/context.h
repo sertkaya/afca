@@ -35,6 +35,9 @@ struct context {
 // Create an empty context with the given size.
 Context* create_context();
 
+// Free the memory allocated for the context c.
+void free_context(Context* c);
+
 // Allocate space for the context.
 void init_context(Context* c, int size);
 

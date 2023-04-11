@@ -100,4 +100,11 @@ void all_stable_extensions(Context* attacks, FILE *outfile) {
 	}
 	printf("Number of closures generated: %d\n", closure_count);
 	printf("Number of stable extensions: %d\n", stable_extension_count);
+
+	free_bitset(bs);
+	free_bitset(ni);
+	free_bitset(tmp);
+
+	free_context(attacks);
+	free_context(not_attacks);
 }
