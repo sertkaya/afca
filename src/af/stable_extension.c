@@ -28,12 +28,9 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 	BitSet* tmp = create_bitset(current->size);
 
 	for (i = not_attacks->size - 1; i >= 0; --i) {
-		// printf("i: %d\n",i);
 		if (TEST_BIT(current, i))
 			RESET_BIT(current, i);
 		else {
-			char flag = 0;
-
 			// check if i attacks i
 			if (TEST_BIT(attacks->a[i], i))
 					continue;
@@ -44,6 +41,7 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 				continue;
 
 			// check if current attacks i
+			char flag = 0;
 			for (j = 0; j < current->size; ++j) {
 				if (TEST_BIT(current,j) && TEST_BIT(attacks->a[j], i)) {
 					flag = 1;
@@ -89,12 +87,12 @@ void all_stable_extensions(Context* attacks, FILE *outfile) {
 			break;
 		++closure_count;
 		// printf("*");
-		// print_bitset(ni);
+		// print_bitset(ni, stdout);
 		// printf("\n");
+
 		prime_obj_attr(not_attacks, ni, tmp);
 		if (bitset_is_equal(ni, tmp)) {
 			++stable_extension_count;
-			// printf(" ");
 			print_bitset(ni, outfile);
 			fprintf(outfile, "\n");
 		}
