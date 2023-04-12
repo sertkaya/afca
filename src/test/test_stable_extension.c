@@ -20,9 +20,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "../af/stable_extensions_nc.h"
 #include "../parser/af_parser.h"
 #include "../fca/context.h"
-#include "../af/stable_extension.h"
 
 int main(int argc, char *argv[]) {
 

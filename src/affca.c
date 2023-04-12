@@ -17,6 +17,7 @@
  */
 
 
+#include <af/stable_extensions_nc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +27,6 @@
 
 #include "parser/af_parser.h"
 #include "fca/context.h"
-#include "af/stable_extension.h"
 #include "utils/timer.h"
 
 
