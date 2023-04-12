@@ -16,29 +16,11 @@
  * limitations under the License.
  */
 
-#ifndef FCA_CONCEPT_H_
-#define FCA_CONCEPT_H_
+#ifndef AF_STABLE_EXTENSIONS_NC_H_
+#define AF_STABLE_EXTENSIONS_NC_H_
 
-#include <stdlib.h>
-#include <assert.h>
-
-#include "../bitset/bitset.h"
 #include "../fca/context.h"
 
+void incremental_stable_extensions(Context* c, FILE *f);
 
-struct concept {
-	BitSet* extent;
-	BitSet* intent;
-	// for the norris-based algorithm
-	BitSet* not_attacked;
-	BitSet* conflict_free;
-};
-
-typedef struct concept Concept;
-
-// Compute lexicographically the next intent that comes after s, store it in i.
-void next_intent(Context* c, BitSet* s, BitSet* i);
-
-void all_intents(Context* c);
-
-#endif /* FCA_CONCEPT_H_ */
+#endif /* AF_STABLE_EXTENSIONS_NC_H_ */
