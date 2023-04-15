@@ -4,7 +4,7 @@
 #include <inttypes.h>
 
 #include "../fca/context.h"
-#include "../fca/concept.h"
+// #include "../fca/concept.h"
 #include "../bitset/bitset.h"
 #include "../utils/linked_list.h"
 
@@ -22,10 +22,11 @@ Concept* create_concept(BitSet* extent,
 }
 
 
-int add(Context* not_attacks, int i, ListNode *head , BitSet** argument_extents, FILE *outfile) {
+int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
 
 	int stable_extension_count = 0;
 
+    ListNode *head = *phead;
 	ListNode *prev = NULL;
 	ListNode *cur = head;
 
@@ -74,7 +75,7 @@ int add(Context* not_attacks, int i, ListNode *head , BitSet** argument_extents,
 				bitset_intersection(c->extent, argument_extents[i], new_extent);
 
 				// "lectic-order test"
-				char is_new_intent_closed = 0;
+				char is_new_intent_closed = 1;
 				for (int j = 0; j < i; ++j) {
 					if (!(TEST_BIT((c->intent),j)) && (bitset_is_subset(new_extent, argument_extents[j]))) {
 						is_new_intent_closed = 0;
@@ -129,6 +130,7 @@ int add(Context* not_attacks, int i, ListNode *head , BitSet** argument_extents,
 	if (prev) {
 		prev->next = new_head;
 	}
+    phead = &head;
 
 	return stable_extension_count;
 }
@@ -149,7 +151,9 @@ void incremental_stable_extensions(Context* attacks, FILE *outfile) {
 
 	BitSet* intent = create_bitset(attacks->size);  // empty set
 	BitSet* extent = create_bitset(attacks->size);
-	negate_bitset(intent, extent);                  // full set
+    for (int i = 0; i < attacks->size; ++i) {       // full set
+        SET_BIT(extent, i);
+    }
 	BitSet* not_attacked = create_bitset(attacks->size);
 	copy_bitset(extent, not_attacked);
 	BitSet* conflict_free = create_bitset(attacks->size);
@@ -160,7 +164,7 @@ void incremental_stable_extensions(Context* attacks, FILE *outfile) {
 	int stable_extension_count = 0;
 
 	for (int i = 0; i < not_attacks->size; ++i) {
-		stable_extension_count += add(not_attacks, i, head, argument_extents, outfile);
+		stable_extension_count += add(not_attacks, i, &head, argument_extents, outfile);
 	}
 
 	printf("Number of stable extensions: %d\n", stable_extension_count);
