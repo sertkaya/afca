@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	read_af(af, c);
 	// print_context(c);
 
-	all_stable_extensions(c, stdout);
+	all_stable_extensions_nc(c, stdout);
 
 	return(0);
 }

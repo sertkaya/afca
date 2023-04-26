@@ -73,7 +73,7 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 	return(0);
 }
 
-void all_stable_extensions(Context* attacks, FILE *outfile) {
+void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 	Context* not_attacks = negate_context(attacks);
 
 	BitSet* bs = create_bitset(attacks->size);

@@ -135,7 +135,7 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 	return stable_extension_count;
 }
 
-void incremental_stable_extensions(Context* attacks, FILE *outfile) {
+void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
 
 	Context* not_attacks = negate_context(attacks);
 

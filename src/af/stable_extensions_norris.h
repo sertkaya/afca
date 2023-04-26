@@ -21,6 +21,6 @@
 
 #include "../fca/context.h"
 
-void incremental_stable_extensions(Context* c, FILE *f);
+void incremental_stable_extensions_norris(Context* c, FILE *f);
 
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */
