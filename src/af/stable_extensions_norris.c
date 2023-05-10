@@ -21,6 +21,13 @@ Concept* create_concept(BitSet* extent,
 	return(c);
 }
 
+void free_concept(Concept *c) {
+	free_bitset(c->extent);
+	free_bitset(c->intent);
+	free_bitset(c->not_attacked);
+	free_bitset(c->conflict_free);
+	free(c);
+}
 
 int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
 
@@ -37,6 +44,8 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 		Concept *c = cur->c;
 		if (TEST_BIT(c->conflict_free, i)) {
 			// c->intent U {i} is a conflict-free superset of c->intent
+			// print_bitset(c->intent, stdout);
+			// printf("\n");
 
 			if (bitset_is_subset(c->extent, argument_extents[i])) {
 				// update c
@@ -61,10 +70,12 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 					cur = cur->next;
 					// remove cur from the concept list
 					if (prev) {
-						free(prev->next);
+						free_concept(prev->next->c);
+						free_node(prev->next);
 						prev->next = cur;
 					} else {
-						free(head);
+						free_concept(head->c);
+						free_node(head);
 						head = cur;
 					}
 					continue;
@@ -98,6 +109,9 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 						print_bitset(new_intent, outfile);
 						fprintf(outfile, "\n");
 						// TODO: deallocate memory for new_*
+						free_bitset(new_intent);
+						free_bitset(new_extent);
+						free_bitset(new_not_attacked);
 					} else {
 						BitSet* new_conflict_free = create_bitset(not_attacks->size);
 						bitset_intersection(new_extent, new_not_attacked, new_conflict_free);
@@ -168,4 +182,12 @@ void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
 	}
 
 	printf("Number of stable extensions: %d\n", stable_extension_count);
+
+	free_concept(c);
+	free_node(head);
+	for (int i = 0; i < not_attacks->size; ++i)
+		free_bitset(argument_extents[i]);
+	free_context(attacks);
+	free_context(not_attacks);
+
 }

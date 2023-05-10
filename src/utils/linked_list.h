@@ -19,7 +19,7 @@ typedef struct list_node ListNode;
 
 ListNode *create_node(Concept *c);
 
-// Delete a node given with its predecessor from a list given with its head
-ListNode *delete_node(ListNode *head, ListNode *previous, ListNode *node);
+// Delete  node
+ListNode *free_node(ListNode *n);
 
 #endif /* UTILS_LINKED_LIST_H_ */

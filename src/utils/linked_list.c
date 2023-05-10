@@ -15,9 +15,13 @@ ListNode *create_node(Concept* c) {
 	ListNode *n = calloc(sizeof(ListNode), 1);
 	assert(n != NULL);
 	n->c = c;
+	n->next = NULL;
 	return(n);
 }
 
-ListNode *delete_node(ListNode *h, ListNode *p, ListNode *n) {
+ListNode *free_node(ListNode *n) {
+	// TODO: restructure code, improve
+	// n->c should be freed before, not the best implementation.
+	free(n);
 	return(NULL);
 }
