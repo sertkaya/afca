@@ -31,7 +31,7 @@ void next_intent(Context* c, BitSet* s, BitSet* ni) {
 			RESET_BIT(s, i);
 		else {
 			SET_BIT(s, i);
-			double_prime_attr_obj(c, s, ni);
+			down_up_arrow(c, s, ni);
 			RESET_BIT(s, i);
 			// TODO: optimize!
 			bitset_set_minus(ni, s, tmp);

@@ -79,7 +79,7 @@ void print_context(Context* c) {
 	}
 }
 
-void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
+void down_up_arrow(Context* c, BitSet* bs, BitSet* r) {
 	int i;
 
 	// First fill r
@@ -94,7 +94,7 @@ void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
 	}
 }
 
-void prime_obj_attr(Context* c, BitSet* bs, BitSet* r) {
+void up_arrow(Context* c, BitSet* bs, BitSet* r) {
 	int i;
 
 	// First fill r
@@ -107,7 +107,8 @@ void prime_obj_attr(Context* c, BitSet* bs, BitSet* r) {
 			bitset_intersection(r, c->a[i], r);
 }
 
-void prime_attr_obj(Context* c, BitSet* bs, BitSet* r) {
+// downarrow
+void down_arrow(Context* c, BitSet* bs, BitSet* r) {
 	int i;
 
 	// First reset r

@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 	print_bitset(bs, stdout);
 	printf("\n");
 
-	double_prime_attr_obj(c, bs, r);
+	down_up_arrow(c, bs, r);
 	printf("r: ");
 	print_bitset(r, stdout);
 	printf("\n");

@@ -55,7 +55,7 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 			SET_BIT(current, i);
 
 			// compute next
-			double_prime_attr_obj(not_attacks, current, next);
+			down_up_arrow(not_attacks, current, next);
 			RESET_BIT(current, i);
 			// TODO: optimize!
 			bitset_set_minus(next, current, tmp);
@@ -90,7 +90,7 @@ void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 		// print_bitset(ni, stdout);
 		// printf("\n");
 
-		prime_obj_attr(not_attacks, ni, tmp);
+		up_arrow(not_attacks, ni, tmp);
 		if (bitset_is_equal(ni, tmp)) {
 			++stable_extension_count;
 			print_bitset(ni, outfile);

@@ -50,10 +50,10 @@ void init_context(Context* c, int size);
 void print_context(Context* c);
 
 // Compute the double prime of the attribute set bs and put the result in r
-void double_prime_attr_obj(Context* c, BitSet* bs, BitSet* r);
+void down_up_arrow(Context* c, BitSet* bs, BitSet* r);
 
-void prime_obj_attr(Context* c, BitSet* bs, BitSet* r);
-void prime_attr_obj(Context* c, BitSet* bs, BitSet* r);
+void up_arrow(Context* c, BitSet* bs, BitSet* r);
+void down_arrow(Context* c, BitSet* bs, BitSet* r);
 
 // Negate the incidence relation (just flip the bits) and return pointer
 // to the new context.
