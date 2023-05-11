@@ -42,6 +42,7 @@ void all_preferred_extensions_nc(Context* attacks, FILE *outfile) {
 
 		up_arrow(not_attacks, ni, tmp_up);
 		down_arrow(not_attacks, ni, tmp_down);
+		// TODO: add the maximality condition!
 		if (bitset_is_subset(tmp_up, tmp_down)) {
 			++preferred_extension_count;
 			print_bitset(ni, outfile);
