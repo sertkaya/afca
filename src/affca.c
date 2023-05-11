@@ -25,6 +25,7 @@
 #include <getopt.h>
 
 #include "af/stable_extensions_nc.h"
+#include "af/preferred_extensions_nc.h"
 #include "af/stable_extensions_norris.h"
 #include "parser/af_parser.h"
 #include "fca/context.h"
@@ -39,15 +40,19 @@ int main(int argc, char *argv[]) {
 	FILE* input_af;
 	FILE* output;
 
-	int c, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
-	char *algorithm = "", *af_file_name = "", *output_file = "";
-	static char usage[] = "Usage: %s -a[next-closure|norris] -i graph -o output\n";
+	int c, problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
+	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
+	static char usage[] = "Usage: %s -a[next-closure|norris] -p problem -i graph -o output\n";
 
-	while ((c = getopt(argc, argv, "a:i:o:v")) != -1)
+	while ((c = getopt(argc, argv, "a:p:i:o:v")) != -1)
 		switch (c) {
 		case 'a':
 			algorithm_flag = 1;
 			algorithm = optarg;
+			break;
+		case 'p':
+			problem_flag = 1;
+			problem = optarg;
 			break;
 		case 'i':
 			input_flag = 1;
@@ -79,8 +84,18 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	if (strcmp(algorithm, "next-closure") != 0 && strcmp(algorithm, "norris")) {
+	if (strcmp(algorithm, "next-closure") != 0 && strcmp(algorithm, "norris") != 0) {
 		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris \n", argv[0]);
+		fprintf(stderr, usage, argv[0]);
+		exit(EXIT_FAILURE);
+	}
+	if (problem_flag == 0) {
+		fprintf(stderr, "%s: Provide one of the problems: EE-ST | EE-PR\n", argv[0]);
+		fprintf(stderr, usage, argv[0]);
+		exit(EXIT_FAILURE);
+	}
+	if ((strcmp(problem, "EE-ST") != 0) && (strcmp(problem, "EE-PR") !=0)) {
+		fprintf(stderr, "%s: Provide one of the problems EE-ST | EE-PR \n", argv[0]);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -122,7 +137,10 @@ int main(int argc, char *argv[]) {
 		incremental_stable_extensions_norris(context, output);
 	}
 	else if (strcmp(algorithm, "next-closure") == 0) {
-		all_stable_extensions_nc(context, output);
+		if (strcmp(problem, "EE-ST") == 0)
+			all_stable_extensions_nc(context, output);
+		else if (strcmp(problem, "EE-PR") == 0)
+			all_preferred_extensions_nc(context, output);
 	}
 
 	STOP_TIMER(stop_time);
