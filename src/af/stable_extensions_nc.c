@@ -23,7 +23,7 @@
 #include "../bitset/bitset.h"
 
 // Compute the next conflict-free closure coming after "current" and store it in "next"
-char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, BitSet* next) {
+char next_closure(Context* not_attacks, Context* attacks, BitSet* current, BitSet* next) {
 	int i,j;
 	BitSet* tmp = create_bitset(current->size);
 
@@ -78,40 +78,40 @@ void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 
 	// reducible_objects(not_attacks);
 
-	BitSet* bs = create_bitset(attacks->size);
-	BitSet* ni = create_bitset(attacks->size);
 	BitSet* tmp = create_bitset(attacks->size);
+	BitSet* nc = create_bitset(attacks->size);
+	BitSet* nc_up = create_bitset(attacks->size);
 
 	int closure_count = 0, stable_extension_count = 0;
 
 	while (1) {
-		if (!next_cf_closure(not_attacks, attacks, bs, ni))
+		if (!next_closure(not_attacks, attacks, tmp, nc))
 			break;
 		++closure_count;
 		// printf("*");
 		// print_bitset(ni, stdout);
 		// printf("\n");
 
-		up_arrow(not_attacks, ni, tmp);
-		// Closed sets with conflict
+		up_arrow(not_attacks, nc, nc_up);
+		// ni is closed but has a conflict
 		// if (!bitset_is_subset(ni, tmp)) {
 		// 	printf("*");
 		// 	print_bitset(ni, stdout);
 		// 	printf("\n");
 		// }
-		if (bitset_is_equal(ni, tmp)) {
+		if (bitset_is_equal(nc, nc_up)) {
 			++stable_extension_count;
-			print_bitset(ni, outfile);
+			print_bitset(nc, outfile);
 			fprintf(outfile, "\n");
 		}
-		copy_bitset(ni, bs);
+		copy_bitset(nc, tmp);
 	}
 	printf("Number of closures generated: %d\n", closure_count);
 	printf("Number of stable extensions: %d\n", stable_extension_count);
 
-	free_bitset(bs);
-	free_bitset(ni);
 	free_bitset(tmp);
+	free_bitset(nc);
+	free_bitset(nc_up);
 
 	free_context(attacks);
 	free_context(not_attacks);

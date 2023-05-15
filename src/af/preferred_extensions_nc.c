@@ -33,7 +33,7 @@ void all_preferred_extensions_nc(Context* attacks, FILE *outfile) {
 	int closure_count = 0, preferred_extension_count = 0;
 
 	while (1) {
-		if (!next_cf_closure(not_attacks, attacks, bs, ni))
+		if (!next_closure(not_attacks, attacks, bs, ni))
 			break;
 		++closure_count;
 		// printf("*");
