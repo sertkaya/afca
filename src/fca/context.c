@@ -122,7 +122,7 @@ void down_arrow(Context* c, BitSet* bs, BitSet* r) {
 			SET_BIT(r, i);
 }
 
-Context* negate_context(Context*c ){
+Context* negate_context(Context *c ){
 	Context* nc = create_context();
 	init_context(nc, c->size);
 
@@ -132,3 +132,28 @@ Context* negate_context(Context*c ){
 
 	return(nc);
 }
+
+void reducible_objects(Context *c) {
+	int i,j,k;
+	BitSet* tmp = create_bitset(c->size);
+
+
+	printf("Reducible objects:\n");
+	for (i = 0; i < c->size; ++i) {
+		// First fill tmp
+		// TODO: Improve efficiency?
+		for (k = 0; k < tmp->size; ++k)
+			SET_BIT(tmp, k);
+
+		for (j = 0; (j < c->size) && (i != j); ++j) {
+			if (bitset_is_subset(c->a[i], c->a[j])) {
+				bitset_intersection(tmp, c->a[j], tmp);
+			}
+		}
+		if (bitset_is_equal(tmp, c->a[i]))
+			printf("%d reducible\n", i);
+	}
+}
+
+
+

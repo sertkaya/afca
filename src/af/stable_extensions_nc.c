@@ -76,6 +76,8 @@ char next_cf_closure(Context* not_attacks, Context* attacks, BitSet* current, Bi
 void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 	Context* not_attacks = negate_context(attacks);
 
+	// reducible_objects(not_attacks);
+
 	BitSet* bs = create_bitset(attacks->size);
 	BitSet* ni = create_bitset(attacks->size);
 	BitSet* tmp = create_bitset(attacks->size);
@@ -91,6 +93,12 @@ void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 		// printf("\n");
 
 		up_arrow(not_attacks, ni, tmp);
+		// Closed sets with conflict
+		// if (!bitset_is_subset(ni, tmp)) {
+		// 	printf("*");
+		// 	print_bitset(ni, stdout);
+		// 	printf("\n");
+		// }
 		if (bitset_is_equal(ni, tmp)) {
 			++stable_extension_count;
 			print_bitset(ni, outfile);
