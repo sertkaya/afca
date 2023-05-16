@@ -23,4 +23,6 @@
 
 void incremental_stable_extensions_norris(Context* c, FILE *f);
 
+void one_stable_extension_norris(Context* attacks, FILE *outfile);
+
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */

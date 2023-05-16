@@ -116,3 +116,46 @@ void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 	free_context(attacks);
 	free_context(not_attacks);
 }
+
+void one_stable_extension_nc(Context* attacks, FILE *outfile) {
+	Context* not_attacks = negate_context(attacks);
+
+	reducible_objects(not_attacks);
+
+	BitSet* tmp = create_bitset(attacks->size);
+	BitSet* nc = create_bitset(attacks->size);
+	BitSet* nc_up = create_bitset(attacks->size);
+
+	int closure_count = 0;
+
+	while (1) {
+		if (!next_closure(not_attacks, attacks, tmp, nc))
+			break;
+		++closure_count;
+		// printf("*");
+		// print_bitset(ni, stdout);
+		// printf("\n");
+
+		up_arrow(not_attacks, nc, nc_up);
+		// ni is closed but has a conflict
+		// if (!bitset_is_subset(ni, tmp)) {
+		// 	printf("*");
+		// 	print_bitset(ni, stdout);
+		// 	printf("\n");
+		// }
+		if (bitset_is_equal(nc, nc_up)) {
+			print_bitset(nc, outfile);
+			fprintf(outfile, "\n");
+			break;
+		}
+		copy_bitset(nc, tmp);
+	}
+	printf("Number of closures generated: %d\n", closure_count);
+
+	free_bitset(tmp);
+	free_bitset(nc);
+	free_bitset(nc_up);
+
+	free_context(attacks);
+	free_context(not_attacks);
+}

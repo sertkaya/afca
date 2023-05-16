@@ -49,5 +49,6 @@ void read_af(FILE* af, Context* c) {
 
 	printf("Argument count: %d\n", arg_count);
 	printf("Attacks count : %d\n", att_count);
+	printf("Density : %.4lf\n", ((double) att_count) / (arg_count * arg_count));
 }
 

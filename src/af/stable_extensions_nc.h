@@ -23,4 +23,6 @@
 
 void all_stable_extensions_nc(Context* c, FILE *f);
 
+void one_stable_extension_nc(Context* c, FILE *f);
+
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */

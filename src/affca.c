@@ -94,8 +94,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	if ((strcmp(problem, "EE-ST") != 0) && (strcmp(problem, "EE-PR") !=0)) {
-		fprintf(stderr, "%s: Provide one of the problems EE-ST | EE-PR \n", argv[0]);
+	if ((strcmp(problem, "EE-ST") != 0) && (strcmp(problem, "EE-PR") !=0) && (strcmp(problem, "SE-ST") !=0)) {
+		fprintf(stderr, "%s: Provide one of the problems EE-ST | EE-PR | SE-ST \n", argv[0]);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 	read_af(input_af, context);
 
 	STOP_TIMER(stop_time);
-	printf("Parsed in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// read and parse the graph
 	fclose(input_af);
@@ -134,17 +134,22 @@ int main(int argc, char *argv[]) {
 
 	// compute the stable extensions
 	if (strcmp(algorithm, "norris") == 0) {
-		incremental_stable_extensions_norris(context, output);
+		if (strcmp(problem, "EE-ST") == 0)
+			incremental_stable_extensions_norris(context, output);
+		else if (strcmp(problem, "SE-ST") == 0)
+			one_stable_extension_norris(context, output);
 	}
 	else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
 			all_stable_extensions_nc(context, output);
 		else if (strcmp(problem, "EE-PR") == 0)
 			all_preferred_extensions_nc(context, output);
+		else if (strcmp(problem, "SE-ST") == 0)
+			one_stable_extension_nc(context, output);
 	}
 
 	STOP_TIMER(stop_time);
-	printf("Enumerated in %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
 	fclose(output);

@@ -22,6 +22,8 @@
 #include "../fca/context.h"
 #include "../bitset/bitset.h"
 
+char next_closure(Context* not_attacks, Context* attacks, BitSet* current, BitSet* next);
+
 void all_preferred_extensions_nc(Context* attacks, FILE *outfile) {
 	Context* not_attacks = negate_context(attacks);
 
