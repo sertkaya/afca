@@ -10,14 +10,12 @@
 
 Concept* create_concept(BitSet* extent,
 		BitSet* intent,
-		BitSet* not_attacked,
-		BitSet* conflict_free) {
+		BitSet* not_attacked) {
 	Concept* c = (Concept*) calloc(1, sizeof(Concept));
 	assert(c != NULL);
 	c->extent = extent;
 	c->intent = intent;
 	c->not_attacked = not_attacked;
-	c->conflict_free = conflict_free;
 	return(c);
 }
 
@@ -25,7 +23,6 @@ void free_concept(Concept *c) {
 	free_bitset(c->extent);
 	free_bitset(c->intent);
 	free_bitset(c->not_attacked);
-	free_bitset(c->conflict_free);
 	free(c);
 }
 
@@ -40,9 +37,12 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 	// new concepts
 	ListNode *new_head = NULL;
 
+	BitSet *conflict_free = create_bitset(not_attacks->size);
+
 	while (cur) {
 		Concept *c = cur->c;
-		if (TEST_BIT(c->conflict_free, i)) {
+		bitset_intersection(c->extent, c->not_attacked, conflict_free);
+		if (TEST_BIT(conflict_free, i)) {
 			// c->intent U {i} is a conflict-free superset of c->intent
 			// print_bitset(c->intent, stdout);
 			// printf("\n");
@@ -60,8 +60,8 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 					fprintf(outfile, "\n");
 					remove_cur = 1;
 				} else {
-					bitset_intersection(c->conflict_free, not_attacks->a[i], c->conflict_free);
-					if (bitset_is_equal(c->conflict_free, c->intent)) {
+					bitset_intersection(conflict_free, not_attacks->a[i], conflict_free);
+					if (bitset_is_equal(conflict_free, c->intent)) {
 						remove_cur = 1;
 					}
 				}
@@ -119,8 +119,7 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
 							Concept *new_concept = create_concept(new_extent,
 									new_intent,
-									new_not_attacked,
-									new_conflict_free);
+									new_not_attacked);
 							ListNode *new_node = create_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
@@ -170,9 +169,7 @@ void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
     }
 	BitSet* not_attacked = create_bitset(attacks->size);
 	copy_bitset(extent, not_attacked);
-	BitSet* conflict_free = create_bitset(attacks->size);
-	copy_bitset(extent, conflict_free);
-	Concept* c = create_concept(extent, intent, not_attacked, conflict_free);
+	Concept* c = create_concept(extent, intent, not_attacked);
 	ListNode* head = create_node(c);
 
 	int stable_extension_count = 0;
@@ -201,9 +198,12 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 	// new concepts
 	ListNode *new_head = NULL;
 
+	BitSet *conflict_free = create_bitset(not_attacks->size);
+
 	while (cur) {
 		Concept *c = cur->c;
-		if (TEST_BIT(c->conflict_free, i)) {
+		bitset_intersection(c->extent, c->not_attacked, conflict_free);
+		if (TEST_BIT(conflict_free, i)) {
 			// c->intent U {i} is a conflict-free superset of c->intent
 			// print_bitset(c->intent, stdout);
 			// printf("\n");
@@ -221,8 +221,8 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 					remove_cur = 1;
 					return(1);
 				} else {
-					bitset_intersection(c->conflict_free, not_attacks->a[i], c->conflict_free);
-					if (bitset_is_equal(c->conflict_free, c->intent)) {
+					bitset_intersection(conflict_free, not_attacks->a[i], conflict_free);
+					if (bitset_is_equal(conflict_free, c->intent)) {
 						remove_cur = 1;
 					}
 				}
@@ -280,8 +280,7 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
 							Concept *new_concept = create_concept(new_extent,
 									new_intent,
-									new_not_attacked,
-									new_conflict_free);
+									new_not_attacked);
 							ListNode *new_node = create_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
@@ -333,7 +332,7 @@ void one_stable_extension_norris(Context* attacks, FILE *outfile) {
 	copy_bitset(extent, not_attacked);
 	BitSet* conflict_free = create_bitset(attacks->size);
 	copy_bitset(extent, conflict_free);
-	Concept* c = create_concept(extent, intent, not_attacked, conflict_free);
+	Concept* c = create_concept(extent, intent, not_attacked);
 	ListNode* head = create_node(c);
 
 	for (int i = 0; i < not_attacks->size; ++i) {

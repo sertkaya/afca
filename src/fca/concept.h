@@ -31,7 +31,6 @@ struct concept {
 	BitSet* intent;
 	// for the norris-based algorithm
 	BitSet* not_attacked;
-	BitSet* conflict_free;
 };
 
 typedef struct concept Concept;
