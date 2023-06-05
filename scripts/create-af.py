@@ -29,8 +29,10 @@ if (density > 1):
 attacks = {}
 attack_count = 0
 while ((attack_count / (arg_count*arg_count)) <= density):
-    row = randrange(1,arg_count)
-    column = randrange(1,arg_count)
+    row = randrange(1,arg_count + 1)
+    column = randrange(1,arg_count + 1)
+    if row == column:
+        continue
     if row not in attacks:
         attacks.setdefault(row, set()).add(column)
         attack_count += 1
