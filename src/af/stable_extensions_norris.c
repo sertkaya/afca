@@ -8,6 +8,8 @@
 #include "../bitset/bitset.h"
 #include "../utils/linked_list.h"
 
+int concept_count = 0;
+
 Concept* create_concept(BitSet* extent,
 		BitSet* intent,
 		BitSet* not_attacked) {
@@ -16,6 +18,7 @@ Concept* create_concept(BitSet* extent,
 	c->extent = extent;
 	c->intent = intent;
 	c->not_attacked = not_attacked;
+	++concept_count;
 	return(c);
 }
 
@@ -179,6 +182,7 @@ void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
 	}
 
 	printf("Number of stable extensions: %d\n", stable_extension_count);
+	printf("Number of created concepts: %d\n", concept_count);
 
 	free_concept(c);
 	free_node(head);
@@ -336,9 +340,11 @@ void one_stable_extension_norris(Context* attacks, FILE *outfile) {
 	ListNode* head = create_node(c);
 
 	for (int i = 0; i < not_attacks->size; ++i) {
-		if (add(not_attacks, i, &head, argument_extents, outfile))
+		if (add_one(not_attacks, i, &head, argument_extents, outfile))
 			break;
 	}
+
+	printf("Number of created concepts: %d\n", concept_count);
 
 	free_concept(c);
 	free_node(head);
