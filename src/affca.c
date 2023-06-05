@@ -42,9 +42,9 @@ int main(int argc, char *argv[]) {
 
 	int c, problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	static char usage[] = "Usage: %s -a[next-closure|norris] -p problem -i graph -o output\n";
+	static char usage[] = "Usage: %s -a[next-closure|norris] -p problem -f input -o output\n";
 
-	while ((c = getopt(argc, argv, "a:p:i:o:v")) != -1)
+	while ((c = getopt(argc, argv, "a:p:f:o:v")) != -1)
 		switch (c) {
 		case 'a':
 			algorithm_flag = 1;
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 			problem_flag = 1;
 			problem = optarg;
 			break;
-		case 'i':
+		case 'f':
 			input_flag = 1;
 			af_file_name = optarg;
 			break;
