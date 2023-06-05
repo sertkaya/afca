@@ -1,18 +1,18 @@
-# afca
+# affca
 Argumentation Framework using Formal Concept Analysis
 
-AFCA is a prototype for computing extensions of Abstract Argumentation 
+AFFCA is a prototype for computing extensions of Abstract Argumentation 
 Frameworks (AFs) using algorithms from Formal Concept Analysis (FCA). 
 Currently it only supports computation of stable extensions. Support for
 other types of extensions are on the way.
 
 # Compiling
-Download and extract the sources into the folder "afca" and execute the 
+Download and extract the sources into the folder "affca" and execute the 
 following commands on a UNIX-like operating system. You will need the automake
 and the autoconf packages.
 
 ```
-$ cd afca
+$ cd affca
 $ aclocal 
 $ autoconf
 $ automake --add-missing
@@ -34,7 +34,7 @@ Now everything should be compiled. A static binary for Linux is also available
 under "Releases".
 
 # Running
-AFCA supports only the simplified index-based format newly introduced for ICCMA 2023 Competition. For details
+AFFCA supports only the simplified index-based format newly introduced for ICCMA 2023 Competition. For details
 of this format please see: https://iccma2023.github.io/rules.html#input-format
 
 Usage:
