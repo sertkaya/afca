@@ -50,3 +50,11 @@ $ ./affca -a <algorithm> -p <problem> -o <output file> -f <input file>
 # Test files
 Test files for the submission to JELIA 2023 are available under:
 https://drive.google.com/file/d/188zYTf68OSvdtBYdUCxeJ0Jq4s6xHwrD/view?usp=sharing
+
+# Scripts
+A bunch of scripts for processing the input frameworks are provieded under the "scripts" directory.
+```
+af2apx.py       Python script for converting the index-based format to the older apx-format.
+apx2af.py       For conversion in the other direction.
+analyze_apx.py  For creating stastical information like size and density from a framework in apx-Format.
+create-af.py    Creates a test framework with a given size and density.
