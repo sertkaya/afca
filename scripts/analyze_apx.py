@@ -17,6 +17,7 @@ in_file = open(str(params.Input), "r")
 
 arg_count = 0
 attack_count = 0
+self_attacking_count = 0
 # dictionary of args. key is arg name, value is id.
 args = {}
 # dictionary of attacks
@@ -37,9 +38,14 @@ for line in in_file:
         if arg1 in args and arg2 in args:
             attacks.setdefault(args[arg1], set()).add(args[arg2])
             attack_count += 1
+            if (arg1 == arg2):
+                self_attacking_count += 1
         else:
             print("One of the arguments did not appear before: " + arg1 + ":" + arg2)
 
 in_file.close()
 
-print(str(attack_count/(arg_count*arg_count)) + " " + str(arg_count) + " " + str(attack_count) + " " + str(params.Input))
+for arg in attacks:
+    print(str(arg) + ":" + str(args[str(arg)]) + ":" + str(len(attacks[arg])))
+
+print(str(attack_count/(arg_count*arg_count)) + " " + str(arg_count) + " " + str(attack_count) + " " + " " + str(self_attacking_count) + " " + str(params.Input))
