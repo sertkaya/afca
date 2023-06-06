@@ -30,8 +30,10 @@ execute:
 ```
 $ make
 ```
-Now everything should be compiled. A static binary for Linux is also available
-under "Releases".
+Now affca should be compiled and available under the folder "src".
+
+A statically compiled binary for Linux is provided under under the  "Releases"
+section on GitHub.
 
 # Running
 AFFCA supports only the simplified index-based format newly introduced for ICCMA 2023 Competition. For details
