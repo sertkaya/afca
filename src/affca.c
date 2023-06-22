@@ -151,7 +151,8 @@ int main(int argc, char *argv[]) {
 		else if (strcmp(problem, "EE-PR") == 0)
 			all_preferred_extensions_nc(context, output);
 		else if (strcmp(problem, "SE-ST") == 0)
-			one_stable_extension_nc(context, output);
+			// one_stable_extension_nc(context, output);
+			one_stable_extension_nc(sc, output);
 	}
 
 	STOP_TIMER(stop_time);

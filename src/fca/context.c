@@ -30,8 +30,6 @@ Context* create_context() {
 	c->size = 0;
 	c->a = NULL;
 
-	c->singletons = NULL;
-
 	return(c);
 }
 
@@ -43,23 +41,14 @@ void init_context(Context* c, int size) {
 	for (i = 0; i < size; ++i) {
 		c->a[i] = create_bitset(size);
 	}
-
-	c->singletons = (BitSet**) calloc(size, sizeof(BitSet*));
-	assert(c->singletons != NULL);
-	for (i = 0; i < size; ++i) {
-		c->singletons[i] = create_bitset(size);
-		SET_BIT(c->singletons[i], i);
-	}
 }
 
 void free_context(Context* c) {
 	int i;
 	for (i = 0; i < c->size; ++i) {
 		free_bitset(c->a[i]);
-		free_bitset(c->singletons[i]);
 	}
 	free(c->a);
-	free(c->singletons);
 	free(c);
 }
 
@@ -69,12 +58,6 @@ void print_context(Context* c) {
 
 	for (i = 0; i < c->size; ++i) {
 		print_bitset(c->a[i], stdout);
-		printf("\n");
-	}
-
-	printf("\nSingletons:\n");
-	for (i = 0; i < c->size; ++i) {
-		print_bitset(c->singletons[i], stdout);
 		printf("\n");
 	}
 }
