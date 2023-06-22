@@ -120,3 +120,11 @@ void reset_bitset(BitSet* bs) {
 	for (i = 0; i < bs->base_count; ++i)
 		bs->elements[i] = 0UL;
 }
+// TODO: optimize!
+int bitset_get_length(BitSet* bs) {
+	int i, l = 0;
+	for (i = 0; i < bs->size; ++i)
+		if (TEST_BIT(bs, i))
+			++l;
+	return(l);
+}
