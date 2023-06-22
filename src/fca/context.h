@@ -28,8 +28,6 @@ typedef struct context Context;
 struct context {
 	int size;
 	BitSet** a;
-	// BitSets for efficiently checking lectic order in next-closure
-	BitSet** singletons;
 };
 
 // Create an empty context with the given size.
