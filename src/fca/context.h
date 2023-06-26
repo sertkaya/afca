@@ -57,6 +57,8 @@ void down_arrow(Context* c, BitSet* bs, BitSet* r);
 // to the new context.
 Context* negate_context(Context* c);
 
-void reducible_objects(Context* c);
+Context* sort_context(Context *c);
+
+// void reducible_objects(Context* c);
 
 #endif /* FCA_CONTEXT_H_ */
