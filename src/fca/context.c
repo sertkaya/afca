@@ -187,8 +187,8 @@ Context* sort_context(Context *c) {
 		}
 	}
 
-	for (i = 0; i < c->size; ++i)
-	 	printf("%d %d %lf\n", i, index_value_pairs[i].index, index_value_pairs[i].value);
+	// for (i = 0; i < c->size; ++i)
+	//  	printf("%d %d %lf\n", i, index_value_pairs[i].index, index_value_pairs[i].value);
 
 	return(sc);
 }
