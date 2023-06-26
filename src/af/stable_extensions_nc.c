@@ -74,9 +74,9 @@ char next_closure(Context* not_attacks, Context* attacks, BitSet* current, BitSe
 }
 
 void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
-	Context* not_attacks = negate_context(attacks);
 
-	// reducible_objects(not_attacks);
+	Context *attacks_sorted = sort_context(attacks);
+	Context* not_attacks = negate_context(attacks_sorted);
 
 	BitSet* tmp = create_bitset(attacks->size);
 	BitSet* nc = create_bitset(attacks->size);
@@ -114,13 +114,17 @@ void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 	free_bitset(nc_up);
 
 	free_context(attacks);
+	free_context(attacks_sorted);
 	free_context(not_attacks);
 }
 
 void one_stable_extension_nc(Context* attacks, FILE *outfile) {
-	Context* not_attacks = negate_context(attacks);
 
-	reducible_objects(not_attacks);
+	// sort the context
+	// heuristic: number of attacked arguments from high to low
+	Context *attacks_sorted = sort_context(attacks);
+
+	Context* not_attacks = negate_context(attacks_sorted);
 
 	BitSet* tmp = create_bitset(attacks->size);
 	BitSet* nc = create_bitset(attacks->size);
@@ -157,5 +161,6 @@ void one_stable_extension_nc(Context* attacks, FILE *outfile) {
 	free_bitset(nc_up);
 
 	free_context(attacks);
+	free_context(attacks_sorted);
 	free_context(not_attacks);
 }

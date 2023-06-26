@@ -29,7 +29,6 @@
 #include "af/stable_extensions_norris.h"
 #include "parser/af_parser.h"
 #include "fca/context.h"
-#include "fca/sorted_context.h"
 #include "utils/timer.h"
 
 
@@ -123,10 +122,6 @@ int main(int argc, char *argv[]) {
 	// read and parse the graph
 	fclose(input_af);
 
-	// sort the context
-	// heuristic: number of attacked arguments from high to low
-	Context *sc = sort_context(context);
-
 	if (verbose_flag) {
 		// print_short_stats(kb);
 	}
@@ -142,8 +137,7 @@ int main(int argc, char *argv[]) {
 		if (strcmp(problem, "EE-ST") == 0)
 			incremental_stable_extensions_norris(context, output);
 		else if (strcmp(problem, "SE-ST") == 0)
-			// one_stable_extension_norris(context, output);
-			one_stable_extension_norris(sc, output);
+			one_stable_extension_norris(context, output);
 	}
 	else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
@@ -151,8 +145,7 @@ int main(int argc, char *argv[]) {
 		else if (strcmp(problem, "EE-PR") == 0)
 			all_preferred_extensions_nc(context, output);
 		else if (strcmp(problem, "SE-ST") == 0)
-			// one_stable_extension_nc(context, output);
-			one_stable_extension_nc(sc, output);
+			one_stable_extension_nc(context, output);
 	}
 
 	STOP_TIMER(stop_time);

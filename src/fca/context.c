@@ -116,6 +116,84 @@ Context* negate_context(Context *c ){
 	return(nc);
 }
 
+struct index_value {
+	int index; // the index of the object
+	double value; // number of crosses for this object
+};
+
+int cmp(const void *v1, const void *v2) {
+	if ((((struct index_value*) v1)-> value) > (((struct index_value*) v2)-> value))
+		return(1);
+	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+		return(-1);
+	else
+		return(0);
+}
+
+Context* sort_context(Context *c) {
+	Context *sc = create_context();
+	init_context(sc, c->size);
+
+	// find the number of crosses for each object, store in a struct
+	struct index_value *index_value_pairs = calloc(c->size, sizeof(struct index_value));
+	assert(index_value_pairs != NULL);
+
+	int i,j;
+
+	// number of attacks
+	/*
+	for (i = 0; i < c->size; ++i) {
+		index_value_pairs[i].index = i;
+		index_value_pairs[i].value = bitset_get_length(c->a[i]);
+	}
+	*/
+
+
+	// number of attacked_by
+	for (i = 0; i < c->size; ++i) {
+		index_value_pairs[i].index = i;
+		index_value_pairs[i].value = 0;
+		for (j = 0; j < c->size; ++j)
+			if (TEST_BIT(c->a[j], i))
+				++index_value_pairs[i].value;
+	}
+
+	/*
+	int attacks_count = 0, attacked_by_count = 0;
+	for (i = 0; i < c->size; ++i) {
+		index_value_pairs[i].index = i;
+		attacks_count = bitset_get_length(c->a[i]);
+		attacked_by_count = 0;
+		for (j = 0; j < c->size; ++j)
+			if (TEST_BIT(c->a[j], i))
+				++attacked_by_count;
+
+		if (attacks_count == 0)
+			attacks_count = 1;
+		// index_value_pairs[i].value = ((double) attacks_count) / (0.5 * attacked_by_count);
+		index_value_pairs[i].value = ((double) attacked_by_count) / attacks_count;
+	}
+	*/
+
+	// sort the index-value pairs according to value
+	qsort(index_value_pairs, c->size, sizeof(index_value_pairs[0]), cmp);
+
+
+	// fill in the new context sorted
+	for (i = 0; i < c->size; ++i) {
+		for (j = 0; j < c->size; ++j) {
+			if (TEST_BIT(c->a[index_value_pairs[i].index], index_value_pairs[j].index))
+				SET_BIT(sc->a[i], j);
+		}
+	}
+
+	for (i = 0; i < c->size; ++i)
+	 	printf("%d %d %lf\n", i, index_value_pairs[i].index, index_value_pairs[i].value);
+
+	return(sc);
+}
+
+/*
 void reducible_objects(Context *c) {
 	int i,j,k;
 	BitSet* tmp = create_bitset(c->size);
@@ -137,6 +215,6 @@ void reducible_objects(Context *c) {
 			printf("%d reducible\n", i);
 	}
 }
-
+*/
 
 
