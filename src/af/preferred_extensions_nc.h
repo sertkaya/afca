@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef AF_STABLE_EXTENSIONS_NC_H_
-#define AF_STABLE_EXTENSIONS_NC_H_
+#ifndef AF_PREFERRED_EXTENSIONS_NC_H_
+#define AF_PREFERRED_EXTENSIONS_NC_H_
 
 #include "../fca/context.h"
 
