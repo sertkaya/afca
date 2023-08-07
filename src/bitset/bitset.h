@@ -79,4 +79,8 @@ void copy_bitset(BitSet* bs1, BitSet* bs2);
 
 // Clear all bits
 void reset_bitset(BitSet* bs);
+
+// Return the number of bits set to 1
+int bitset_get_length(BitSet* bs);
+
 #endif /* BITSET_BITSET_H_ */
