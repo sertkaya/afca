@@ -153,8 +153,6 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 
 void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
 
-	// Context *attacks_sorted = sort_context(attacks);
-	// Context* not_attacks = negate_context(attacks_sorted);
 	Context* not_attacks = negate_context(attacks);
 
 	BitSet* argument_extents[attacks->size];
@@ -192,7 +190,6 @@ void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
 		free_bitset(argument_extents[i]);
 
 	free_context(attacks);
-	// free_context(attacks_sorted);
 	free_context(not_attacks);
 
 }
@@ -319,8 +316,6 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 
 void one_stable_extension_norris(Context* attacks, FILE *outfile) {
 
-	// Context *attacks_sorted = sort_context(attacks);
-	// Context *not_attacks = negate_context(attacks_sorted);
 	Context *not_attacks = negate_context(attacks);
 
 	BitSet* argument_extents[attacks->size];
@@ -358,6 +353,5 @@ void one_stable_extension_norris(Context* attacks, FILE *outfile) {
 		free_bitset(argument_extents[i]);
 
 	free_context(attacks);
-	// free_context(attacks_sorted);
 	free_context(not_attacks);
 }
