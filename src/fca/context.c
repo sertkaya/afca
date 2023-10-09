@@ -115,3 +115,15 @@ Context* negate_context(Context *c ){
 
 	return(nc);
 }
+
+Context* transpose_context(Context *c) {
+	Context* tc = create_context();
+	init_context(tc, c->size);
+
+	int i,j;
+	for (i = 0; i < c->size; ++i)
+		for (j = 0; j < c->size; ++j)
+			if (TEST_BIT(c->a[i], j))
+				SET_BIT(tc->a[j], i);
+	return(tc);
+}
