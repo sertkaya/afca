@@ -57,8 +57,10 @@ void down_arrow(Context* c, BitSet* bs, BitSet* r);
 // to the new context.
 Context* negate_context(Context* c);
 
-Context* sort_context(Context *c);
+// Swap the rows and the columns.
+// Under the assumption, same number of rows and columns!
+// (which is the case in argumentation frameworks)
+Context* transpose_context(Context *c);
 
-// void reducible_objects(Context* c);
 
 #endif /* FCA_CONTEXT_H_ */

@@ -17,11 +17,15 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <inttypes.h>
 
 #include "../fca/context.h"
 #include "../bitset/bitset.h"
+#include "stable_extensions_nourine.h"
 
+/*
 // In our case implications are unit implications.
 // lhs is a bitset, rhs is an index
 struct unit_implication {
@@ -31,11 +35,20 @@ struct unit_implication {
 
 typedef struct unit_implication UnitImplication;
 
-UnitImplication *create_unit_implication(int size) {
+// Implication set is just an array of implications
+struct implication_set {
+	int size;
+	UnitImplication **elements;
+};
+
+typedef struct implication_set ImplicationSet;
+*/
+
+UnitImplication *create_unit_implication(BitSet *lhs, int rhs) {
 	UnitImplication *imp = (UnitImplication*) calloc(1, sizeof(UnitImplication));
 	assert(imp != NULL);
-	imp->lhs = create_bitset(size);
-	imp->rhs = -1;
+	imp->lhs = lhs;
+	imp->rhs = rhs;
 
 	return(imp);
 }
@@ -45,13 +58,16 @@ void free_implication(UnitImplication *imp) {
 	free(imp);
 }
 
-// Implication set is just an array of implications
-struct implication_set {
-	int size;
-	UnitImplication **elements;
-};
+void print_implication(UnitImplication *imp) {
+	print_bitset(imp->lhs, stdout);
+	printf("-> %d\n", imp->rhs);
+}
 
-typedef struct implication_set ImplicationSet;
+void print_implication_set(ImplicationSet *imps) {
+	int i;
+	for (i = 0; i < imps->size; ++i)
+		print_implication(imps->elements[i]);
+}
 
 ImplicationSet *create_implication_set() {
 	ImplicationSet *imps = (ImplicationSet*) calloc(1, sizeof(ImplicationSet));
@@ -73,12 +89,16 @@ void add_implication(UnitImplication *imp, ImplicationSet *imps) {
 
 ImplicationSet *attacks_to_implications(Context *attacks) {
 	ImplicationSet *imps = create_implication_set();
+	Context *attacked_by = transpose_context(attacks);
 
 	int i, j;
 	for (i = 0; i < attacks->size; ++i) {
 		for (j = 0; j < attacks->size; ++j) {
 			if (TEST_BIT(attacks->a[i], j) && !TEST_BIT(attacks->a[j], i)) {
-				// TODO
+				BitSet *lhs = create_bitset(attacks->size);
+				copy_bitset(attacked_by->a[i], lhs);
+				UnitImplication *imp = create_unit_implication(lhs, j);
+				add_implication(imp, imps);
 			}
 		}
 	}
