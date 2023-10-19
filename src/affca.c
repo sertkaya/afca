@@ -27,6 +27,7 @@
 #include "af/stable_extensions_nc.h"
 #include "af/preferred_extensions_nc.h"
 #include "af/stable_extensions_norris.h"
+#include "af/stable_extensions_nourine.h"
 #include "parser/af_parser.h"
 #include "fca/context.h"
 #include "utils/timer.h"
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]) {
 
 	int c, problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	static char usage[] = "Usage: %s -a[next-closure|norris] -p problem -f input -o output\n";
+	static char usage[] = "Usage: %s -a[next-closure|norris|nourine] -p problem -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "a:p:f:o:v")) != -1)
 		switch (c) {
@@ -80,12 +81,12 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (algorithm_flag == 0) {
-		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris\n", argv[0]);
+		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris | nourine\n", argv[0]);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	if (strcmp(algorithm, "next-closure") != 0 && strcmp(algorithm, "norris") != 0) {
-		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris \n", argv[0]);
+	if (strcmp(algorithm, "next-closure") != 0 && strcmp(algorithm, "norris") != 0 && strcmp(algorithm, "nourine") != 0) {
+		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris | nourine \n", argv[0]);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -146,6 +147,12 @@ int main(int argc, char *argv[]) {
 			all_preferred_extensions_nc(context, output);
 		else if (strcmp(problem, "SE-ST") == 0)
 			one_stable_extension_nc(context, output);
+	}
+	else if (strcmp(algorithm, "nourine") == 0) {
+		if (strcmp(problem, "EE-ST") == 0)
+			all_stable_extensions_nourine(context, output);
+		else if (strcmp(problem, "SE-ST") == 0)
+			one_stable_extension_nourine(context, output);
 	}
 
 	STOP_TIMER(stop_time);

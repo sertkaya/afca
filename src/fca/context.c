@@ -111,7 +111,7 @@ Context* negate_context(Context *c ){
 
 	int i;
 	for (i = 0; i < c->size; ++i)
-		negate_bitset(c->a[i], nc->a[i]);
+		complement_bitset(c->a[i], nc->a[i]);
 
 	return(nc);
 }
