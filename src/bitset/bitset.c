@@ -78,10 +78,26 @@ void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
 		r->elements[i] = bs1->elements[i] & bs2->elements[i];
 }
 
+void bitset_union(BitSet* bs1, BitSet* bs2, BitSet* r) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		r->elements[i] = bs1->elements[i] | bs2->elements[i];
+}
+
+/*
 void negate_bitset(BitSet* bs, BitSet* r) {
 	int i;
 	for (i = 0; i < bs->base_count; ++i)
 		r->elements[i] = ~(bs->elements[i]);
+}
+*/
+void complement_bitset(BitSet* bs, BitSet* r) {
+	int i;
+	for (i = 0; i < bs->size; ++i)
+		if (TEST_BIT(bs,i))
+			RESET_BIT(r,i);
+		else
+			SET_BIT(r, i);
 }
 
 void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {

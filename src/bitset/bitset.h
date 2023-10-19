@@ -53,8 +53,9 @@ void print_bitset(BitSet* bs, FILE *f);
 // Test bit at index k
 #define TEST_BIT(bs,k)    ( bs->elements[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
 
-// Return 1 if bs1 is subset of bs2, otherwise 0.
 // Caution: The methods below do not check and compare the sizes of bs1 and bs2
+
+// Return 1 if bs1 is subset of bs2, otherwise 0.
 char bitset_is_subset(BitSet* bs1, BitSet* bs2);
 
 char bitset_is_equal(BitSet* bs1, BitSet* bs2);
@@ -62,8 +63,11 @@ char bitset_is_equal(BitSet* bs1, BitSet* bs2);
 // Intersect bs1 and bs2, store the result in r
 void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r);
 
+// Unite bs1 and bs2, store the result in r
+void bitset_union(BitSet* bs1, BitSet* bs2, BitSet* r);
+
 // Negate bitset (flip the bits) bs and store the result in r.
-void negate_bitset(BitSet* bs, BitSet* r);
+void complement_bitset(BitSet* bs, BitSet* r);
 
 // Compute set difference bs1 \ bs2, store it in r.
 void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r);

@@ -88,7 +88,7 @@ void all_stable_extensions_nc(Context* attacks, FILE *outfile) {
 			break;
 		++closure_count;
 		// printf("*");
-		// print_bitset(ni, stdout);
+		// print_bitset(tmp, stdout);
 		// printf("\n");
 
 		up_arrow(not_attacks, nc, nc_up);
