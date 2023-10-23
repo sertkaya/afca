@@ -57,8 +57,12 @@ void print_bitset(BitSet* bs, FILE *outfile) {
 char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
 	int i;
 
-	for (i = 0; i < bs1->base_count; ++i)
-		if (bs1->elements[i] != (bs1->elements[i] & bs2->elements[i]))
+	// for (i = 0; i < bs1->base_count; ++i)
+	// 	if (bs1->elements[i] != (bs1->elements[i] & bs2->elements[i]))
+	// 		return(0);
+	// TODO: temporarily!
+	for (i = 0; i < bs1->size; ++i)
+		if (TEST_BIT(bs1, i) && !TEST_BIT(bs2,i))
 			return(0);
 	return(1);
 }
@@ -66,8 +70,12 @@ char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
 char bitset_is_equal(BitSet* bs1, BitSet* bs2) {
 	int i;
 
-	for (i = 0; i < bs1->base_count; ++i)
-		if (bs1->elements[i] != bs2->elements[i])
+	// for (i = 0; i < bs1->base_count; ++i)
+	// 	if (bs1->elements[i] != bs2->elements[i])
+	// 		return(0);
+	// TODO: temporarily!
+	for (i = 0; i < bs1->size; ++i)
+		if ((TEST_BIT(bs1,i) && !TEST_BIT(bs2,i)) || (TEST_BIT(bs2,i) && !TEST_BIT(bs1,i)))
 			return(0);
 	return(1);
 }
@@ -102,8 +110,21 @@ void complement_bitset(BitSet* bs, BitSet* r) {
 
 void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
+	reset_bitset(r);
 	for (i = 0; i < bs1->base_count; ++i)
-		r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
+	 	r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
+	// TODO: temprorarily
+	/*
+	for (i = 0; i < bs1->size; ++i)
+	 	if (TEST_BIT(bs1,i) && TEST_BIT(bs2,i))
+	 		RESET_BIT(r, i);
+	 	else if (TEST_BIT(bs1,i) && !TEST_BIT(bs2,i))
+	 		SET_BIT(r, i);
+	 	else if (!TEST_BIT(bs1,i) && TEST_BIT(bs2,i))
+	 		RESET_BIT(r, i);
+	 	else if (!TEST_BIT(bs1,i) && !TEST_BIT(bs2,i))
+	 		RESET_BIT(r, i);
+	 		*/
 }
 
 void copy_bitset(BitSet* bs1, BitSet* bs2) {
