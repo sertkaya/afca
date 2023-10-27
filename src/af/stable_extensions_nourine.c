@@ -149,11 +149,13 @@ void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 	Context* not_attacks = negate_context(attacks);
 
-	BitSet* current = create_bitset(attacks->size);
-	// next closure
-	BitSet* next = create_bitset(attacks->size);
-	BitSet* complement_next = create_bitset(attacks->size);
-	BitSet* next_complement_up = create_bitset(attacks->size);
+	BitSet* c = create_bitset(attacks->size);
+	// c closure
+	BitSet* cc = create_bitset(attacks->size);
+	// c closure complement
+	BitSet* ccc = create_bitset(attacks->size);
+	// c closure complement up
+	BitSet* ccc_up = create_bitset(attacks->size);
 	BitSet* tmp = create_bitset(attacks->size);
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
@@ -163,219 +165,84 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 	int i, j, closure_count = 0, stable_extension_count = 0;
 
 	// closure of the empty set
-	naive_closure(tmp, imps, current);
-	++closure_count;
+	naive_closure(c, imps, cc);
+	copy_bitset(cc, c);
 
-	while (!bitset_is_fullset(current)) {
+	complement_bitset(cc, ccc);
+	up_arrow(not_attacks, ccc, ccc_up);
+
+	if (bitset_is_equal(ccc, ccc_up)) {
+		++stable_extension_count;
+		print_bitset(ccc, outfile);
+		fprintf(outfile, "\n");
+	}
+
+	while (!bitset_is_fullset(c)) {
+		// print_bitset(c, stdout);
+		// printf("\n");
+		++closure_count;
+
 
 		for (i = attacks->size - 1; i >= 0; --i) {
-			if (TEST_BIT(current, i))
-				RESET_BIT(current, i);
+			if (TEST_BIT(c, i))
+				RESET_BIT(c, i);
 			else {
 				reset_bitset(tmp);
-				SET_BIT(current, i);
+				SET_BIT(c, i);
 
 				// compute closure
-				naive_closure(current, imps, next);
-				++closure_count;
+				naive_closure(c, imps, cc);
 
-				RESET_BIT(current, i);
-
-				// complement of next
-				complement_bitset(next, complement_next);
+				RESET_BIT(c, i);
 
 				// TODO: optimize!
-				bitset_set_minus(next, current, tmp);
-				char flag = 0;
+				bitset_set_minus(cc, c, tmp);
+				char canonicity_test_passed = 1;
 				for (j = 0; j < i; ++j) {
 					// check if next \ current contains a bit larger than i
 					if (TEST_BIT(tmp, j)) {
-						flag = 1;
+						canonicity_test_passed = 0;
 						break;
 					}
 				}
-				if (!flag) {
-					// next \ current does not contain bit larger than i
-					// next is the next closure
-					// break the for loop with counter i
-					// return(1);
-					break;
-				}
+				if (canonicity_test_passed) {
+					complement_bitset(cc, ccc);
+					up_arrow(not_attacks, ccc, ccc_up);
 
-				// check if complement of next is a stable extension
-				up_arrow(not_attacks, complement_next, next_complement_up);
-				if (bitset_is_equal(complement_next, next_complement_up)) {
-					++stable_extension_count;
-					print_bitset(complement_next, outfile);
-					fprintf(outfile, "\n");
-					continue;
+					if (bitset_is_equal(ccc, ccc_up)) {
+						++stable_extension_count;
+						print_bitset(ccc, outfile);
+						fprintf(outfile, "\n");
+						// printf("cut\n");
+						// printf("\n");
+						++closure_count;
+						continue;
+					}
+					else if (is_conflict_free(attacks, ccc)) {
+						// printf("cut\n");
+						continue;
+					}
+					else
+						break;
 				}
-
-				// check if the complement of next is conflict free
-				// in this case we cut this branch
-				if (is_conflict_free(attacks, complement_next)) {
-					continue;
-				}
-
 			}
 		}
-
-		if (i != -1)
-			copy_bitset(next, current);
-		else
-			break;
+		copy_bitset(cc, c);
 	}
 
 	printf("Number of closures generated: %d\n", closure_count);
 	printf("Number of stable extensions: %d\n", stable_extension_count);
 
 	free_bitset(tmp);
-	free_bitset(current);
-	free_bitset(next);
-	free_bitset(complement_next);
-	free_bitset(next_complement_up);
+	free_bitset(c);
+	free_bitset(cc);
+	free_bitset(ccc);
+	free_bitset(ccc_up);
 
 	free_context(attacks);
 	free_context(not_attacks);
 }
-
-
-// Compute the next conflict-free closure coming after "current" and store it in "next"
-char next_imp_closure(ImplicationSet *imps, BitSet* current, BitSet* next) {
-	int i,j;
-	BitSet* tmp = create_bitset(current->size);
-
-	for (i = current->size - 1; i >= 0; --i) {
-		if (TEST_BIT(current, i))
-			RESET_BIT(current, i);
-		else {
-			reset_bitset(tmp);
-			SET_BIT(current, i);
-
-			// compute closure
-			// reset_bitset(next);
-			naive_closure(current, imps, next);
-			RESET_BIT(current, i);
-
-			// TODO: optimize!
-			bitset_set_minus(next, current, tmp);
-			char flag = 0;
-			for (j = 0; j < i; ++j)
-				// check if next \ current contains a bit larger than i
-				if (TEST_BIT(tmp, j)) {
-					flag = 1;
-					break;
-				}
-			if (!flag)
-				return(1);
-		}
-	}
-	return(0);
-}
-
-/*
-void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
-
-	Context* not_attacks = negate_context(attacks);
-
-	BitSet* tmp = create_bitset(attacks->size);
-	BitSet* current = create_bitset(attacks->size);
-	// next closure
-	BitSet* next = create_bitset(attacks->size);
-	// next closure complement
-	BitSet* current_complement = create_bitset(attacks->size);
-	// next closure complement up
-	BitSet* current_complement_up = create_bitset(attacks->size);
-
-	ImplicationSet *imps = attacks_to_implications(attacks);
-
-	printf("\nImps size: %d\n\n", imps->size);
-	printf("imps: ");
-	print_implication_set(imps);
-
-	int closure_count = 0, stable_extension_count = 0;
-
-	// closure of the empty set
-	naive_closure(tmp, imps, current);
-
-	while (1) {
-		++closure_count;
-		print_bitset(current, stdout);
-		printf("\t");
-
-		complement_bitset(current, current_complement);
-		print_bitset(current_complement, stdout);
-		printf("\n");
-
-		char cf = is_conflict_free(attacks, current_complement);
-
-		up_arrow(not_attacks, current_complement, current_complement_up);
-
-		if (bitset_is_equal(current_complement, current_complement_up)) {
-			++stable_extension_count;
-			print_bitset(current_complement, outfile);
-			fprintf(outfile, "\n");
-		}
-		if (!next_imp_closure(imps, current, next))
-			break;
-		copy_bitset(next, current);
-	}
-	printf("Number of closures generated: %d\n", closure_count);
-	printf("Number of stable extensions: %d\n", stable_extension_count);
-
-	free_bitset(tmp);
-	free_bitset(current);
-	free_bitset(next);
-	free_bitset(current_complement);
-	free_bitset(current_complement_up);
-
-	free_context(attacks);
-	free_context(not_attacks);
-}
-*/
 
 void one_stable_extension_nourine(Context* attacks, FILE *outfile) {
-
-	Context* not_attacks = negate_context(attacks);
-
-	BitSet* tmp = create_bitset(attacks->size);
-	BitSet* nc = create_bitset(attacks->size);
-	BitSet* nc_up = create_bitset(attacks->size);
-
-	ImplicationSet *imps = attacks_to_implications(attacks);
-
-	int closure_count = 0;
-
-	while (1) {
-		/* TODO:
-		if (!next_imp_closure(attacks, imps, tmp, nc))
-			break;
-		*/
-		++closure_count;
-		// printf("*");
-		// print_bitset(ni, stdout);
-		// printf("\n");
-
-		up_arrow(not_attacks, nc, nc_up);
-		// ni is closed but has a conflict
-		// if (!bitset_is_subset(ni, tmp)) {
-		// 	printf("*");
-		// 	print_bitset(ni, stdout);
-		// 	printf("\n");
-		// }
-		if (bitset_is_equal(nc, nc_up)) {
-			print_bitset(nc, outfile);
-			fprintf(outfile, "\n");
-			break;
-		}
-		copy_bitset(nc, tmp);
-	}
-	printf("Number of closures generated: %d\n", closure_count);
-
-	free_bitset(tmp);
-	free_bitset(nc);
-	free_bitset(nc_up);
-
-	free_context(attacks);
-	free_context(not_attacks);
+	// TODO
 }
