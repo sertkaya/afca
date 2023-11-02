@@ -101,28 +101,6 @@ ImplicationSet *attacks_to_implications(Context *attacks) {
 
 				UnitImplication *imp = create_unit_implication(lhs, j);
 				add_implication(imp, imps);
-				//
-
-				/*
-				int lhs_was_empty = bitset_is_emptyset(lhs);
-				int k;
-				for (k = 0; k < attacks->size; ++k) {
-					if (TEST_BIT(attacks->a[i], k)) {
-						RESET_BIT(lhs, k);
-					}
-				}
-				UnitImplication *imp = create_unit_implication(lhs, j);
-				if (lhs_was_empty) {
-					add_implication(imp, imps);
-				}
-				else
-					if (bitset_is_emptyset(lhs)) {
-						continue;
-					}
-					else {
-						add_implication(imp, imps);
-					}
-					*/
 			}
 		}
 	}
@@ -144,6 +122,111 @@ void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 			}
 		}
 	} while (!bitset_is_equal(tmp, c));
+	free_bitset(tmp);
+}
+
+ImplicationSet *reduce_implications(Context *attacks, ImplicationSet *imps) {
+	ImplicationSet *imps_r = create_implication_set();
+	ImplicationSet *imps_r2 = create_implication_set();
+
+	int i;
+	// Self-attacks
+	for (i = 0; i < attacks->size; ++i)
+		if (TEST_BIT(attacks->a[i], i)) {
+			BitSet *lhs = create_bitset(attacks->size);
+			UnitImplication *imp = create_unit_implication(lhs, i);
+			add_implication(imp, imps_r);
+		}
+
+	// Conflict type 1
+	BitSet *X_closure = create_bitset(attacks->size);
+	BitSet *empty = create_bitset(attacks->size);
+	BitSet *empty_closure = create_bitset(attacks->size);
+	BitSet *X_union_empty_closure = create_bitset(attacks->size);
+	BitSet *diff = create_bitset(attacks->size);
+	BitSet *tmp = create_bitset(attacks->size);
+	BitSet *T = create_bitset(attacks->size);
+	for (i = 0; i < imps->size; ++i) {
+		if ((i%10) == 0)
+			printf("%d\n", i);
+		if (bitset_is_emptyset(imps->elements[i]->lhs)) {
+			BitSet *new_lhs = create_bitset(attacks->size);
+			UnitImplication *imp = create_unit_implication(new_lhs, imps->elements[i]->rhs);
+			add_implication(imp, imps_r);
+			continue;
+		}
+		naive_closure(imps->elements[i]->lhs, imps, X_closure);
+		naive_closure(empty, imps, empty_closure);
+		bitset_union(imps->elements[i]->lhs, empty_closure, X_union_empty_closure);
+		bitset_set_minus(X_closure, X_union_empty_closure, diff);
+		int z;
+		for (z = 0; z < attacks->size; ++z) {
+			if (TEST_BIT(diff, z)) {
+				reset_bitset(tmp);
+				reset_bitset(T);
+				SET_BIT(tmp, z);
+				int t;
+				for (t = 0; t < attacks->size; ++t) {
+					if (TEST_BIT(imps->elements[i]->lhs, t)) {
+						SET_BIT(tmp, t);
+						if (!is_conflict_free(attacks, tmp)) {
+							SET_BIT(T, t);
+						}
+						RESET_BIT(tmp, t);
+					}
+				}
+				BitSet *new_lhs = create_bitset(attacks->size);
+				bitset_set_minus(imps->elements[i]->lhs, T, new_lhs);
+				UnitImplication *imp = create_unit_implication(new_lhs, z);
+				add_implication(imp, imps_r);
+			}
+		}
+	}
+
+	// printf("---------------------\n");
+	printf("After conflict type 1:\n");
+	printf("\n Size: %d\n\n", imps_r->size);
+	// print_implication_set(imps_r);
+	// printf("---------------------\n");
+	// Conflict type 2
+	BitSet *Gamma_t = create_bitset(attacks->size);
+	BitSet *Gamma_t_closure = create_bitset(attacks->size);
+	for (i = 0; i < imps_r->size; ++i) {
+		reset_bitset(T);
+		int t;
+		// Iterate over elements of X
+		for (t = 0; t < attacks->size; ++t) {
+			if (TEST_BIT(imps_r->elements[i]->lhs, t)) {
+				reset_bitset(Gamma_t);
+				reset_bitset(Gamma_t_closure);
+				// Compute Gamma(t)
+				int j;
+				for (j = 0; j < attacks->size; ++j) {
+					reset_bitset(tmp);
+					SET_BIT(tmp, t);
+					SET_BIT(tmp, j);
+					if  (!is_conflict_free(attacks, tmp)) {
+						SET_BIT(Gamma_t, j);
+					}
+				}
+				// Closure of Gamma(t)
+				naive_closure(Gamma_t, imps_r, Gamma_t_closure);
+				if (TEST_BIT(Gamma_t_closure, imps_r->elements[i]->rhs)) {
+					SET_BIT(T, t);
+				}
+			}
+		}
+		BitSet *new_lhs = create_bitset(attacks->size);
+
+		bitset_set_minus(imps_r->elements[i]->lhs, T, new_lhs);
+
+		UnitImplication *imp = create_unit_implication(new_lhs, imps_r->elements[i]->rhs);
+		add_implication(imp, imps_r2);
+		if (((imps_r2->size)%100) == 0)
+			printf("Size of imps_r2: %d\n", imps_r2->size);
+	}
+
+	return(imps_r2);
 }
 
 void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
@@ -159,13 +242,17 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 	BitSet* tmp = create_bitset(attacks->size);
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
-	print_implication_set(imps);
-	printf("\nImps size: %d\n\n", imps->size);
+	// print_implication_set(imps);
+	printf("\n Original size: %d\n\n", imps->size);
+
+	ImplicationSet *imps_r = reduce_implications(attacks, imps);
+	// print_implication_set(imps_r);
+	printf("\nImps reduced size: %d\n\n", imps_r->size);
 
 	int i, j, closure_count = 0, stable_extension_count = 0;
 
 	// closure of the empty set
-	naive_closure(c, imps, cc);
+	naive_closure(c, imps_r, cc);
 	copy_bitset(cc, c);
 
 	complement_bitset(cc, ccc);
@@ -177,11 +264,11 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 		fprintf(outfile, "\n");
 	}
 
+	int min_i = attacks->size;
 	while (!bitset_is_fullset(c)) {
 		// print_bitset(c, stdout);
 		// printf("\n");
 		++closure_count;
-
 
 		for (i = attacks->size - 1; i >= 0; --i) {
 			if (TEST_BIT(c, i))
@@ -190,8 +277,13 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 				reset_bitset(tmp);
 				SET_BIT(c, i);
 
+				if (i < min_i) {
+					min_i = i;
+					printf("%d\n", i);
+				}
+
 				// compute closure
-				naive_closure(c, imps, cc);
+				naive_closure(c, imps_r, cc);
 
 				RESET_BIT(c, i);
 
@@ -213,13 +305,14 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 						++stable_extension_count;
 						print_bitset(ccc, outfile);
 						fprintf(outfile, "\n");
-						// printf("cut\n");
-						// printf("\n");
+						// print_bitset(cc, stdout);
+						// printf("*cut\n");
 						++closure_count;
 						continue;
 					}
 					else if (is_conflict_free(attacks, ccc)) {
-						// printf("cut\n");
+						// print_bitset(cc, stdout);
+						// printf(" cut\n");
 						continue;
 					}
 					else
