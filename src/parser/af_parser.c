@@ -23,27 +23,26 @@
 #include <sys/time.h>
 
 #include "../bitset/bitset.h"
-#include "../fca/context.h"
+#include "../af/af.h"
 
-void read_af(FILE* af, Context* c) {
+void read_af(FILE* input_fd) {
 	int arg_count = 0, att_count = 0;
 
-	int rc = fscanf(af, "p af %d", &arg_count);
+	int rc = fscanf(input_fd, "p af %d", &arg_count);
 
-	// Allocate space for the context
-	init_context(c, arg_count);
+	// create an AF with size arg_count
+	AF *af = create_argumentation_framework(arg_count);
 
 	int arg1, arg2;
-	// while (rc != EOF) {
 	do {
-		rc = fscanf(af, "%d %d\n", &arg1, &arg2);
+		rc = fscanf(input_fd, "%d %d\n", &arg1, &arg2);
 		if (rc <= 0)
 			// Line does not match to the format,
 			// skip until end-of-line
-			fscanf(af, "%*[^\n]\n");
+			fscanf(input_fd, "%*[^\n]\n");
 		else {
 			++att_count;
-			ADD_ATTRIBUTE(c, arg2, arg1);
+			ADD_ATTACK(af, arg1, arg2);
 		}
 	} while (rc != EOF);
 

@@ -23,132 +23,129 @@
 #include <stdio.h>
 #include <assert.h>
 
-BitSet* create_bitset(int size) {
-
-	int base_count = (size / BITSET_BASE_SIZE);
-	if (size % BITSET_BASE_SIZE)
-		++base_count;
+BitSet* create_bitset(AF *af) {
 
 	BitSet* bs = (BitSet*) calloc(1,  sizeof(BitSet));
 	assert(bs != NULL);
 
-	bs->base_count = base_count;
-	bs->size = size;
-	bs->elements = (BITSET_BASE_TYPE*) calloc(base_count,  BITSET_BASE_SIZE / 8);
+	bs->elements = (BITSET_BASE_TYPE*) calloc(af->bitset_base_count,  sizeof(BITSET_BASE_TYPE));
 	assert(bs->elements != NULL);
 
 	return(bs);
 }
 
-void free_bitset(BitSet* bs) {
+int free_bitset(AF* af, BitSet* bs) {
+	int freed_bytes = af->bitset_base_count * sizeof(BITSET_BASE_TYPE);
 	free(bs->elements);
 	free(bs);
 }
 
-void print_bitset(BitSet* bs, FILE *outfile) {
+void print_bitset(AF *af, BitSet* bs, FILE *outfile) {
 	int i;
-	for (i = 0; i < bs->size; ++i)
+	for (i = 0; i < af->size; ++i)
 		if (TEST_BIT(bs, i))
 			fprintf(outfile, "%d", 1);
 		else
 			fprintf(outfile, "%d", 0);
 }
 
-char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
+char bitset_is_subset(AF *af, BitSet* bs1, BitSet* bs2) {
 	int i;
 
-	for (i = 0; i < bs1->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		if (bs1->elements[i] != (bs1->elements[i] & bs2->elements[i]))
 			return(0);
-	// for (i = 0; i < bs1->size; ++i)
-	// 	if (TEST_BIT(bs1, i) && !TEST_BIT(bs2,i))
-	// 		return(0);
 	return(1);
 }
 
-char bitset_is_equal(BitSet* bs1, BitSet* bs2) {
+char bitset_is_equal(AF *af, BitSet* bs1, BitSet* bs2) {
 	int i;
 
-	for (i = 0; i < bs1->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		if (bs1->elements[i] != bs2->elements[i])
 			return(0);
-	// for (i = 0; i < bs1->size; ++i)
-	// 	if ((TEST_BIT(bs1,i) && !TEST_BIT(bs2,i)) || (TEST_BIT(bs2,i) && !TEST_BIT(bs1,i)))
-	// 		return(0);
 	return(1);
 }
 
-void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
+void bitset_intersection(AF *af, BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
-	for (i = 0; i < bs1->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		r->elements[i] = bs1->elements[i] & bs2->elements[i];
 }
 
-void bitset_union(BitSet* bs1, BitSet* bs2, BitSet* r) {
+void bitset_union(AF *af, BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
-	for (i = 0; i < bs1->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		r->elements[i] = bs1->elements[i] | bs2->elements[i];
 }
 
 /*
 void negate_bitset(BitSet* bs, BitSet* r) {
-	int i;
-	for (i = 0; i < bs->base_count; ++i)
-		r->elements[i] = ~(bs->elements[i]);
 }
 */
-void complement_bitset(BitSet* bs, BitSet* r) {
+void complement_bitset(AF *af, BitSet* bs, BitSet* r) {
 	// TODO: temporarily
+	// int i;
+	// for (i = 0; i < bs->size; ++i)
+	// 	if (TEST_BIT(bs,i))
+	// 		RESET_BIT(r,i);
+	// 	else
+	// 		SET_BIT(r, i);
 	int i;
-	for (i = 0; i < bs->size; ++i)
-		if (TEST_BIT(bs,i))
-			RESET_BIT(r,i);
-		else
-			SET_BIT(r, i);
+	for (i = 0; i < af->bitset_base_count; ++i)
+		r->elements[i] = ~(bs->elements[i]);
 }
 
-void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
+void bitset_set_minus(AF *af, BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
 	reset_bitset(r);
-	for (i = 0; i < bs1->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 	 	r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
 }
 
-void copy_bitset(BitSet* bs1, BitSet* bs2) {
+void copy_bitset(AF *af, BitSet* bs1, BitSet* bs2) {
 	int i;
-	for (i = 0; i < bs1->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		bs2->elements[i] = bs1->elements[i];
 }
 
 // TODO: optimize!
-char bitset_is_fullset(BitSet* bs) {
+char bitset_is_fullset(AF *af, BitSet* bs) {
 	int i;
-	for (i = 0; i < bs->size; ++i)
+	for (i = 0; i < af->size; ++i)
 		if (!(TEST_BIT(bs, i)))
 			return 0;
 	return(1);
 }
 
-char bitset_is_emptyset(BitSet* bs) {
+char bitset_is_emptyset(AF *af, BitSet* bs) {
 	int i;
 
-	for (i = 0; i < bs->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		if (bs->elements[i] != 0UL)
 			return(0);
 	return(1);
 }
 
-void reset_bitset(BitSet* bs) {
+void reset_bitset(AF *af, BitSet* bs) {
 	int i;
 
-	for (i = 0; i < bs->base_count; ++i)
+	for (i = 0; i < af->bitset_base_count; ++i)
 		bs->elements[i] = 0UL;
 }
+
+void set_bitset(AF *af, BitSet* bs) {
+	int i;
+
+	for (i = 0; i < af->bitset_base_count; ++i)
+		bs->elements[i] = 1UL;
+}
+
 // TODO: optimize!
-int bitset_get_length(BitSet* bs) {
-	int i, l = 0;
-	for (i = 0; i < bs->size; ++i)
-		if (TEST_BIT(bs, i))
-			++l;
-	return(l);
+// int bitset_get_length(AF *af, BitSet* bs) {
+// 	int i, l = 0;
+// 	for (i = 0; i < af->size; ++i)
+// 		if (TEST_BIT(bs, i))
+// 			++l;
+// 	return(l);
 }
