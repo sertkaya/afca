@@ -38,7 +38,7 @@ void usage(char* program) {
 }
 
 int main(int argc, char *argv[]) {
-	FILE* input_af;
+	FILE* input_fd;
 	FILE* output;
 
 	int c, problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
@@ -105,23 +105,20 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	// open the af file
-	input_af = fopen(af_file_name, "r");
-	assert(input_af != NULL);
-
-	// Create an empty context.
-	Context* context = create_context();
+	input_fd = fopen(af_file_name, "r");
+	assert(input_fd != NULL);
 
 	struct timeval start_time, stop_time;
 	START_TIMER(start_time);
 
-	// Read the af into the context.
-	read_af(input_af, context);
+	// Read the file into an argumentation framework.
+	AF *af = read_af(input_fd);
 
 	STOP_TIMER(stop_time);
 	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// read and parse the graph
-	fclose(input_af);
+	fclose(input_fd);
 
 	if (verbose_flag) {
 		// print_short_stats(kb);

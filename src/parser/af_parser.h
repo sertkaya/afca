@@ -20,9 +20,9 @@
 #define PARSER_AF_PARSER_H_
 
 #include <stdio.h>
-#include "../fca/context.h"
+#include "../af/af.h"
 
-// Read the argumentation framework from file into context.
-void read_af(FILE* af, Context* c);
+// Read the argumentation framework from file into AF.
+AF* read_af(FILE* af);
 
 #endif /* PARSER_AF_PARSER_H_ */
