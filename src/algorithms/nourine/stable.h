@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include "../fca/context.h"
+#include "../af/af.h"
 #include "../bitset/bitset.h"
 
 // In our case implications are unit implications.
@@ -47,13 +47,13 @@ ImplicationSet *create_implication_set();
 
 void add_implication(UnitImplication *imp, ImplicationSet *imps);
 
-ImplicationSet *attacks_to_implications(Context *attacks);
+ImplicationSet *attacks_to_implications(AF* attacks);
 
 void print_implication_set(ImplicationSet *imps);
 
-void all_stable_extensions_nourine(Context* c, FILE *f);
+void all_stable_extensions_nourine(AF* c, FILE *f);
 
-void one_stable_extension_nourine(Context* c, FILE *f);
+void one_stable_extension_nourine(AF* c, FILE *f);
 
 void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c);
 

@@ -20,21 +20,19 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "../af/af.h"
 #include "../parser/af_parser.h"
-#include "../fca/context.h"
 
 int main(int argc, char *argv[]) {
 
-	FILE *af = fopen(argv[1], "r");
-	assert(af != NULL);
+	FILE *input_fd = fopen(argv[1], "r");
+	assert(input_fd != NULL);
 
-	Context* c = create_context();
+	AF *af = read_af(input_fd);
 
-	read_af(af, c);
+	print_argumentation_framework(af);
 
-	print_context(c);
-
-	int size = c->size;
+	int size = af->size;
 	BitSet* bs = create_bitset(size);
 	BitSet* r = create_bitset(size);
 
@@ -43,7 +41,7 @@ int main(int argc, char *argv[]) {
 	print_bitset(bs, stdout);
 	printf("\n");
 
-	down_up_arrow(c, bs, r);
+	down_up_arrow(af, bs, r);
 	printf("r: ");
 	print_bitset(r, stdout);
 	printf("\n");

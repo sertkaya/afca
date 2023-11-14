@@ -1,8 +1,6 @@
 /*
  * AFCA - argumentation framework using closed sets
  *
- * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,11 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef AF_PREFERRED_EXTENSIONS_NC_H_
-#define AF_PREFERRED_EXTENSIONS_NC_H_
+#ifndef AF_STABLE_EXTENSIONS_NC_H_
+#define AF_STABLE_EXTENSIONS_NC_H_
 
-#include "../fca/context.h"
+#include "../af/af.h"
 
-void all_preferred_extensions_nc(Context* c, FILE *f);
+void stable_extensions_nc(AF* af, FILE *f);
 
-#endif /* AF_PREFERRED_EXTENSIONS_NC_H_ */
+void one_stable_extension_nc(AF* af, FILE *f);
+
+#endif /* AF_STABLE_EXTENSIONS_NC_H_ */

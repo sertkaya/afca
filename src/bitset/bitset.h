@@ -1,8 +1,6 @@
 /*
  * AFCA - argumentation framework using closed sets
  *
- * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,8 +18,8 @@
 #define BITSET_BITSET_H_
 
 #include <stdio.h>
+#include <math.h>
 #include <stdint.h>
-#include "../af/af.h"
 
 // Base type for storing the bits.
 #define BITSET_BASE_TYPE	uint64_t
@@ -33,62 +31,138 @@ typedef struct bitset BitSet;
 
 // A BitSet is an array of BITSET_BASE_TYPE
 struct bitset {
+	unsigned short size;
+	unsigned short base_count;
 	BITSET_BASE_TYPE* elements;
 };
 
 // Create an empty bitset of the given size and return the address.
-BitSet* create_bitset(AF *af);
+BitSet* create_bitset(unsigned short);
 
 // Free the memory allocated for the bitset bs.
 // Returns the number of bytes freed
-int free_bitset(AF *af, BitSet* bs);
+int free_bitset(BitSet* bs);
 
 // Print the given bitset
-void print_bitset(AF *af, BitSet* bs, FILE *f);
+void print_bitset(BitSet* bs, FILE *f);
 
 // Caution: The below methods do not check the index k !
 // Set bit at index k
- #define SET_BIT(bs,k)     ( bs->elements[(k)/BITSET_BASE_SIZE] |= (1UL << ((k)%BITSET_BASE_SIZE)) )
+ #define SET_BIT(bs,k)		( bs->elements[(k)/BITSET_BASE_SIZE] |= (1UL << ((k)%BITSET_BASE_SIZE)) )
 // Reset bit at index k
-#define RESET_BIT(bs,k)   ( bs->elements[(k)/BITSET_BASE_SIZE] &= ~(1UL << ((k)%BITSET_BASE_SIZE)) )
+#define RESET_BIT(bs,k)		( bs->elements[(k)/BITSET_BASE_SIZE] &= ~(1UL << ((k)%BITSET_BASE_SIZE)) )
 // Test bit at index k
-#define TEST_BIT(bs,k)    ( bs->elements[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
+#define TEST_BIT(bs,k)		( bs->elements[(k)/BITSET_BASE_SIZE] & (1UL << ((k)%BITSET_BASE_SIZE)) )
 
 // Caution: The methods below do not check and compare the sizes of bs1 and bs2
-
-// Return 1 if bs1 is subset of bs2, otherwise 0.
-char bitset_is_subset(AF *af, BitSet* bs1, BitSet* bs2);
-
-char bitset_is_equal(AF *af, BitSet* bs1, BitSet* bs2);
-
-// Intersect bs1 and bs2, store the result in r
-void bitset_intersection(AF *af, BitSet* bs1, BitSet* bs2, BitSet* r);
-
-// Unite bs1 and bs2, store the result in r
-void bitset_union(AF *af, BitSet* bs1, BitSet* bs2, BitSet* r);
-
-// Negate bitset (flip the bits) bs and store the result in r.
-void complement_bitset(AF *af, BitSet* bs, BitSet* r);
-
-// Compute set difference bs1 \ bs2, store it in r.
-void bitset_set_minus(AF *af, BitSet* bs1, BitSet* bs2, BitSet* r);
-
-// Return true if all bits are set, otherwise false
-char bitset_is_fullset(AF *af, BitSet* bs);
-
-// Return true if all bits are 0, otherwise false
-char bitset_is_emptyset(AF *af, BitSet* bs);
-
-// Copy bs1 into bs2
-void copy_bitset(AF *af, BitSet* bs1, BitSet* bs2);
-
-// Clear all bits
-void reset_bitset(AF *af, BitSet* bs);
-
-// Set all bits
-void set_bitset(AF *af, BitSet* bs);
 
 // Return the number of bits set to 1
 // int bitset_get_length(BitSet* bs);
 
+// Return 1 if bs1 is subset of bs2, otherwise 0.
+inline char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
+	int i;
+
+	for (i = 0; i < bs1->base_count; ++i)
+		if (bs1->elements[i] != (bs1->elements[i] & bs2->elements[i]))
+			return(0);
+	return(1);
+}
+
+inline char bitset_is_equal(BitSet* bs1, BitSet* bs2) {
+	int i;
+
+	for (i = 0; i < bs1->base_count; ++i)
+		if (bs1->elements[i] != bs2->elements[i])
+			return(0);
+	return(1);
+}
+
+// Intersect bs1 and bs2, store the result in r
+inline void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		r->elements[i] = bs1->elements[i] & bs2->elements[i];
+}
+
+// Check if intersection bs1 and bs2 is empty
+// Return 1 if yes, 0 othersie
+inline char is_bitset_intersection_empty(BitSet* bs1, BitSet* bs2) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		if ((bs1->elements[i] & bs2->elements[i]) != 0UL)
+			return(0);
+	return(1);
+}
+// Unite bs1 and bs2, store the result in r
+inline void bitset_union(BitSet* bs1, BitSet* bs2, BitSet* r) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		r->elements[i] = bs1->elements[i] | bs2->elements[i];
+}
+
+// Negate bitset (flip the bits) bs and store the result in r.
+inline void complement_bitset(BitSet* bs, BitSet* r) {
+	// TODO: temporarily
+	// int i;
+	// for (i = 0; i < bs->size; ++i)
+	// 	if (TEST_BIT(bs,i))
+	// 		RESET_BIT(r,i);
+	// 	else
+	// 		SET_BIT(r, i);
+	int i;
+	for (i = 0; i < bs->base_count; ++i)
+		r->elements[i] = ~(bs->elements[i]);
+}
+
+// Clear all bits
+inline void reset_bitset(BitSet* bs) {
+	int i;
+
+	for (i = 0; i < bs->base_count; ++i)
+		bs->elements[i] = 0UL;
+}
+
+// Compute set difference bs1 \ bs2, store it in r.
+inline void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
+	int i;
+	reset_bitset(r);
+	for (i = 0; i < bs1->base_count; ++i)
+	 	r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
+}
+
+// Copy bs1 into bs2
+inline void copy_bitset(BitSet* bs1, BitSet* bs2) {
+	int i;
+	for (i = 0; i < bs1->base_count; ++i)
+		bs2->elements[i] = bs1->elements[i];
+}
+
+// Return true if all bits are set, otherwise false
+// TODO: optimize!
+inline char bitset_is_fullset(BitSet* bs) {
+	int i;
+	for (i = 0; i < bs->size; ++i)
+		if (!(TEST_BIT(bs, i)))
+			return 0;
+	return(1);
+}
+
+// Return true if all bits are 0, otherwise false
+inline char bitset_is_emptyset(BitSet* bs) {
+	int i;
+
+	for (i = 0; i < bs->base_count; ++i)
+		if (bs->elements[i] != 0UL)
+			return(0);
+	return(1);
+}
+
+// Set all bits
+inline void set_bitset(BitSet* bs) {
+	int i;
+
+	for (i = 0; i < bs->base_count; ++i)
+		bs->elements[i] = 1UL;
+}
 #endif /* BITSET_BITSET_H_ */
