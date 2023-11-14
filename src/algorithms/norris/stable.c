@@ -3,16 +3,22 @@
 #include <assert.h>
 #include <inttypes.h>
 
-#include "../fca/context.h"
-// #include "../fca/concept.h"
+#include "../af/af.h"
 #include "../bitset/bitset.h"
 #include "../utils/linked_list.h"
 
+struct concept {
+	BitSet* extent;
+	BitSet* intent;
+	// for the norris-based algorithm
+	BitSet* not_attacked;
+};
+
+typedef struct concept Concept;
+
 int concept_count = 0;
 
-Concept* create_concept(BitSet* extent,
-		BitSet* intent,
-		BitSet* not_attacked) {
+Concept* create_concept(BitSet* extent, BitSet* intent, BitSet* not_attacked) {
 	Concept* c = (Concept*) calloc(1, sizeof(Concept));
 	assert(c != NULL);
 	c->extent = extent;
@@ -22,15 +28,14 @@ Concept* create_concept(BitSet* extent,
 	return(c);
 }
 
-void free_concept(Concept *c) {
+void free_concept(AF *af, Concept *c) {
 	free_bitset(c->extent);
 	free_bitset(c->intent);
 	free_bitset(c->not_attacked);
 	free(c);
 }
 
-int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
-
+int add(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
 	int stable_extension_count = 0;
 
     ListNode *head = *phead;
@@ -47,13 +52,11 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 		bitset_intersection(c->extent, c->not_attacked, conflict_free);
 		if (TEST_BIT(conflict_free, i)) {
 			// c->intent U {i} is a conflict-free superset of c->intent
-			// print_bitset(c->intent, stdout);
-			// printf("\n");
 
 			if (bitset_is_subset(c->extent, argument_extents[i])) {
 				// update c
 				SET_BIT(c->intent, i);
-				bitset_intersection(c->not_attacked, not_attacks->a[i], c->not_attacked);
+				bitset_intersection(c->not_attacked, not_attacks->graph[i], c->not_attacked);
 
 				char remove_cur = 0;
 				if (bitset_is_equal(c->intent, c->not_attacked)) {
@@ -63,7 +66,7 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 					fprintf(outfile, "\n");
 					remove_cur = 1;
 				} else {
-					bitset_intersection(conflict_free, not_attacks->a[i], conflict_free);
+					bitset_intersection(conflict_free, not_attacks->graph[i], conflict_free);
 					if (bitset_is_equal(conflict_free, c->intent)) {
 						remove_cur = 1;
 					}
@@ -73,11 +76,11 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 					cur = cur->next;
 					// remove cur from the concept list
 					if (prev) {
-						free_concept(prev->next->c);
+						free_concept(not_attacks, prev->next->c);
 						free_node(prev->next);
 						prev->next = cur;
 					} else {
-						free_concept(head->c);
+						free_concept(not_attacks, head->c);
 						free_node(head);
 						head = cur;
 					}
@@ -104,7 +107,7 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 					SET_BIT(new_intent, i);
 
 					BitSet* new_not_attacked = create_bitset(not_attacks->size);
-					bitset_intersection(c->not_attacked, not_attacks->a[i], new_not_attacked);
+					bitset_intersection(c->not_attacked, not_attacks->graph[i], new_not_attacked);
 
 					if (bitset_is_equal(new_intent, new_not_attacked)) {
 						// new_intent is a stable extension
@@ -120,9 +123,7 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 						bitset_intersection(new_extent, new_not_attacked, new_conflict_free);
 
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
-							Concept *new_concept = create_concept(new_extent,
-									new_intent,
-									new_not_attacked);
+							Concept *new_concept = create_concept(new_extent, new_intent, new_not_attacked);
 							ListNode *new_node = create_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
@@ -151,15 +152,14 @@ int add(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extent
 	return stable_extension_count;
 }
 
-void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
-
-	Context* not_attacks = negate_context(attacks);
+void incremental_stable_extensions_norris(AF* attacks, FILE *outfile) {
+	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
 	for (int i = 0; i < not_attacks->size; ++i) {
 		argument_extents[i] = create_bitset(not_attacks->size);
 		for (int j = 0; j < not_attacks->size; ++j) {
-			if (TEST_BIT(not_attacks->a[j], i)) {
+			if (TEST_BIT(not_attacks->graph[j], i)) {
 				SET_BIT(argument_extents[i], j);
 			}
 		}
@@ -184,18 +184,15 @@ void incremental_stable_extensions_norris(Context* attacks, FILE *outfile) {
 	printf("Number of stable extensions: %d\n", stable_extension_count);
 	printf("Number of created concepts: %d\n", concept_count);
 
-	free_concept(c);
+	free_concept(attacks, c);
 	free_node(head);
 	for (int i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
-	free_context(attacks);
-	free_context(not_attacks);
-
+	free_argumentation_framework(not_attacks);
 }
 
-int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
-
+int add_one(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
     ListNode *head = *phead;
 	ListNode *prev = NULL;
 	ListNode *cur = head;
@@ -216,7 +213,7 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 			if (bitset_is_subset(c->extent, argument_extents[i])) {
 				// update c
 				SET_BIT(c->intent, i);
-				bitset_intersection(c->not_attacked, not_attacks->a[i], c->not_attacked);
+				bitset_intersection(c->not_attacked, not_attacks->graph[i], c->not_attacked);
 
 				char remove_cur = 0;
 				if (bitset_is_equal(c->intent, c->not_attacked)) {
@@ -226,7 +223,7 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 					remove_cur = 1;
 					return(1);
 				} else {
-					bitset_intersection(conflict_free, not_attacks->a[i], conflict_free);
+					bitset_intersection(conflict_free, not_attacks->graph[i], conflict_free);
 					if (bitset_is_equal(conflict_free, c->intent)) {
 						remove_cur = 1;
 					}
@@ -236,11 +233,11 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 					cur = cur->next;
 					// remove cur from the concept list
 					if (prev) {
-						free_concept(prev->next->c);
+						free_concept(not_attacks, prev->next->c);
 						free_node(prev->next);
 						prev->next = cur;
 					} else {
-						free_concept(head->c);
+						free_concept(not_attacks, head->c);
 						free_node(head);
 						head = cur;
 					}
@@ -267,7 +264,7 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 					SET_BIT(new_intent, i);
 
 					BitSet* new_not_attacked = create_bitset(not_attacks->size);
-					bitset_intersection(c->not_attacked, not_attacks->a[i], new_not_attacked);
+					bitset_intersection(c->not_attacked, not_attacks->graph[i], new_not_attacked);
 
 					if (bitset_is_equal(new_intent, new_not_attacked)) {
 						// new_intent is a stable extension
@@ -283,9 +280,7 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 						bitset_intersection(new_extent, new_not_attacked, new_conflict_free);
 
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
-							Concept *new_concept = create_concept(new_extent,
-									new_intent,
-									new_not_attacked);
+							Concept *new_concept = create_concept(new_extent, new_intent, new_not_attacked);
 							ListNode *new_node = create_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
@@ -314,15 +309,14 @@ int add_one(Context* not_attacks, int i, ListNode **phead , BitSet** argument_ex
 	return(0);
 }
 
-void one_stable_extension_norris(Context* attacks, FILE *outfile) {
-
-	Context *not_attacks = negate_context(attacks);
+void one_stable_extension_norris(AF* attacks, FILE *outfile) {
+	AF *not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
 	for (int i = 0; i < not_attacks->size; ++i) {
 		argument_extents[i] = create_bitset(not_attacks->size);
 		for (int j = 0; j < not_attacks->size; ++j) {
-			if (TEST_BIT(not_attacks->a[j], i)) {
+			if (TEST_BIT(not_attacks->graph[j], i)) {
 				SET_BIT(argument_extents[i], j);
 			}
 		}
@@ -347,11 +341,10 @@ void one_stable_extension_norris(Context* attacks, FILE *outfile) {
 
 	printf("Number of created concepts: %d\n", concept_count);
 
-	free_concept(c);
+	free_concept(attacks, c);
 	free_node(head);
 	for (int i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
-	free_context(attacks);
-	free_context(not_attacks);
+	free_argumentation_framework(not_attacks);
 }

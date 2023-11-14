@@ -17,13 +17,13 @@
 #ifndef AF_AF_H_
 #define AF_AF_H_
 
+#include "../bitset/bitset.h"
+
 struct argumentation_framework {
 	// Number of arguments
-	int size;
+	unsigned short size;
 	// The adjacency matrix: array of bitsets
 	BitSet **graph;
-	// Number of bytes required for one bitset
-	int bitset_base_count;
 };
 
 typedef struct argumentation_framework AF;
@@ -38,17 +38,99 @@ int free_argumentation_framework(AF *af);
 void print_argumentation_framework(AF *af);
 
 // Add an attack from argument at index i to argument at index j
+// "i-1" and "j-1" since the arguments in the input file start with "1"
 #define ADD_ATTACK(af,i,j)		SET_BIT(af->graph[i-1],j-1)
 
-int is_conflict_free(Context* attacks, BitSet* x);
+// Check if argument i attacks argument j
+// Here i and j start from "0"
+#define CHECK_ARG_ATTACKS_ARG(af,i,j)		TEST_BIT(af->graph[i],j)
 
-// Compute victims of bs (arguments attacked by bs)
+// Check if arg attacks bs
+// Return 1 if yes, 0 otherwise
+#define CHECK_ARG_ATTACKS_SET(af,arg,bs)	(!is_bitset_intersection_empty(af->graph[arg],bs))
+
+// Check if set s attacks argument arg
+// Return 1 if yes, 0 otherwise
+inline char check_set_attacks_arg(AF* af, BitSet* s, int arg) {
+	int i;
+	for (i = 0; i < af->size; ++i)
+		if (TEST_BIT(s,i) && CHECK_ARG_ATTACKS_ARG(af, i, arg))
+			return(1);
+	return(0);
+}
+
+/*
+int is_conflict_free(Context* attacks, BitSet* x) {
+	BitSet* x_attacks = create_bitset(attacks->size);
+	BitSet* r = create_bitset(attacks->size);
+	int i;
+	for (i = 0; i < attacks->size; ++i) {
+		if (TEST_BIT(x, i))
+			bitset_union(x_attacks, attacks->a[i], x_attacks);
+	}
+	bitset_intersection(x, x_attacks, r);
+	if (bitset_is_emptyset(r))
+		return(1);
+	return(0);
+}
+*/
+
+// TODO: compare to the above. Which is more efficient?
+inline char is_set_conflict_free(AF* af, BitSet* s) {
+	int i,j;
+	for (i = 0; TEST_BIT(s, i) && i < af->size; ++i)
+		for (j = 0; TEST_BIT(s, j) && j < af->size; ++j)
+			if (CHECK_ARG_ATTACKS_ARG(af, i, j))
+				return(0);
+	return(1);
+}
+
+// Compute common victims of the arguments in s (arguments attacked by all elements of s)
 // (up-arrow in FCA terms) Put the result in r
-void get_victims(AF* af, BitSet* bs, BitSet* r);
+// inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
+inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
+	int i;
 
-// Compute attackers of bs (arguments that attack bs)
+	// First fill r
+	// TODO: Improve efficiency?
+	set_bitset(r);
+
+	for (i = 0; i < af->size; ++i)
+		if (TEST_BIT(s, i))
+			bitset_intersection(r, af->graph[i], r);
+}
+
+// Compute total attackers of s (arguments attacking all elements of s)
 // (down-arrow in FCA terms) Put the result in r
-void get_attackers(AF* af, BitSet* bs, BitSet* r);
+// inline void get_total_attackers(AF* af, BitSet* s, BitSet* r) {
+inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
+	int i;
+
+	// TODO: Improve efficiency?
+	reset_bitset(r);
+
+	for (i = 0; i < af->size; ++i)
+		if (bitset_is_subset(s, af->graph[i]))
+			SET_BIT(r, i);
+}
+
+// Compute common victims of the total attackers of s
+// (arguments commonly attacked by the arguments that attack all elements of s.
+// In FCA: down-up-arrow closure operator on the formal context)
+// inline void get_common_victims_of_total_attackers(AF* af, BitSet* s, BitSet* r) {
+inline void down_up_arrow(AF* af, BitSet* s, BitSet* r) {
+	int i;
+
+	// First fill r
+	// TODO: Improve efficiency?
+	set_bitset(r);
+
+	for (i = 0; i < af->size; ++i) {
+		if (bitset_is_subset(s, af->graph[i])) {
+			bitset_intersection(r, af->graph[i], r);
+		}
+	}
+}
 
 AF* complement_argumentation_framework(AF *af );
 

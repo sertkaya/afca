@@ -1,8 +1,6 @@
 /*
  * AFCA - argumentation framework using closed sets
  *
- * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,15 +14,15 @@
  * limitations under the License.
  */
 
+#include "stable.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <inttypes.h>
 
-#include "../fca/context.h"
+#include "../af/af.h"
 #include "../bitset/bitset.h"
-#include "stable_extensions_nourine.h"
-#include "af.h"
 
 /*
 // In our case implications are unit implications.
@@ -88,16 +86,16 @@ void add_implication(UnitImplication *imp, ImplicationSet *imps) {
 	++imps->size;
 }
 
-ImplicationSet *attacks_to_implications(Context *attacks) {
+ImplicationSet *attacks_to_implications(AF* attacks) {
 	ImplicationSet *imps = create_implication_set();
-	Context *attacked_by = transpose_context(attacks);
+	AF* attacked_by = transpose_argumentation_framework(attacks);
 
 	int i, j;
 	for (i = 0; i < attacks->size; ++i) {
 		for (j = 0; j < attacks->size; ++j) {
-			if (TEST_BIT(attacks->a[i], j) && !TEST_BIT(attacks->a[j], i)) {
+			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
 				BitSet *lhs = create_bitset(attacks->size);
-				copy_bitset(attacked_by->a[i], lhs);
+				copy_bitset(attacked_by->graph[i], lhs);
 
 				UnitImplication *imp = create_unit_implication(lhs, j);
 				add_implication(imp, imps);
@@ -125,14 +123,14 @@ void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 	free_bitset(tmp);
 }
 
-ImplicationSet *reduce_implications(Context *attacks, ImplicationSet *imps) {
+ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 	ImplicationSet *imps_r = create_implication_set();
 	ImplicationSet *imps_r2 = create_implication_set();
 
 	int i;
 	// Self-attacks
 	for (i = 0; i < attacks->size; ++i)
-		if (TEST_BIT(attacks->a[i], i)) {
+		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
 			BitSet *lhs = create_bitset(attacks->size);
 			UnitImplication *imp = create_unit_implication(lhs, i);
 			add_implication(imp, imps_r);
@@ -169,7 +167,7 @@ ImplicationSet *reduce_implications(Context *attacks, ImplicationSet *imps) {
 				for (t = 0; t < attacks->size; ++t) {
 					if (TEST_BIT(imps->elements[i]->lhs, t)) {
 						SET_BIT(tmp, t);
-						if (!is_conflict_free(attacks, tmp)) {
+						if (!is_set_conflict_free(attacks, tmp)) {
 							SET_BIT(T, t);
 						}
 						RESET_BIT(tmp, t);
@@ -183,11 +181,9 @@ ImplicationSet *reduce_implications(Context *attacks, ImplicationSet *imps) {
 		}
 	}
 
-	// printf("---------------------\n");
 	printf("After conflict type 1:\n");
 	printf("\n Size: %d\n\n", imps_r->size);
-	// print_implication_set(imps_r);
-	// printf("---------------------\n");
+
 	// Conflict type 2
 	BitSet *Gamma_t = create_bitset(attacks->size);
 	BitSet *Gamma_t_closure = create_bitset(attacks->size);
@@ -205,7 +201,7 @@ ImplicationSet *reduce_implications(Context *attacks, ImplicationSet *imps) {
 					reset_bitset(tmp);
 					SET_BIT(tmp, t);
 					SET_BIT(tmp, j);
-					if  (!is_conflict_free(attacks, tmp)) {
+					if  (!is_set_conflict_free(attacks, tmp)) {
 						SET_BIT(Gamma_t, j);
 					}
 				}
@@ -226,11 +222,23 @@ ImplicationSet *reduce_implications(Context *attacks, ImplicationSet *imps) {
 			printf("Size of imps_r2: %d\n", imps_r2->size);
 	}
 
+	free_bitset(X_closure);
+	free_bitset(empty);
+	free_bitset(empty_closure);
+	free_bitset(X_union_empty_closure);
+	free_bitset(diff);
+	free_bitset(tmp);
+	free_bitset(T);
+
+	free_bitset(Gamma_t);
+	free_bitset(Gamma_t_closure);
+
 	return(imps_r2);
 }
 
-void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
-	Context* not_attacks = negate_context(attacks);
+void stable_extensions_nourine(AF* attacks, FILE *outfile) {
+
+	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* c = create_bitset(attacks->size);
 	// c closure
@@ -242,14 +250,12 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 	BitSet* tmp = create_bitset(attacks->size);
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
-	// print_implication_set(imps);
 	printf("\n Original size: %d\n\n", imps->size);
 
 	ImplicationSet *imps_r = reduce_implications(attacks, imps);
-	// print_implication_set(imps_r);
 	printf("\nImps reduced size: %d\n\n", imps_r->size);
 
-	int i, j, closure_count = 0, stable_extension_count = 0;
+	int i, j, concept_count = 0, stable_extension_count = 0;
 
 	// closure of the empty set
 	naive_closure(c, imps_r, cc);
@@ -268,7 +274,7 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 	while (!bitset_is_fullset(c)) {
 		// print_bitset(c, stdout);
 		// printf("\n");
-		++closure_count;
+		++concept_count;
 
 		for (i = attacks->size - 1; i >= 0; --i) {
 			if (TEST_BIT(c, i))
@@ -307,10 +313,10 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 						fprintf(outfile, "\n");
 						// print_bitset(cc, stdout);
 						// printf("*cut\n");
-						++closure_count;
+						++concept_count;
 						continue;
 					}
-					else if (is_conflict_free(attacks, ccc)) {
+					else if (is_set_conflict_free(attacks, ccc)) {
 						// print_bitset(cc, stdout);
 						// printf(" cut\n");
 						continue;
@@ -323,7 +329,7 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 		copy_bitset(cc, c);
 	}
 
-	printf("Number of closures generated: %d\n", closure_count);
+	printf("Number of concepts generated: %d\n", concept_count);
 	printf("Number of stable extensions: %d\n", stable_extension_count);
 
 	free_bitset(tmp);
@@ -332,10 +338,9 @@ void all_stable_extensions_nourine(Context* attacks, FILE *outfile) {
 	free_bitset(ccc);
 	free_bitset(ccc_up);
 
-	free_context(attacks);
-	free_context(not_attacks);
+	free_argumentation_framework(not_attacks);
 }
 
-void one_stable_extension_nourine(Context* attacks, FILE *outfile) {
+void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	// TODO
 }

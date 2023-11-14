@@ -1,8 +1,6 @@
 /*
  * AFCA - argumentation framework using closed sets
  *
- * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,10 +22,9 @@
 #include <assert.h>
 #include <getopt.h>
 
-#include "af/stable_extensions_nc.h"
-#include "af/preferred_extensions_nc.h"
-#include "af/stable_extensions_norris.h"
-#include "af/stable_extensions_nourine.h"
+#include "algorithms/next-closure/stable.h"
+#include "algorithms/norris/stable.h"
+#include "algorithms/nourine/stable.h"
 #include "parser/af_parser.h"
 #include "fca/context.h"
 #include "utils/timer.h"
@@ -133,23 +130,23 @@ int main(int argc, char *argv[]) {
 	// compute the stable extensions
 	if (strcmp(algorithm, "norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
-			incremental_stable_extensions_norris(context, output);
+			incremental_stable_extensions_norris(af, output);
 		else if (strcmp(problem, "SE-ST") == 0)
-			one_stable_extension_norris(context, output);
+			one_stable_extension_norris(af, output);
 	}
 	else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
-			all_stable_extensions_nc(context, output);
+			stable_extensions_nc(af, output);
 		else if (strcmp(problem, "EE-PR") == 0)
-			all_preferred_extensions_nc(context, output);
+			printf("Currently not supported.\n");
 		else if (strcmp(problem, "SE-ST") == 0)
-			one_stable_extension_nc(context, output);
+			one_stable_extension_nc(af, output);
 	}
 	else if (strcmp(algorithm, "nourine") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
-			all_stable_extensions_nourine(context, output);
+			stable_extensions_nourine(af, output);
 		else if (strcmp(problem, "SE-ST") == 0)
-			one_stable_extension_nourine(context, output);
+			one_stable_extension_nourine(af, output);
 	}
 
 	STOP_TIMER(stop_time);
