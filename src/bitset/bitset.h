@@ -163,6 +163,9 @@ inline void set_bitset(BitSet* bs) {
 	int i;
 
 	for (i = 0; i < bs->base_count; ++i)
-		bs->elements[i] = 1UL;
+		// bs->elements[i] = -1;
+		bs->elements[i] = ~(0UL);
 }
+
+
 #endif /* BITSET_BITSET_H_ */
