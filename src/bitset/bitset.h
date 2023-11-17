@@ -60,7 +60,7 @@ void print_bitset(BitSet* bs, FILE *f);
 // int bitset_get_length(BitSet* bs);
 
 // Return 1 if bs1 is subset of bs2, otherwise 0.
-inline char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
+static inline char bitset_is_subset(BitSet* bs1, BitSet* bs2) {
 	int i;
 
 	for (i = 0; i < bs1->base_count; ++i)
@@ -79,7 +79,7 @@ inline char bitset_is_equal(BitSet* bs1, BitSet* bs2) {
 }
 
 // Intersect bs1 and bs2, store the result in r
-inline void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
+static inline void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
 	for (i = 0; i < bs1->base_count; ++i)
 		r->elements[i] = bs1->elements[i] & bs2->elements[i];

@@ -19,7 +19,7 @@
 #ifndef AF_STABLE_EXTENSIONS_NORRIS_H_
 #define AF_STABLE_EXTENSIONS_NORRIS_H_
 
-#include "../af/af.h"
+#include "../../af/af.h"
 
 void incremental_stable_extensions_norris(AF* af, FILE *f);
 

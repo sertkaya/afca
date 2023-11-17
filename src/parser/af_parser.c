@@ -23,7 +23,7 @@
 #include "../bitset/bitset.h"
 #include "../af/af.h"
 
-void read_af(FILE* input_fd) {
+AF* read_af(FILE* input_fd) {
 	int arg_count = 0, att_count = 0;
 
 	int rc = fscanf(input_fd, "p af %d", &arg_count);
@@ -47,5 +47,7 @@ void read_af(FILE* input_fd) {
 	printf("Argument count: %d\n", arg_count);
 	printf("Attacks count : %d\n", att_count);
 	printf("Density : %.4lf\n", ((double) att_count) / (arg_count * arg_count));
+
+	return(af);
 }
 

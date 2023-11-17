@@ -20,20 +20,20 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../af/stable_extensions_norris.h"
+
+#include "../af/af.h"
 #include "../parser/af_parser.h"
-#include "../fca/context.h"
+#include "../algorithms/norris/stable.h"
 
 int main(int argc, char *argv[]) {
 
-	FILE *af = fopen(argv[1], "r");
-	assert(af != NULL);
+	FILE *fd = fopen(argv[1], "r");
+	assert(fd != NULL);
 
-	Context* c = create_context();
-	read_af(af, c);
+	AF* af = read_af(fd);
 	// print_context(c);
 
-	incremental_stable_extensions_norris(c, stdout);
+	incremental_stable_extensions_norris(af, stdout);
 
 	return(0);
 }

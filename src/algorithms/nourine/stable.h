@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include "../af/af.h"
-#include "../bitset/bitset.h"
+#include "../../af/af.h"
+#include "../../bitset/bitset.h"
 
 // In our case implications are unit implications.
 // lhs is a bitset, rhs is an index
@@ -51,7 +51,7 @@ ImplicationSet *attacks_to_implications(AF* attacks);
 
 void print_implication_set(ImplicationSet *imps);
 
-void all_stable_extensions_nourine(AF* c, FILE *f);
+void stable_extensions_nourine(AF* c, FILE *f);
 
 void one_stable_extension_nourine(AF* c, FILE *f);
 

@@ -17,7 +17,7 @@
 #ifndef AF_STABLE_EXTENSIONS_NC_H_
 #define AF_STABLE_EXTENSIONS_NC_H_
 
-#include "../af/af.h"
+#include "../../af/af.h"
 
 void stable_extensions_nc(AF* af, FILE *f);
 
