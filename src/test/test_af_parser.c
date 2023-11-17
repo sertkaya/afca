@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../af/af.h"
 #include "../parser/af_parser.h"
+#include "../af/af.h"
 
 int main(int argc, char *argv[]) {
 

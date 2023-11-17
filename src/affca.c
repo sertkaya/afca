@@ -26,7 +26,6 @@
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
 #include "parser/af_parser.h"
-#include "fca/context.h"
 #include "utils/timer.h"
 
 

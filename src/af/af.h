@@ -88,7 +88,7 @@ inline char is_set_conflict_free(AF* af, BitSet* s) {
 // Compute common victims of the arguments in s (arguments attacked by all elements of s)
 // (up-arrow in FCA terms) Put the result in r
 // inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
-inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
+static inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
 	int i;
 
 	// First fill r
@@ -103,7 +103,7 @@ inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
 // Compute total attackers of s (arguments attacking all elements of s)
 // (down-arrow in FCA terms) Put the result in r
 // inline void get_total_attackers(AF* af, BitSet* s, BitSet* r) {
-inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
+static inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
 	int i;
 
 	// TODO: Improve efficiency?
@@ -118,7 +118,7 @@ inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
 // (arguments commonly attacked by the arguments that attack all elements of s.
 // In FCA: down-up-arrow closure operator on the formal context)
 // inline void get_common_victims_of_total_attackers(AF* af, BitSet* s, BitSet* r) {
-inline void down_up_arrow(AF* af, BitSet* s, BitSet* r) {
+static inline void down_up_arrow(AF* af, BitSet* s, BitSet* r) {
 	int i;
 
 	// First fill r

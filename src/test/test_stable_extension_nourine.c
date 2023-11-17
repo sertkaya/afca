@@ -20,32 +20,30 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../af/stable_extensions_nourine.h"
+#include "../af/af.h"
 #include "../parser/af_parser.h"
-#include "../fca/context.h"
+#include "../algorithms/nourine/stable.h"
 
 int main(int argc, char *argv[]) {
 
-	FILE *af = fopen(argv[1], "r");
-	assert(af != NULL);
+	FILE *fd = fopen(argv[1], "r");
+	assert(fd != NULL);
 
-	Context* c = create_context();
-	read_af(af, c);
-	print_context(c);
+	AF* af = read_af(fd);
 
-	ImplicationSet *imps = attacks_to_implications(c);
+	ImplicationSet *imps = attacks_to_implications(af);
 
 	print_implication_set(imps);
 
-	BitSet *x = create_bitset(c->size);
+	BitSet *x = create_bitset(af->size);
 	SET_BIT(x, 2);
 	printf("x: ");
 	print_bitset(x, stdout);
 	printf("\n");
 
-	BitSet *xc = create_bitset(c->size);
+	BitSet *xc = create_bitset(af->size);
 
-	naive_closure(x, imps, xc);
+	// naive_closure(x, imps, xc);
 
 	printf("xc: ");
 	print_bitset(xc, stdout);

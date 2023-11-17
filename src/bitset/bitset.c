@@ -26,7 +26,8 @@ BitSet* create_bitset(unsigned short size) {
 	BitSet* bs = (BitSet*) calloc(1,  sizeof(BitSet));
 	assert(bs != NULL);
 
-	bs->base_count = (int) ceilf((double) size / BITSET_BASE_SIZE);
+	bs->size = size;
+	bs->base_count = (int) ceilf((double) bs->size / BITSET_BASE_SIZE);
 	bs->elements = (BITSET_BASE_TYPE*) calloc(bs->base_count,  sizeof(BITSET_BASE_TYPE));
 	assert(bs->elements != NULL);
 
@@ -37,6 +38,7 @@ int free_bitset(BitSet* bs) {
 	int freed_bytes = bs->base_count * sizeof(BITSET_BASE_TYPE);
 	free(bs->elements);
 	free(bs);
+	return(freed_bytes);
 }
 
 void print_bitset(BitSet* bs, FILE *outfile) {

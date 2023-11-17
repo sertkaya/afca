@@ -20,20 +20,19 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../af/stable_extensions_nc.h"
+#include "../af/af.h"
 #include "../parser/af_parser.h"
-#include "../fca/context.h"
+#include "../algorithms/next-closure/stable.h"
 
 int main(int argc, char *argv[]) {
 
-	FILE *af = fopen(argv[1], "r");
-	assert(af != NULL);
+	FILE *fd = fopen(argv[1], "r");
+	assert(fd != NULL);
 
-	Context* c = create_context();
-	read_af(af, c);
+	AF* af = read_af(fd);
 	// print_context(c);
 
-	all_stable_extensions_nc(c, stdout);
+	stable_extensions_nc(af, stdout);
 
 	return(0);
 }

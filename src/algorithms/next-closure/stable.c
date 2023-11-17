@@ -47,9 +47,15 @@ char next_closure(AF* not_attacks, AF* attacks, BitSet* current, BitSet* next) {
 
 			reset_bitset(tmp);
 			SET_BIT(current, i);
+			printf("current: ");
+			print_bitset(current, stdout);
+			printf("\n");
 
 			// compute next
 			down_up_arrow(not_attacks, current, next);
+			printf("next: ");
+			print_bitset(next, stdout);
+			printf("\n");
 			RESET_BIT(current, i);
 
 			// TODO: optimize!
@@ -82,7 +88,11 @@ void stable_extensions_nc(AF *attacks, FILE *outfile) {
 
 	int concept_count = 0, stable_extension_count = 0;
 
+	print_argumentation_framework(not_attacks);
+	printf("\n");
 	while (1) {
+		print_bitset(c, stdout);
+		printf("-\n");
 		if (!next_closure(not_attacks, attacks, tmp, c))
 			break;
 		++concept_count;
