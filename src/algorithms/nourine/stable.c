@@ -37,6 +37,7 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 	return(imps);
 }
 
+/*
 ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 	ImplicationSet *imps_r = create_implication_set();
 	ImplicationSet *imps_r2 = create_implication_set();
@@ -149,6 +150,7 @@ ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 
 	return(imps_r2);
 }
+*/
 
 void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
