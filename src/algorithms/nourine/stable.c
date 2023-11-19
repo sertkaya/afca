@@ -15,76 +15,7 @@
  */
 
 #include "stable.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <inttypes.h>
-
-#include "../af/af.h"
-#include "../bitset/bitset.h"
-
-/*
-// In our case implications are unit implications.
-// lhs is a bitset, rhs is an index
-struct unit_implication {
-	BitSet *lhs;
-	int rhs;
-};
-
-typedef struct unit_implication UnitImplication;
-
-// Implication set is just an array of implications
-struct implication_set {
-	int size;
-	UnitImplication **elements;
-};
-
-typedef struct implication_set ImplicationSet;
-*/
-
-UnitImplication *create_unit_implication(BitSet *lhs, int rhs) {
-	UnitImplication *imp = (UnitImplication*) calloc(1, sizeof(UnitImplication));
-	assert(imp != NULL);
-	imp->lhs = lhs;
-	imp->rhs = rhs;
-
-	return(imp);
-}
-
-void free_implication(UnitImplication *imp) {
-	free_bitset(imp->lhs);
-	free(imp);
-}
-
-void print_implication(UnitImplication *imp) {
-	print_bitset(imp->lhs, stdout);
-	printf("-> %d\n", imp->rhs);
-}
-
-void print_implication_set(ImplicationSet *imps) {
-	int i;
-	for (i = 0; i < imps->size; ++i)
-		print_implication(imps->elements[i]);
-}
-
-ImplicationSet *create_implication_set() {
-	ImplicationSet *imps = (ImplicationSet*) calloc(1, sizeof(ImplicationSet));
-	assert(imps != NULL);
-	imps->size = 0;
-	imps->elements = NULL;
-
-	return(imps);
-}
-
-void add_implication(UnitImplication *imp, ImplicationSet *imps) {
-	UnitImplication** tmp;
-	tmp = realloc(imps->elements, (imps->size + 1) * sizeof(UnitImplication*));
-	assert(tmp != NULL);
-	imps->elements = tmp;
-	imps->elements[imps->size] = imp;
-	++imps->size;
-}
+#include "implications.h"
 
 ImplicationSet *attacks_to_implications(AF* attacks) {
 	ImplicationSet *imps = create_implication_set();
@@ -104,23 +35,6 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 	}
 
 	return(imps);
-}
-
-// Compute closure of x under imps and store in c
-void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
-	int i;
-	// TODO: optimize!
-	copy_bitset(x, c);
-	BitSet *tmp = create_bitset(x->size);
-	do {
-		copy_bitset(c, tmp);
-		for (i = 0; i < imps->size; ++i) {
-			if (bitset_is_subset(imps->elements[i]->lhs, c)) {
-				SET_BIT(c, imps->elements[i]->rhs);
-			}
-		}
-	} while (!bitset_is_equal(tmp, c));
-	free_bitset(tmp);
 }
 
 ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
@@ -250,15 +164,15 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	BitSet* tmp = create_bitset(attacks->size);
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
-	printf("\n Original size: %d\n\n", imps->size);
+	printf("Implications size: %d\n", imps->size);
 
-	ImplicationSet *imps_r = reduce_implications(attacks, imps);
-	printf("\nImps reduced size: %d\n\n", imps_r->size);
+	// ImplicationSet *imps_r = reduce_implications(attacks, imps);
+	// printf("\nImps reduced size: %d\n\n", imps_r->size);
 
 	int i, j, concept_count = 0, stable_extension_count = 0;
 
 	// closure of the empty set
-	naive_closure(c, imps_r, cc);
+	naive_closure(c, imps, cc);
 	copy_bitset(cc, c);
 
 	complement_bitset(cc, ccc);
@@ -270,7 +184,6 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 		fprintf(outfile, "\n");
 	}
 
-	int min_i = attacks->size;
 	while (!bitset_is_fullset(c)) {
 		// print_bitset(c, stdout);
 		// printf("\n");
@@ -283,13 +196,8 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 				reset_bitset(tmp);
 				SET_BIT(c, i);
 
-				if (i < min_i) {
-					min_i = i;
-					printf("%d\n", i);
-				}
-
 				// compute closure
-				naive_closure(c, imps_r, cc);
+				naive_closure(c, imps, cc);
 
 				RESET_BIT(c, i);
 
