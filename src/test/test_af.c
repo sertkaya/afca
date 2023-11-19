@@ -18,20 +18,34 @@
 #include <stdlib.h>
 #include <assert.h>
 
-
-#include "../af/af.h"
 #include "../parser/af_parser.h"
-#include "../algorithms/norris/stable.h"
+#include "../af/af.h"
 
 int main(int argc, char *argv[]) {
 
-	FILE *fd = fopen(argv[1], "r");
-	assert(fd != NULL);
+	FILE *input_fd = fopen(argv[1], "r");
+	assert(input_fd != NULL);
 
-	AF* af = read_af(fd);
-	// print_context(c);
+	AF *af = read_af(input_fd);
+	print_argumentation_framework(af);
+	printf("\n");
 
-	incremental_stable_extensions_norris(af, stdout);
+	AF *af_c = complement_argumentation_framework(af);
+	print_argumentation_framework(af_c);
+	printf("\n");
+
+	BitSet* bs = create_bitset(af->size);
+	BitSet* r = create_bitset(af->size);
+
+	SET_BIT(bs, 4);
+	printf("bs: ");
+	print_bitset(bs, stdout);
+	printf("\n");
+
+	up_arrow(af, bs, r);
+	printf("r: ");
+	print_bitset(r, stdout);
+	printf("\n");
 
 	return(0);
 }
