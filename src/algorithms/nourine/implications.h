@@ -27,7 +27,9 @@ typedef struct implication Implication;
 
 Implication *create_implication(BitSet *lhs, BitSet *rhs);
 
-void free_implication(Implication *imp);
+void print_implication(Implication *imp);
+
+unsigned long free_implication(Implication *imp);
 
 // Implication set is just an array of implications
 struct implication_set {
@@ -38,6 +40,10 @@ struct implication_set {
 typedef struct implication_set ImplicationSet;
 
 ImplicationSet *create_implication_set();
+
+// Free the set of implications.
+// Returns the number of bytes freed.
+unsigned long free_implication_set(ImplicationSet *imps);
 
 void add_implication(Implication *imp, ImplicationSet *imps);
 

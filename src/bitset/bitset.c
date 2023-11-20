@@ -50,12 +50,13 @@ void print_bitset(BitSet* bs, FILE *outfile) {
 			fprintf(outfile, "%d", 0);
 }
 
-void print_set(BitSet* bs, FILE *outfile) {
+void print_set(BitSet* bs, FILE *outfile, const char *end) {
 	int i;
+	fprintf(outfile, "[ ");
 	for (i = 0; i < bs->size; ++i)
 		if (TEST_BIT(bs, i))
 			fprintf(outfile, "%d ", i+1);
-	fprintf(outfile, "\n");
+	fprintf(outfile, "]%s", end);
 }
 
 // TODO: optimize!

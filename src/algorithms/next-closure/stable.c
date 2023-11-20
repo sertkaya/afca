@@ -91,7 +91,7 @@ void stable_extensions_nc(AF *attacks, FILE *outfile) {
 
 		if (bitset_is_equal(c, c_up)) {
 			++stable_extension_count;
-			print_set(c, outfile);
+			print_set(c, outfile, "\n");
 		}
 		copy_bitset(c, tmp);
 	}
@@ -123,7 +123,7 @@ void one_stable_extension_nc(AF* attacks, FILE *outfile) {
 		up_arrow(not_attacks, c, c_up);
 
 		if (bitset_is_equal(c, c_up)) {
-			print_set(c, outfile);
+			print_set(c, outfile, "\n");
 			break;
 		}
 		copy_bitset(c, tmp);

@@ -62,7 +62,7 @@ int add(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FI
 				if (bitset_is_equal(c->intent, c->not_attacked)) {
 					// c->intent is a stable extension
 					++stable_extension_count;
-					print_set(c->intent, outfile);
+					print_set(c->intent, outfile, "\n");
 					remove_cur = 1;
 				} else {
 					bitset_intersection(conflict_free, not_attacks->graph[i], conflict_free);
@@ -111,7 +111,7 @@ int add(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FI
 					if (bitset_is_equal(new_intent, new_not_attacked)) {
 						// new_intent is a stable extension
 						++stable_extension_count;
-						print_set(new_intent, outfile);
+						print_set(new_intent, outfile, "\n");
 						// TODO: deallocate memory for new_*
 						free_bitset(new_intent);
 						free_bitset(new_extent);
@@ -216,7 +216,7 @@ int add_one(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents
 				char remove_cur = 0;
 				if (bitset_is_equal(c->intent, c->not_attacked)) {
 					// c->intent is a stable extension
-					print_set(c->intent, outfile);
+					print_set(c->intent, outfile, "\n");
 					remove_cur = 1;
 					return(1);
 				} else {
@@ -265,7 +265,7 @@ int add_one(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents
 
 					if (bitset_is_equal(new_intent, new_not_attacked)) {
 						// new_intent is a stable extension
-						print_set(new_intent, outfile);
+						print_set(new_intent, outfile, "\n");
 						// TODO: deallocate memory for new_*
 						free_bitset(new_intent);
 						free_bitset(new_extent);
