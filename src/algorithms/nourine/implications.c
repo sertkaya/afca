@@ -23,8 +23,8 @@
 #include "../bitset/bitset.h"
 #include "implications.h"
 
-UnitImplication *create_unit_implication(BitSet *lhs, int rhs) {
-	UnitImplication *imp = (UnitImplication*) calloc(1, sizeof(UnitImplication));
+Implication *create_implication(BitSet *lhs, BitSet *rhs) {
+	Implication *imp = (Implication*) calloc(1, sizeof(Implication));
 	assert(imp != NULL);
 	imp->lhs = lhs;
 	imp->rhs = rhs;
@@ -32,14 +32,17 @@ UnitImplication *create_unit_implication(BitSet *lhs, int rhs) {
 	return(imp);
 }
 
-void free_implication(UnitImplication *imp) {
+void free_implication(Implication *imp) {
 	free_bitset(imp->lhs);
+	free_bitset(imp->rhs);
 	free(imp);
 }
 
-void print_implication(UnitImplication *imp) {
+void print_implication(Implication *imp) {
 	print_bitset(imp->lhs, stdout);
-	printf("-> %d\n", imp->rhs);
+	printf("-> ");
+	print_bitset(imp->lhs, stdout);
+	printf("\n");
 }
 
 void print_implication_set(ImplicationSet *imps) {
@@ -57,9 +60,9 @@ ImplicationSet *create_implication_set() {
 	return(imps);
 }
 
-void add_implication(UnitImplication *imp, ImplicationSet *imps) {
-	UnitImplication** tmp;
-	tmp = realloc(imps->elements, (imps->size + 1) * sizeof(UnitImplication*));
+void add_implication(Implication *imp, ImplicationSet *imps) {
+	Implication** tmp;
+	tmp = realloc(imps->elements, (imps->size + 1) * sizeof(Implication*));
 	assert(tmp != NULL);
 	imps->elements = tmp;
 	imps->elements[imps->size] = imp;
@@ -76,7 +79,8 @@ void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 		copy_bitset(c, tmp);
 		for (i = 0; i < imps->size; ++i) {
 			if (bitset_is_subset(imps->elements[i]->lhs, c)) {
-				SET_BIT(c, imps->elements[i]->rhs);
+				bitset_union(c, imps->elements[i]->rhs, c);
+				// SET_BIT(c, imps->elements[i]->rhs);
 			}
 		}
 	} while (!bitset_is_equal(tmp, c));

@@ -17,30 +17,29 @@
 #ifndef ALGORITHMS_NOURINE_IMPLICATIONS_H_
 #define ALGORITHMS_NOURINE_IMPLICATIONS_H_
 
-// In our case implications are unit implications.
-// lhs is a bitset, rhs is an index
-struct unit_implication {
+// Implication. lhs and rhs are bitsets.
+struct implication {
 	BitSet *lhs;
-	int rhs;
+	BitSet *rhs;
 };
 
-typedef struct unit_implication UnitImplication;
+typedef struct implication Implication;
 
-UnitImplication *create_unit_implication(BitSet *lhs, int rhs);
+Implication *create_implication(BitSet *lhs, BitSet *rhs);
 
-void free_implication(UnitImplication *imp);
+void free_implication(Implication *imp);
 
 // Implication set is just an array of implications
 struct implication_set {
 	int size;
-	UnitImplication **elements;
+	Implication **elements;
 };
 
 typedef struct implication_set ImplicationSet;
 
 ImplicationSet *create_implication_set();
 
-void add_implication(UnitImplication *imp, ImplicationSet *imps);
+void add_implication(Implication *imp, ImplicationSet *imps);
 
 ImplicationSet *attacks_to_implications(AF* attacks);
 
