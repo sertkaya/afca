@@ -22,6 +22,7 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 
 	int i, j;
+	// Implications from the Nourine paper.
 	for (i = 0; i < attacks->size; ++i) {
 		for (j = 0; j < attacks->size; ++j) {
 			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
@@ -47,6 +48,19 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 			add_implication(imp, imps);
 		}
 
+	// Extra implications for stable extensions.
+	// {a} U B -> A where B is the set of attackers of "a".
+	for (i = 0; i < attacked_by->size; ++i) {
+		BitSet *lhs = create_bitset(attacked_by->size);
+		SET_BIT(lhs, i);
+		bitset_union(lhs, attacked_by->graph[i], lhs);
+
+		BitSet *rhs = create_bitset(attacked_by->size);
+		set_bitset(rhs);
+
+		Implication *imp = create_implication(lhs, rhs);
+		add_implication(imp, imps);
+	}
 
 	return(imps);
 }
@@ -181,8 +195,8 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
 	printf("Implications size: %d\n", imps->size);
-	print_implication_set(imps);
-	printf("\n");
+	// print_implication_set(imps);
+	// printf("\n");
 
 	// ImplicationSet *imps_r = reduce_implications(attacks, imps);
 	// printf("\nImps reduced size: %d\n\n", imps_r->size);
@@ -202,8 +216,8 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	}
 
 	while (!bitset_is_fullset(c)) {
-		print_bitset(c, stdout);
-		printf("\n");
+		// print_bitset(c, stdout);
+		// printf("\n");
 		++concept_count;
 
 		for (i = attacks->size - 1; i >= 0; --i) {
