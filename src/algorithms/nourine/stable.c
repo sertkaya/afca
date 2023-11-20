@@ -182,8 +182,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 	if (bitset_is_equal(ccc, ccc_up)) {
 		++stable_extension_count;
-		print_bitset(ccc, outfile);
-		fprintf(outfile, "\n");
+		print_set(ccc, outfile);
 	}
 
 	while (!bitset_is_fullset(c)) {
@@ -219,8 +218,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 					if (bitset_is_equal(ccc, ccc_up)) {
 						++stable_extension_count;
-						print_bitset(ccc, outfile);
-						fprintf(outfile, "\n");
+						print_set(ccc, outfile);
 						// print_bitset(cc, stdout);
 						// printf("*cut\n");
 						++concept_count;

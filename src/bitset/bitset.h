@@ -46,6 +46,9 @@ int free_bitset(BitSet* bs);
 // Print the given bitset
 void print_bitset(BitSet* bs, FILE *f);
 
+// Print the given bitset as set
+void print_set(BitSet* bs, FILE *f);
+
 // Caution: The below methods do not check the index k !
 // Set bit at index k
  #define SET_BIT(bs,k)		( bs->elements[(k)/BITSET_BASE_SIZE] |= (1UL << ((k)%BITSET_BASE_SIZE)) )

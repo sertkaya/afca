@@ -50,6 +50,14 @@ void print_bitset(BitSet* bs, FILE *outfile) {
 			fprintf(outfile, "%d", 0);
 }
 
+void print_set(BitSet* bs, FILE *outfile) {
+	int i;
+	for (i = 0; i < bs->size; ++i)
+		if (TEST_BIT(bs, i))
+			fprintf(outfile, "%d ", i+1);
+	fprintf(outfile, "\n");
+}
+
 // TODO: optimize!
 // int bitset_get_length(AF *af, BitSet* bs) {
 // 	int i, l = 0;
