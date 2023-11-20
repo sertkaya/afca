@@ -32,16 +32,21 @@ Implication *create_implication(BitSet *lhs, BitSet *rhs) {
 	return(imp);
 }
 
-void free_implication(Implication *imp) {
-	free_bitset(imp->lhs);
-	free_bitset(imp->rhs);
+unsigned long free_implication(Implication *imp) {
+	unsigned long freed_bytes = 0;
+	freed_bytes += free_bitset(imp->lhs);
+	freed_bytes += free_bitset(imp->rhs);
+	freed_bytes += sizeof(Implication);
 	free(imp);
+	return(freed_bytes);
 }
 
 void print_implication(Implication *imp) {
-	print_bitset(imp->lhs, stdout);
+	// print_bitset(imp->lhs, stdout);
+	print_set(imp->lhs, stdout, "");
 	printf("-> ");
-	print_bitset(imp->lhs, stdout);
+	// print_bitset(imp->lhs, stdout);
+	print_set(imp->rhs, stdout, "");
 	printf("\n");
 }
 
@@ -58,6 +63,16 @@ ImplicationSet *create_implication_set() {
 	imps->elements = NULL;
 
 	return(imps);
+}
+
+unsigned long free_implication_set(ImplicationSet *imps) {
+	unsigned long freed_bytes = 0;
+	int i;
+	for (i = 0; i < imps->size; ++i)
+		freed_bytes += free_implication(imps->elements[i]);
+	freed_bytes += sizeof(ImplicationSet);
+	free(imps);
+	return(freed_bytes);
 }
 
 void add_implication(Implication *imp, ImplicationSet *imps) {

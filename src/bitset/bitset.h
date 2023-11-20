@@ -43,11 +43,11 @@ BitSet* create_bitset(unsigned short);
 // Returns the number of bytes freed
 int free_bitset(BitSet* bs);
 
-// Print the given bitset
-void print_bitset(BitSet* bs, FILE *f);
+// Print the given bitset with the given ending
+void print_set(BitSet* bs, FILE *f, const char *end);
 
 // Print the given bitset as set
-void print_set(BitSet* bs, FILE *f);
+void print_bitset(BitSet* bs, FILE *f);
 
 // Caution: The below methods do not check the index k !
 // Set bit at index k

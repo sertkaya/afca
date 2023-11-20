@@ -37,6 +37,17 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 		}
 	}
 
+	// Self-attacks. This is part of "reducing implications" in the paper.
+	for (i = 0; i < attacks->size; ++i)
+		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
+			BitSet *lhs = create_bitset(attacks->size);
+			BitSet *rhs = create_bitset(attacks->size);
+			SET_BIT(rhs, i);
+			Implication *imp = create_implication(lhs, rhs);
+			add_implication(imp, imps);
+		}
+
+
 	return(imps);
 }
 
@@ -170,6 +181,8 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
 	printf("Implications size: %d\n", imps->size);
+	print_implication_set(imps);
+	printf("\n");
 
 	// ImplicationSet *imps_r = reduce_implications(attacks, imps);
 	// printf("\nImps reduced size: %d\n\n", imps_r->size);
@@ -185,12 +198,12 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 	if (bitset_is_equal(ccc, ccc_up)) {
 		++stable_extension_count;
-		print_set(ccc, outfile);
+		print_set(ccc, outfile, "\n");
 	}
 
 	while (!bitset_is_fullset(c)) {
-		// print_bitset(c, stdout);
-		// printf("\n");
+		print_bitset(c, stdout);
+		printf("\n");
 		++concept_count;
 
 		for (i = attacks->size - 1; i >= 0; --i) {
@@ -221,7 +234,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 					if (bitset_is_equal(ccc, ccc_up)) {
 						++stable_extension_count;
-						print_set(ccc, outfile);
+						print_set(ccc, outfile, "\n");
 						// print_bitset(cc, stdout);
 						// printf("*cut\n");
 						++concept_count;
@@ -249,6 +262,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	free_bitset(ccc);
 	free_bitset(ccc_up);
 
+	free_implication_set(imps);
 	free_argumentation_framework(not_attacks);
 }
 
