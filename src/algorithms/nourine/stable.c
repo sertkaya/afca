@@ -28,7 +28,10 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 				BitSet *lhs = create_bitset(attacks->size);
 				copy_bitset(attacked_by->graph[i], lhs);
 
-				UnitImplication *imp = create_unit_implication(lhs, j);
+				BitSet *rhs = create_bitset(attacks->size);
+				SET_BIT(rhs, j);
+
+				Implication *imp = create_implication(lhs, rhs);
 				add_implication(imp, imps);
 			}
 		}
