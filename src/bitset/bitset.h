@@ -84,6 +84,7 @@ inline char bitset_is_equal(BitSet* bs1, BitSet* bs2) {
 // Intersect bs1 and bs2, store the result in r
 static inline void bitset_intersection(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
+
 	for (i = 0; i < bs1->base_count; ++i)
 		r->elements[i] = bs1->elements[i] & bs2->elements[i];
 }
@@ -106,16 +107,10 @@ inline void bitset_union(BitSet* bs1, BitSet* bs2, BitSet* r) {
 
 // Negate bitset (flip the bits) bs and store the result in r.
 inline void complement_bitset(BitSet* bs, BitSet* r) {
-	// TODO: temporarily
-	// int i;
-	// for (i = 0; i < bs->size; ++i)
-	// 	if (TEST_BIT(bs,i))
-	// 		RESET_BIT(r,i);
-	// 	else
-	// 		SET_BIT(r, i);
 	int i;
 	for (i = 0; i < bs->base_count; ++i)
 		r->elements[i] = ~(bs->elements[i]);
+
 }
 
 // Clear all bits
@@ -131,7 +126,7 @@ inline void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
 	reset_bitset(r);
 	for (i = 0; i < bs1->base_count; ++i)
-	 	r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
+		r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
 }
 
 // Copy bs1 into bs2
