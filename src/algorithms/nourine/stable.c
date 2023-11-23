@@ -216,8 +216,8 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	}
 
 	while (!bitset_is_fullset(c)) {
-		print_bitset(c, stdout);
-		printf("\n");
+		// print_bitset(c, stdout);
+		// printf("\n");
 		++concept_count;
 
 		for (i = attacks->size - 1; i >= 0; --i) {
@@ -232,9 +232,6 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 				RESET_BIT(c, i);
 
-				// printf("  ");
-				// print_bitset(cc, stdout);
-
 				// TODO: optimize!
 				bitset_set_minus(cc, c, tmp);
 				char canonicity_test_passed = 1;
@@ -245,8 +242,6 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 						break;
 					}
 				}
-
-				// printf(":%d:%d", i,canonicity_test_passed);
 
 				if (canonicity_test_passed) {
 					complement_bitset(cc, ccc);
@@ -259,8 +254,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 						continue;
 					}
 					else if (is_set_conflict_free(attacks, ccc)) {
-						// continue;
-						break;
+						continue;
 					}
 					else {
 						break;

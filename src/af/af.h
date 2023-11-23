@@ -78,10 +78,11 @@ int is_conflict_free(Context* attacks, BitSet* x) {
 // TODO: compare to the above. Which is more efficient?
 inline char is_set_conflict_free(AF* af, BitSet* s) {
 	int i,j;
-	for (i = 0; TEST_BIT(s, i) && i < af->size; ++i)
-		for (j = 0; TEST_BIT(s, j) && j < af->size; ++j)
-			if (CHECK_ARG_ATTACKS_ARG(af, i, j))
-				return(0);
+	for (i = 0; i < af->size; ++i)
+		if (TEST_BIT(s, i))
+			for (j = i; j < af->size; ++j)
+				if (TEST_BIT(s, j) && (CHECK_ARG_ATTACKS_ARG(af, i, j) || CHECK_ARG_ATTACKS_ARG(af, j, i)))
+					return(0);
 	return(1);
 }
 
