@@ -20,9 +20,12 @@
 #define AF_STABLE_EXTENSIONS_NORRIS_H_
 
 #include "../../af/af.h"
+#include "../../utils/linked_list.h"
 
 void incremental_stable_extensions_norris(AF* af, FILE *f);
 
 void one_stable_extension_norris(AF* af, FILE *outfile);
+
+ListNode* enumerate_stable_extensions_norris(AF* af);
 
 #endif /* AF_STABLE_EXTENSIONS_NORRIS_H_ */

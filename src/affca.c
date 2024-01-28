@@ -25,8 +25,34 @@
 #include "algorithms/next-closure/stable.h"
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
+#include "algorithms/connected-components/wcc.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
+
+
+void print_extension(BitSet* ext, FILE* outfile) {
+	print_set(ext, outfile, "\n");
+}
+
+
+void run_wcc_norris(AF* af, FILE* output) {
+	ListNode* head = wcc_stable_extensions(af, enumerate_stable_extensions_norris);
+	ListNode* node = head;
+
+	while (node) {
+		print_extension(node->c, output);
+		node = node->next;
+	}
+
+	while (head) {
+		ListNode* next = head->next;
+		free_bitset((BitSet*) head->c);
+		free(head);
+		head = next;
+	}
+
+	free_argumentation_framework(af);
+}
 
 
 void usage(char* program) {
@@ -81,8 +107,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	if (strcmp(algorithm, "next-closure") != 0 && strcmp(algorithm, "norris") != 0 && strcmp(algorithm, "nourine") != 0) {
-		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris | nourine \n", argv[0]);
+	if (strcmp(algorithm, "next-closure") != 0 && strcmp(algorithm, "norris") != 0 && strcmp(algorithm, "nourine") != 0 && strcmp(algorithm, "wcc-norris") != 0) {
+		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris | nourine | wcc-norris \n", argv[0]);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -146,6 +172,10 @@ int main(int argc, char *argv[]) {
 			stable_extensions_nourine(af, output);
 		else if (strcmp(problem, "SE-ST") == 0)
 			one_stable_extension_nourine(af, output);
+	} else if (strcmp(algorithm, "wcc-norris") == 0) {
+		if (strcmp(problem, "EE-ST") == 0) {
+			run_wcc_norris(af, output);
+		}
 	}
 
 	STOP_TIMER(stop_time);
