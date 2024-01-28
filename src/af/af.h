@@ -17,6 +17,8 @@
 #ifndef AF_AF_H_
 #define AF_AF_H_
 
+#include <stdbool.h>
+
 #include "../bitset/bitset.h"
 
 struct argumentation_framework {
@@ -28,12 +30,24 @@ struct argumentation_framework {
 
 typedef struct argumentation_framework AF;
 
+
+struct projected_argumentation_framework {
+	AF* af;
+	// index_mapping[i] is the index of the ith argument of af in the original framework
+	unsigned short* index_mapping;
+};
+
+typedef struct projected_argumentation_framework PAF;
+
+
 // Create argumentation framework with the given number of arguments
 AF* create_argumentation_framework(int size);
 
 // Free the space allocated for af
 // Return the number of bytes freed
 int free_argumentation_framework(AF *af);
+
+int free_projected_argumentation_framework(PAF *af);
 
 void print_argumentation_framework(AF *af);
 
@@ -136,5 +150,9 @@ static inline void down_up_arrow(AF* af, BitSet* s, BitSet* r) {
 AF* complement_argumentation_framework(AF *af );
 
 AF* transpose_argumentation_framework(AF *af);
+
+PAF* project_argumentation_framework(AF *af, bool* mask);
+
+BitSet* project_back(BitSet* bs, PAF* paf, unsigned short base_size);
 
 #endif /* AF_AF_H_ */

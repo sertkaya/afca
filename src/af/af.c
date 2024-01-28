@@ -19,9 +19,11 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
+#include <inttypes.h>
 
 #include "af.h"
 #include "../bitset/bitset.h"
+#include <stdbool.h>
 
 AF* create_argumentation_framework(int size) {
 	AF *af = calloc(1, sizeof(AF));
@@ -50,6 +52,15 @@ int free_argumentation_framework(AF* af) {
 	free(af);
 	freed_bytes += sizeof(AF);
 	return(freed_bytes);
+}
+
+
+int free_projected_argumentation_framework(PAF* paf) {
+	free(paf->index_mapping);
+	int freed_bytes = paf->af->size * sizeof(unsigned short);
+	freed_bytes += free_argumentation_framework(paf->af);
+	free(paf);
+	return freed_bytes + sizeof(PAF);
 }
 
 
@@ -85,4 +96,46 @@ AF* transpose_argumentation_framework(AF *af) {
 			if (TEST_BIT(af->graph[i], j))
 				SET_BIT(t_af->graph[j], i);
 	return(t_af);
+}
+
+PAF* project_argumentation_framework(AF *af, bool *mask) {
+	PAF *paf = calloc(1, sizeof(PAF));
+	assert(paf != NULL);
+
+    unsigned short size = 0;
+    for (unsigned short i = 0; i < af->size; ++i) {
+        if (mask[i]) {
+            ++size;
+        }
+    }
+
+    paf->index_mapping = calloc(size, sizeof(unsigned short));
+    unsigned short j = 0;
+    for (unsigned short i = 0; i < af->size; ++i) {
+        if (mask[i]) {
+            paf->index_mapping[j++] = i;
+        }
+    }
+
+    paf->af = create_argumentation_framework(size);
+    for (unsigned short i = 0; i < size; ++i) {
+        for (unsigned short j = 0; j < size; ++j) {
+            if (TEST_BIT(af->graph[paf->index_mapping[i]], paf->index_mapping[j])) {
+				SET_BIT(paf->af->graph[i], j);
+            }
+        }
+    }
+
+	return paf;
+}
+
+
+BitSet* project_back(BitSet* bs, PAF* paf, unsigned short base_size) {
+	BitSet* res = create_bitset(base_size);
+	for (unsigned short i = 0; i < paf->af->size; ++i) {
+		if (TEST_BIT(bs, i)) {
+			SET_BIT(res, paf->index_mapping[i]);
+		}
+	}
+	return res;
 }
