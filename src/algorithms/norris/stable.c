@@ -151,6 +151,7 @@ int add(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FI
 }
 
 void incremental_stable_extensions_norris(AF* attacks, FILE *outfile) {
+	concept_count = 0;
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
@@ -306,6 +307,7 @@ int add_one(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents
 }
 
 void one_stable_extension_norris(AF* attacks, FILE *outfile) {
+	concept_count = 0;
 	AF *not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
@@ -474,6 +476,7 @@ int add_to_list(AF* not_attacks, int i, ListNode **phead , BitSet** argument_ext
 
 ListNode* enumerate_stable_extensions_norris(AF* attacks)
 {
+	concept_count = 0;
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
