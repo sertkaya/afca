@@ -103,6 +103,7 @@ ListNode* wcc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) 
     ListNode* component = first_component;
     for (unsigned short i = 0; i < n; ++i) {
         projections[i] = project_argumentation_framework(af, component->c);
+        printf("Number of arguments in component %d: %d\n", i + 1, projections[i]->af->size);
         extension_lists[i] = stable_extensions(projections[i]->af);
         if (!extension_lists[i]) {
             // there are no "global" stable extensions either
