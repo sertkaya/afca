@@ -153,6 +153,7 @@ AF* transpose_argumentation_framework(AF *af);
 
 PAF* project_argumentation_framework(AF *af, bool* mask);
 
+
 BitSet* project_back(BitSet* bs, PAF* paf, unsigned short base_size);
 
 #endif /* AF_AF_H_ */
