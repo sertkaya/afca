@@ -40,7 +40,7 @@ void find_source_component(AF* af, bool* component) {
         }
     }
 
-    // extract the component containg vertex i
+    // extract the component containing source vertex
     printf("Source vertex: %d\n", source);
     reset_bool_array(component, af->size);
     backward_dfs(af, source, component);
