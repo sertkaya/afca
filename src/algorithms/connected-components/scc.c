@@ -11,7 +11,7 @@ void reset_bool_array(bool* array, unsigned short size) {
 
 void dfs(AF* af, int i, bool* visited) {
     visited[i] = true;
-    for (unsigned short j = 1; j < af->size; ++j) {
+    for (unsigned short j = 1; j < af->size; ++j) { // assume that vertex 0 is already marked
         if (!visited[j] && TEST_BIT(af->graph[i], j)) {
             dfs(af, j, visited);
         }
@@ -21,7 +21,7 @@ void dfs(AF* af, int i, bool* visited) {
 
 void backward_dfs(AF* af, int i, bool* visited) {
     visited[i] = true;
-    for (unsigned short j = 1; j < af->size; ++j) {
+    for (unsigned short j = 0; j < af->size; ++j) {
         if (!visited[j] && TEST_BIT(af->graph[j], i)) {
             backward_dfs(af, j, visited);
         }
