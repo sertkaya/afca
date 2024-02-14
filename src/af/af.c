@@ -109,9 +109,7 @@ PAF* project_argumentation_framework(AF *af, bool *mask) {
         }
     }
 
-	if (size == 0) {
-		return NULL;
-	}
+	assert(size > 0);
 
     paf->index_mapping = calloc(size, sizeof(unsigned short));
     unsigned short j = 0;
