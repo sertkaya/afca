@@ -34,8 +34,8 @@ while set(component) != set(range(scc_count)):
 attacks = collections.defaultdict(set)
 for i in range(arg_count):
     for j in range(arg_count):
-        if i == j:
-            continue
+        # if i == j:
+        #     continue
         if random.random() < density:
             if component[i] <= component[j]:
                 attacks[i + 1].add(j + 1)
