@@ -29,9 +29,18 @@ ListNode *create_node(void* c) {
 	return(n);
 }
 
+
 ListNode *free_node(ListNode *n) {
 	// TODO: restructure code, improve
 	// n->c should be freed before, not the best implementation.
 	free(n);
 	return(NULL);
+}
+
+
+ListNode *insert_node(void *c, ListNode *prev) {
+	ListNode *next = prev->next;
+	prev->next = create_node(c);
+	prev->next->next = next;
+	return prev->next;
 }
