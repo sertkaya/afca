@@ -93,10 +93,12 @@ unsigned short len_set(BitSet* bs) {
 PAF* extract_residual_framework(AF* af, bool* source_component, BitSet* component_extension) {
 	bool remainder[af->size];
     // add arguments outside source_component not attacked by component_extension
+    bool something_remains = false;
 	for (unsigned short i = 0; i < af->size; ++i) {
 		remainder[i] = !source_component[i] && !check_set_attacks_arg(af, component_extension, i);
+        something_remains |= remainder[i];
 	}
-	return project_argumentation_framework(af, remainder);
+	return something_remains ? project_argumentation_framework(af, remainder) : NULL;
 }
 
 
@@ -123,22 +125,29 @@ ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) 
         printf("Arguments in component extension: %d\n", len_set(component_extension->c));
         // log_set(component_extension->c);
         PAF* residual_framework = extract_residual_framework(af, component, component_extension->c);
-        printf("Residual arguments: %d\n", residual_framework->af->size);
-        ListNode* residual_extension = scc_stable_extensions(residual_framework->af, stable_extensions);
-        restore_base_indices(residual_extension, residual_framework, af->size);
-        free_projected_argumentation_framework(residual_framework);
+        if (residual_framework) {
+            printf("Residual arguments: %d\n", residual_framework->af->size);
+            ListNode* residual_extension = scc_stable_extensions(residual_framework->af, stable_extensions);
+            restore_base_indices(residual_extension, residual_framework, af->size);
+            free_projected_argumentation_framework(residual_framework);
 
-        while (residual_extension) {
-            // printf("Component extension: ");
-            // log_set(residual_extension->c);
+            while (residual_extension) {
+                // printf("Component extension: ");
+                // log_set(residual_extension->c);
 
-            last_node->next = create_node(create_bitset(af->size));
+                last_node->next = create_node(create_bitset(af->size));
+                last_node = last_node->next;
+                bitset_union(component_extension->c, residual_extension->c, last_node->c);
+                residual_extension = advance_and_free_extension(residual_extension);
+            }
+            component_extension = advance_and_free_extension(component_extension);
+        } else {
+            printf("Residual arguments: 0\n");
+            last_node->next = component_extension;
             last_node = last_node->next;
-            bitset_union(component_extension->c, residual_extension->c, last_node->c);
-            residual_extension = advance_and_free_extension(residual_extension);
+            component_extension = component_extension->next;
+            last_node->next = NULL;
         }
-
-        component_extension = advance_and_free_extension(component_extension);
     }
 
     ListNode* first_extension = head->next;
