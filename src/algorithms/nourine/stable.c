@@ -38,6 +38,7 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 		}
 	}
 
+/*
 	// Self-attacks. This is part of "reducing implications" in the paper.
 	for (i = 0; i < attacks->size; ++i)
 		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
@@ -47,7 +48,9 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 			Implication *imp = create_implication(lhs, rhs);
 			add_implication(imp, imps);
 		}
+*/
 
+/*
 	// Extra implications for stable extensions.
 	// {a} U B -> A where B is the set of attackers of "a".
 	for (i = 0; i < attacked_by->size; ++i) {
@@ -61,21 +64,43 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 		Implication *imp = create_implication(lhs, rhs);
 		add_implication(imp, imps);
 	}
+	*/
 
 	return(imps);
 }
 
-/*
-ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
+// Extra implications for stable extensions.
+// {a} U B -> A where B is the set of attackers of "a".
+void *add_our_implications(AF* attacks, ImplicationSet *imps) {
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+	int i;
+	for (i = 0; i < attacked_by->size; ++i) {
+		BitSet *lhs = create_bitset(attacked_by->size);
+		SET_BIT(lhs, i);
+		bitset_union(lhs, attacked_by->graph[i], lhs);
+
+		BitSet *rhs = create_bitset(attacked_by->size);
+		set_bitset(rhs);
+
+		Implication *imp = create_implication(lhs, rhs);
+		add_implication(imp, imps);
+	}
+}
+
+
+ImplicationSet *reduce_adm(AF* attacks, ImplicationSet *imps) {
 	ImplicationSet *imps_r = create_implication_set();
 	ImplicationSet *imps_r2 = create_implication_set();
 
 	int i;
-	// Self-attacks
+
+	// Self-attacks.
 	for (i = 0; i < attacks->size; ++i)
 		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
 			BitSet *lhs = create_bitset(attacks->size);
-			UnitImplication *imp = create_unit_implication(lhs, i);
+			BitSet *rhs = create_bitset(attacks->size);
+			SET_BIT(rhs, i);
+			Implication *imp = create_implication(lhs, rhs);
 			add_implication(imp, imps_r);
 		}
 
@@ -92,7 +117,9 @@ ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 			printf("%d\n", i);
 		if (bitset_is_emptyset(imps->elements[i]->lhs)) {
 			BitSet *new_lhs = create_bitset(attacks->size);
-			UnitImplication *imp = create_unit_implication(new_lhs, imps->elements[i]->rhs);
+			BitSet *rhs = create_bitset(attacks->size);
+			copy_bitset(imps->elements[i]->rhs, rhs);
+			Implication *imp = create_implication(new_lhs, rhs);
 			add_implication(imp, imps_r);
 			continue;
 		}
@@ -117,8 +144,10 @@ ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 					}
 				}
 				BitSet *new_lhs = create_bitset(attacks->size);
+				BitSet *rhs = create_bitset(attacks->size);
 				bitset_set_minus(imps->elements[i]->lhs, T, new_lhs);
-				UnitImplication *imp = create_unit_implication(new_lhs, z);
+				SET_BIT(rhs, z);
+				Implication *imp = create_implication(new_lhs, rhs);
 				add_implication(imp, imps_r);
 			}
 		}
@@ -150,16 +179,18 @@ ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 				}
 				// Closure of Gamma(t)
 				naive_closure(Gamma_t, imps_r, Gamma_t_closure);
-				if (TEST_BIT(Gamma_t_closure, imps_r->elements[i]->rhs)) {
+				// if (TEST_BIT(Gamma_t_closure, imps_r->elements[i]->rhs)) {
+				if (bitset_is_subset(imps_r->elements[i]->rhs, Gamma_t_closure)) {
 					SET_BIT(T, t);
 				}
 			}
 		}
 		BitSet *new_lhs = create_bitset(attacks->size);
-
 		bitset_set_minus(imps_r->elements[i]->lhs, T, new_lhs);
+		BitSet *rhs = create_bitset(attacks->size);
+		copy_bitset(imps_r->elements[i]->rhs, rhs);
 
-		UnitImplication *imp = create_unit_implication(new_lhs, imps_r->elements[i]->rhs);
+		Implication *imp = create_implication(new_lhs, rhs);
 		add_implication(imp, imps_r2);
 		if (((imps_r2->size)%100) == 0)
 			printf("Size of imps_r2: %d\n", imps_r2->size);
@@ -178,7 +209,6 @@ ImplicationSet *reduce_implications(AF* attacks, ImplicationSet *imps) {
 
 	return(imps_r2);
 }
-*/
 
 void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
@@ -195,16 +225,21 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 	ImplicationSet *imps = attacks_to_implications(attacks);
 	printf("Implications size: %d\n", imps->size);
-	// print_implication_set(imps);
-	// printf("\n");
+	print_implication_set(imps);
+	printf("\n");
 
-	// ImplicationSet *imps_r = reduce_implications(attacks, imps);
-	// printf("\nImps reduced size: %d\n\n", imps_r->size);
+	ImplicationSet *imps_r = reduce_adm(attacks, imps);
+	printf("\nImps reduced size: %d\n\n", imps_r->size);
+	print_implication_set(imps_r);
+	printf("\n");
+
+	add_our_implications(attacks, imps_r);
+	printf("\nSize after adding our implications: %d\n\n", imps_r->size);
 
 	int i, j, concept_count = 0, stable_extension_count = 0;
 
 	// closure of the empty set
-	naive_closure(c, imps, cc);
+	naive_closure(c, imps_r, cc);
 	copy_bitset(cc, c);
 
 	complement_bitset(cc, ccc);
@@ -228,7 +263,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 				SET_BIT(c, i);
 
 				// compute closure
-				naive_closure(c, imps, cc);
+				naive_closure(c, imps_r, cc);
 
 				RESET_BIT(c, i);
 
