@@ -151,8 +151,7 @@ AF* complement_argumentation_framework(AF *af );
 
 AF* transpose_argumentation_framework(AF *af);
 
-PAF* project_argumentation_framework(AF *af, bool* mask);
-
+PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
 BitSet* project_back(BitSet* bs, PAF* paf, unsigned short base_size);
 
