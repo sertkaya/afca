@@ -63,7 +63,7 @@ int bitset_hash_map_reset(BitSetHashMap* hash_map);
 inline int bitset_hash_map_put(BitSetHashMap* hash_map, BitSet* bs, void* value) {
 	printf("in hash put\n");
 	fflush(stdout);
-	int hash_value = get_key(bs) & (hash_map->bucket_count - 1);
+	int hash_value = get_key(bs) % hash_map->bucket_count;
 	BitSetHashMapElement** bucket = hash_map->buckets[hash_value];
 	int chain_size = hash_map->chain_sizes[hash_value];
 
@@ -99,7 +99,7 @@ inline int bitset_hash_map_put(BitSetHashMap* hash_map, BitSet* bs, void* value)
  * Returns the value for the given key, it it exists, NULL if it does not exist.
  */
 inline void* bitset_hash_map_get(BitSetHashMap* hash_map, BitSet* bs) {
-	int bucket_index = get_key(bs) & (hash_map->bucket_count - 1);
+	int bucket_index = get_key(bs) % hash_map->bucket_count;
 	printf("bucket index: %d; ", bucket_index);
 	BitSetHashMapElement** bucket = hash_map->buckets[bucket_index];
 	int chain_size = hash_map->chain_sizes[bucket_index];

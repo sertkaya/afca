@@ -37,11 +37,6 @@ inline BitSetHashMap* bitset_hash_map_create(unsigned int size) {
 
 void bitset_hash_map_init(BitSetHashMap* hash_map, unsigned int size) {
 
-	if (size < 16)
-		size = 16;
-	else
-		size = roundup_pow2(size);
-
 	// allocate space for the buckets
 	hash_map->buckets = (BitSetHashMapElement***) calloc(size, sizeof(BitSetHashMapElement**));
 	assert(hash_map->buckets != NULL);

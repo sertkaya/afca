@@ -3,7 +3,7 @@
 #include "../utils/map.h"
 
 
-#define MAP_INITIAL_SIZE 	100
+#define MAP_SIZE 	101
 
 
 void dfs(AF* af, unsigned short i, BitSet* arguments, BitSet* visited) {
@@ -118,7 +118,7 @@ ListNode* get_component_extensions(AF* af,
             restore_base_indices(component_extension, projection, af->size);
         }
         free_projected_argumentation_framework(projection);
-        printf("PUT %llu, %d, %llu\n", get_key(component), subextensions->bucket_count, get_key(component) & (subextensions->bucket_count - 1));
+        printf("PUT %llu, %d, %llu\n", get_key(component), subextensions->bucket_count, get_key(component) % subextensions->bucket_count);
         BitSet* key = create_bitset(component->size);
         copy_bitset(component, key);
         MAP_PUT(key, component_extension, subextensions);
@@ -199,10 +199,10 @@ void free_map_contents(Map* subextensions) {
 ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) {
     // maps a subset of arguments to a list of stable extensions of the induced argumentation subframework
     Map subextensions;
-    MAP_INIT(&subextensions, MAP_INITIAL_SIZE);
+    MAP_INIT(&subextensions, MAP_SIZE);
     BitSet* all_arguments = create_bitset(af->size);
     set_bitset(all_arguments);
     ListNode* first_extension = compute_extensions(af, all_arguments, stable_extensions, &subextensions);
-    free_map_content(&subextensions);
+    // free_map_content(&subextensions);
     return first_extension;
 }
