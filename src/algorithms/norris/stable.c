@@ -505,8 +505,8 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 		stable_extension_count += add_to_list(not_attacks, i, &head, argument_extents, extensions);
 	}
 
-	printf("Number of stable extensions: %d\n", stable_extension_count);
-	printf("Number of created concepts: %d\n", concept_count);
+	// printf("Number of stable extensions: %d\n", stable_extension_count);
+	// printf("Number of created concepts: %d\n", concept_count);
 
 	free_concept(attacks, c);
 	free_node(head);

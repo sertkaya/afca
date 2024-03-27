@@ -48,7 +48,7 @@ void find_source_component(AF* af, BitSet* arguments, BitSet* component) {
     }
 
     // extract the component containing source
-    printf("Source vertex: %d\n", source);
+    // printf("Source vertex: %d\n", source);
     reset_bitset(component);
     backward_dfs(af, source, arguments, component);
 }
@@ -112,19 +112,19 @@ ListNode* get_component_extensions(AF* af,
     ListNode* component_extension = MAP_GET(component, subextensions); 
     if (!component_extension) {
         PAF* projection = project_argumentation_framework(af, component);
-        printf("Arguments in source component: %d\n", projection->af->size);
+        // printf("Arguments in source component: %d\n", projection->af->size);
         component_extension = stable_extensions(projection->af);
         if (projection->af->size < af->size) {
             restore_base_indices(component_extension, projection, af->size);
         }
         free_projected_argumentation_framework(projection);
-        printf("PUT %llu, %d, %llu\n", get_key(component), subextensions->bucket_count, get_key(component) % subextensions->bucket_count);
+        // printf("PUT %llu, %d, %llu\n", get_key(component), subextensions->bucket_count, get_key(component) % subextensions->bucket_count);
         BitSet* key = create_bitset(component->size);
         copy_bitset(component, key);
         MAP_PUT(key, component_extension, subextensions);
-    } else {
-        printf("Solution for component is taken from the hash\n");
-    }
+    } // else {
+        // printf("Solution for component is taken from the hash\n");
+    // }
     return component_extension;
 }
 
@@ -134,12 +134,12 @@ ListNode* compute_extensions(AF* af,
                              BitSet* arguments, 
                              ListNode* (*stable_extensions)(AF* af),
                              Map* subextensions) {
-    printf("\nARGUMENTS: %d\n", count_bits(arguments)); 
-    log_set(arguments);
-    printf("Hashed lists: %d\n", subextensions->element_count);
+    // printf("\nARGUMENTS: %d\n", count_bits(arguments)); 
+    // log_set(arguments);
+    // printf("Hashed lists: %d\n", subextensions->element_count);
     ListNode* first_extension = MAP_GET(arguments, subextensions);
     if (first_extension) {
-        printf("Solution is taken from the hash\n");
+        // printf("Solution is taken from the hash\n");
         return first_extension;
     }
 
@@ -156,11 +156,11 @@ ListNode* compute_extensions(AF* af,
     ListNode* last_node = head;
 
     while (component_extension) {
-        printf("Arguments in component extension: %d\n", count_bits(component_extension->c));
+        // printf("Arguments in component extension: %d\n", count_bits(component_extension->c));
         // log_set(component_extension->c);
         BitSet* residual_arguments = extract_residual_arguments(af, arguments, component, component_extension->c);
         if (residual_arguments) {
-            printf("Residual arguments: %d\n", count_bits(residual_arguments));
+            // printf("Residual arguments: %d\n", count_bits(residual_arguments));
             ListNode* residual_extension = compute_extensions(af, residual_arguments, stable_extensions, subextensions);
             // free_bitset(residual_arguments);
 
@@ -176,7 +176,7 @@ ListNode* compute_extensions(AF* af,
             // component_extension = advance_and_free_extension(component_extension);
             component_extension = component_extension->next;
         } else {
-            printf("Residual arguments: 0\n");
+            // printf("Residual arguments: 0\n");
             last_node->next = component_extension;
             last_node = last_node->next;
             component_extension = component_extension->next;

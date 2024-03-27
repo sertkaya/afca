@@ -61,8 +61,8 @@ int bitset_hash_map_reset(BitSetHashMap* hash_map);
  * Returns 1 if a new key value pair is inserted, 0 otherwise.
  */
 inline int bitset_hash_map_put(BitSetHashMap* hash_map, BitSet* bs, void* value) {
-	printf("in hash put\n");
-	fflush(stdout);
+	// printf("in hash put\n");
+	// fflush(stdout);
 	int hash_value = get_key(bs) % hash_map->bucket_count;
 	BitSetHashMapElement** bucket = hash_map->buckets[hash_value];
 	int chain_size = hash_map->chain_sizes[hash_value];
@@ -75,7 +75,7 @@ inline int bitset_hash_map_put(BitSetHashMap* hash_map, BitSet* bs, void* value)
     }
 
 	BitSetHashMapElement** tmp = realloc(bucket, (chain_size + 1) * sizeof(BitSetHashMapElement*));
-	printf("still in hash put\n");
+	// printf("still in hash put\n");
 	assert(tmp != NULL);
 	bucket = hash_map->buckets[hash_value] = tmp;
 
@@ -100,10 +100,10 @@ inline int bitset_hash_map_put(BitSetHashMap* hash_map, BitSet* bs, void* value)
  */
 inline void* bitset_hash_map_get(BitSetHashMap* hash_map, BitSet* bs) {
 	int bucket_index = get_key(bs) % hash_map->bucket_count;
-	printf("bucket index: %d; ", bucket_index);
+	// printf("bucket index: %d; ", bucket_index);
 	BitSetHashMapElement** bucket = hash_map->buckets[bucket_index];
 	int chain_size = hash_map->chain_sizes[bucket_index];
-	printf("chain size = %d\n", chain_size);
+	// printf("chain size = %d\n", chain_size);
 
 	for (unsigned int i = 0; i < chain_size; ++i) {
 		if (bitset_is_equal(bs, bucket[i]->key)) {
