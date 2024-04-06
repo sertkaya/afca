@@ -69,9 +69,36 @@ ImplicationSet *attacks_to_implications(AF* attacks) {
 	return(imps);
 }
 
+ImplicationSet* attacks_to_implications_partially_reduced(AF* attacks) {
+	ImplicationSet* imps = create_implication_set();
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+
+	BitSet* closure = create_bitset(attacks->size);
+	// Implications from the Nourine paper.
+	for (unsigned short i = 0; i < attacks->size; ++i) {
+		for (unsigned short j = 0; j < attacks->size; ++j) {
+			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
+				naive_closure(attacked_by->graph[i], imps, closure);
+				if (!TEST_BIT(closure, j)) {
+					BitSet *lhs = create_bitset(attacks->size);
+					copy_bitset(attacked_by->graph[i], lhs);
+
+					BitSet *rhs = create_bitset(attacks->size);
+					SET_BIT(rhs, j);
+
+					Implication *imp = create_implication(lhs, rhs);
+					add_implication(imp, imps);
+				}
+			}
+		}
+	}
+	free_bitset(closure);
+	return imps;
+}
+
 // Extra implications for stable extensions.
 // {a} U B -> A where B is the set of attackers of "a".
-void *add_our_implications(AF* attacks, ImplicationSet *imps) {
+void add_our_implications(AF* attacks, ImplicationSet *imps) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	int i;
 	for (i = 0; i < attacked_by->size; ++i) {
@@ -113,7 +140,7 @@ ImplicationSet *reduce_adm(AF* attacks, ImplicationSet *imps) {
 	BitSet *tmp = create_bitset(attacks->size);
 	BitSet *T = create_bitset(attacks->size);
 	for (i = 0; i < imps->size; ++i) {
-		if ((i%10) == 0)
+		if ((i%1000) == 0)
 			printf("%d\n", i);
 		if (bitset_is_emptyset(imps->elements[i]->lhs)) {
 			BitSet *new_lhs = create_bitset(attacks->size);
@@ -313,6 +340,69 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	free_argumentation_framework(not_attacks);
 }
 
+
+// compute lectically next set closed under imps and implications of
+// the form {a} U B —> \bot, where B is the set of all attackers of a 
+bool next_dominating_closure(BitSet* closure, ImplicationSet* imps, AF* attacked) {
+	bool next = false;
+	BitSet* new_closure = create_bitset(closure->size);
+	for (unsigned short i = closure->size - 1; i >= 0; --i) {
+		if (TEST_BIT(closure, i)) {
+			RESET_BIT(closure, i);
+		} else {
+			SET_BIT(closure, i);
+			naive_closure(closure, imps, new_closure);
+			next = true;
+			for (unsigned short j = 0; j < i; ++j) { // lectic-order test || domination test: complement must attack all arguments in new_closure
+				if (TEST_BIT(new_closure, j) && (!TEST_BIT(closure, j) || bitset_is_subset(attacked->graph[j], new_closure))) {
+					next = false;
+					break;
+				}
+			}
+			for (unsigned short j = i; j < closure->size; ++j) {
+				if (TEST_BIT(new_closure, j) && bitset_is_subset(attacked->graph[j], new_closure)) {	// domination test
+					next = false;
+					break;
+				}
+			}
+			if (next) {
+				copy_bitset(new_closure, closure);
+				break;
+			} else {
+				RESET_BIT(closure, i);
+			}
+		}
+	}
+	free_bitset(new_closure);
+	return next;
+}
+
 void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
-	// TODO
+	ImplicationSet* edge_implications = attacks_to_implications_partially_reduced(attacks);
+	printf("Implications size: %d\n", edge_implications->size);
+
+	ImplicationSet* imps = edge_implications; //reduce_adm(attacks, edge_implications);
+	// free_implication_set(edge_implications);
+	// printf("\nImps reduced size: %d\n\n", imps->size);
+
+	AF* attacked = transpose_argumentation_framework(attacks);
+
+	BitSet* empty = create_bitset(attacks->size);
+	BitSet* closure = create_bitset(attacks->size);
+	naive_closure(empty, imps, closure);
+	free_bitset(empty);
+
+	BitSet* complement = create_bitset(attacks->size);
+	do {
+		complement_bitset(closure, complement);
+		if (is_set_conflict_free(attacks, complement)) {
+			print_set(complement, outfile, "\n");
+			break;
+		}
+	} while (next_dominating_closure(closure, imps, attacked));
+
+	free_argumentation_framework(attacked);
+	free_bitset(closure);
+	free_bitset(complement);
+	free_implication_set(imps);
 }
