@@ -64,9 +64,10 @@ int main(int argc, char *argv[]) {
 	FILE* input_fd;
 	FILE* output;
 
-	int c, problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
+	int c;
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	static char usage[] = "Usage: %s -a[next-closure|norris|nourine] -p problem -f input -o output\n";
+	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris] -p [SE-ST, EE-ST] -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "a:p:f:o:v")) != -1)
 		switch (c) {
@@ -93,44 +94,21 @@ int main(int argc, char *argv[]) {
 			wrong_argument_flag = 1;
 			break;
 		}
-	if (input_flag == 0) {
-		fprintf(stderr, "%s: Provide an input argumentation framework\n", argv[0]);
+	if (wrong_argument_flag || !input_flag || !output_flag || !algorithm_flag || !problem_flag) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	if (output_flag == 0) {
-		fprintf(stderr, "%s: Provide an output file\n", argv[0]);
+
+	if ((strcmp(algorithm, "next-closure") != 0 &&
+			strcmp(algorithm, "norris") != 0 &&
+			strcmp(algorithm, "nourine") != 0 &&
+			strcmp(algorithm, "wcc-norris") != 0 &&
+			strcmp(algorithm, "scc-norris") != 0) ||
+			(strcmp(problem, "SE-ST") != 0 && strcmp(problem, "EE-ST") != 0)) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	if (algorithm_flag == 0) {
-		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris | nourine\n", argv[0]);
-		fprintf(stderr, usage, argv[0]);
-		exit(EXIT_FAILURE);
-	}
-	if (strcmp(algorithm, "next-closure") != 0 && 
-		strcmp(algorithm, "norris") != 0 && 
-		strcmp(algorithm, "nourine") != 0 && 
-		strcmp(algorithm, "wcc-norris") != 0 && 
-		strcmp(algorithm, "scc-norris") != 0) {
-		fprintf(stderr, "%s: Provide one of the algorithms: next-closure | norris | nourine | wcc-norris | scc-norris \n", argv[0]);
-		fprintf(stderr, usage, argv[0]);
-		exit(EXIT_FAILURE);
-	}
-	if (problem_flag == 0) {
-		fprintf(stderr, "%s: Provide one of the problems: EE-ST | EE-PR\n", argv[0]);
-		fprintf(stderr, usage, argv[0]);
-		exit(EXIT_FAILURE);
-	}
-	if ((strcmp(problem, "EE-ST") != 0) && (strcmp(problem, "EE-PR") !=0) && (strcmp(problem, "SE-ST") !=0)) {
-		fprintf(stderr, "%s: Provide one of the problems EE-ST | EE-PR | SE-ST \n", argv[0]);
-		fprintf(stderr, usage, argv[0]);
-		exit(EXIT_FAILURE);
-	}
-	if (wrong_argument_flag) {
-		fprintf(stderr, usage, argv[0]);
-		exit(EXIT_FAILURE);
-	}
+
 	// open the af file
 	input_fd = fopen(af_file_name, "r");
 	assert(input_fd != NULL);
@@ -157,36 +135,49 @@ int main(int argc, char *argv[]) {
 
 	START_TIMER(start_time);
 
-	// compute the stable extensions
+	// compute the extensions
 	if (strcmp(algorithm, "norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
 			incremental_stable_extensions_norris(af, output);
 		else if (strcmp(problem, "SE-ST") == 0)
 			one_stable_extension_norris(af, output);
+		else
+			wrong_argument_flag = 1;
 	}
 	else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
 			stable_extensions_nc(af, output);
-		else if (strcmp(problem, "EE-PR") == 0)
-			printf("Currently not supported.\n");
 		else if (strcmp(problem, "SE-ST") == 0)
 			one_stable_extension_nc(af, output);
+		else
+			wrong_argument_flag = 1;
 	}
 	else if (strcmp(algorithm, "nourine") == 0) {
 		if (strcmp(problem, "EE-ST") == 0)
 			stable_extensions_nourine(af, output);
 		else if (strcmp(problem, "SE-ST") == 0)
 			one_stable_extension_nourine(af, output);
+		else
+			wrong_argument_flag = 1;
 	}
 	else if (strcmp(algorithm, "wcc-norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			run_cc_norris(af, output, false);
 		}
+		else
+			wrong_argument_flag = 1;
 	}
 	else if (strcmp(algorithm, "scc-norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			run_cc_norris(af, output, true);
 		}
+		else
+			wrong_argument_flag = 1;
+	}
+	if (wrong_argument_flag) {
+		fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+		fclose(output);
+		exit(EXIT_FAILURE);
 	}
 
 	STOP_TIMER(stop_time);
@@ -195,6 +186,6 @@ int main(int argc, char *argv[]) {
 	// close the output file
 	fclose(output);
 
-	return 0;
+	return(0);
 }
 
