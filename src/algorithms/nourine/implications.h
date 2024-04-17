@@ -45,6 +45,17 @@ ImplicationSet *create_implication_set();
 // Returns the number of bytes freed.
 unsigned long free_implication_set(ImplicationSet *imps);
 
+struct implication_node {
+	Implication* implication;
+	struct implication_node* next;
+};
+
+typedef struct implication_node ImplicationNode;
+
+ImplicationNode *create_implication_node(Implication* i, ImplicationNode* next);
+
+void free_implication_node(ImplicationNode* node, bool free_tail);
+
 void add_implication(Implication *imp, ImplicationSet *imps);
 
 ImplicationSet *attacks_to_implications(AF* attacks);
@@ -52,5 +63,13 @@ ImplicationSet *attacks_to_implications(AF* attacks);
 void print_implication_set(ImplicationSet *imps);
 
 void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c);
+
+void close(BitSet* x, ImplicationNode* head);
+
+void compute_closure(BitSet* x, ImplicationNode* head, BitSet* c);
+
+unsigned int count_implications(ImplicationNode* head);
+
+ImplicationNode* reduce_implications(ImplicationNode* head);
 
 #endif /* ALGORITHMS_NOURINE_IMPLICATIONS_H_ */
