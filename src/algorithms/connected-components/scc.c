@@ -1,49 +1,56 @@
 #include "../../af/af.h"
 #include "../utils/linked_list.h"
+#include "../utils/map.h"
 
 
-void reset_bool_array(bool* array, unsigned short size) {
-    for (unsigned short i = 0; i < size; ++i) {
-        array[i] = false;
-    }
-}
+#define MAP_SIZE 	101
 
 
-void dfs(AF* af, int i, bool* visited) {
-    visited[i] = true;
-    for (unsigned short j = 1; j < af->size; ++j) { // assume that vertex 0 is already marked
-        if (!visited[j] && TEST_BIT(af->graph[i], j)) {
-            dfs(af, j, visited);
+void dfs(AF* af, unsigned short i, BitSet* arguments, BitSet* visited) {
+    SET_BIT(visited, i);
+    // assume that vertex 0 is already visited
+    for (unsigned short j = 1; j < af->size; ++j) { 
+        if (TEST_BIT(arguments, j) && 
+            !TEST_BIT(visited, j) && 
+            TEST_BIT(af->graph[i], j)) {
+            dfs(af, j, arguments, visited);
         }
     }
 }
 
 
-void backward_dfs(AF* af, int i, bool* visited) {
-    visited[i] = true;
+void backward_dfs(AF* af,
+                  unsigned short i,
+                  BitSet* arguments, 
+                  BitSet* visited) {
+    SET_BIT(visited, i);
     for (unsigned short j = 0; j < af->size; ++j) {
-        if (!visited[j] && TEST_BIT(af->graph[j], i)) {
-            backward_dfs(af, j, visited);
+        if (TEST_BIT(arguments, j) && 
+            !TEST_BIT(visited, j) && 
+            TEST_BIT(af->graph[j], i)) {
+            backward_dfs(af, j, arguments, visited);
         }
     }
 }
 
-void find_source_component(AF* af, bool* component) {
 
+// find a source component in af's subframework induced by arguments
+// arguments must be non-empty
+// component must be empty
+void find_source_component(AF* af, BitSet* arguments, BitSet* component) {
     // find a vertex in a source component
-    reset_bool_array(component, af->size);
     unsigned short source;
     for (unsigned short i = 0; i < af->size; ++i) {
-        if (!component[i]) {
+        if (TEST_BIT(arguments, i) && !TEST_BIT(component, i)) {
             source = i;
-            dfs(af, i, component);
+            dfs(af, i, arguments, component);
         }
     }
 
-    // extract the component containing source vertex
-    printf("Source vertex: %d\n", source);
-    reset_bool_array(component, af->size);
-    backward_dfs(af, source, component);
+    // extract the component containing source
+    // printf("Source vertex: %d\n", source);
+    reset_bitset(component);
+    backward_dfs(af, source, arguments, component);
 }
 
 
@@ -62,6 +69,7 @@ void free_extension_node(ListNode* node){
     free_node(node);
 }
 
+
 ListNode* advance_and_free_extension(ListNode* node) {
     ListNode* next = node->next;
     free_extension_node(node);
@@ -79,78 +87,122 @@ void log_set(BitSet* bs) {
 }
 
 
-unsigned short len_set(BitSet* bs) {
-    unsigned short len = 0;
-	for (unsigned short i = 0; i < bs->size; ++i) {
-		if (TEST_BIT(bs, i)) {
-            ++len;
-        }
-    }
-    return len;
-}
-
-
-PAF* extract_residual_framework(AF* af, bool* source_component, BitSet* component_extension) {
-	bool remainder[af->size];
+BitSet* extract_residual_arguments(AF* af, BitSet* arguments, BitSet* source_component, BitSet* component_extension) {
+    BitSet* remainder = create_bitset(af->size);
     // add arguments outside source_component not attacked by component_extension
     bool something_remains = false;
 	for (unsigned short i = 0; i < af->size; ++i) {
-		remainder[i] = !source_component[i] && !check_set_attacks_arg(af, component_extension, i);
-        something_remains |= remainder[i];
+		if (TEST_BIT(arguments, i) && !TEST_BIT(source_component, i) && !check_set_attacks_arg(af, component_extension, i)) {
+            SET_BIT(remainder, i);
+            something_remains = true;
+        }
 	}
-	return something_remains ? project_argumentation_framework(af, remainder) : NULL;
+    if (!something_remains) {
+        free_bitset(remainder);
+        remainder = NULL;
+    }
+	return remainder;
 }
 
 
-
-ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) {
-    printf("\nARGUMENTS: %d\n", af->size);
-    bool component[af->size];
-    find_source_component(af, component);
-
-    PAF* projection = project_argumentation_framework(af, component);
-    printf("Arguments in source component: %d\n", projection->af->size);
-    ListNode* component_extension = stable_extensions(projection->af);
-    if (projection->af->size == af->size) {
+ListNode* get_component_extensions(AF* af,
+                                   BitSet* component, 
+                                   ListNode* (*stable_extensions)(AF* af), 
+                                   Map* subextensions) {
+    ListNode* component_extension = MAP_GET(component, subextensions); 
+    if (!component_extension) {
+        PAF* projection = project_argumentation_framework(af, component);
+        // printf("Arguments in source component: %d\n", projection->af->size);
+        component_extension = stable_extensions(projection->af);
+        if (projection->af->size < af->size) {
+            restore_base_indices(component_extension, projection, af->size);
+        }
         free_projected_argumentation_framework(projection);
+        // printf("PUT %llu, %d, %llu\n", get_key(component), subextensions->bucket_count, get_key(component) % subextensions->bucket_count);
+        BitSet* key = create_bitset(component->size);
+        copy_bitset(component, key);
+        MAP_PUT(key, component_extension, subextensions);
+    } // else {
+        // printf("Solution for component is taken from the hash\n");
+    // }
+    return component_extension;
+}
+
+
+// compute the stable extensions in the subframework of af induced by arguments
+ListNode* compute_extensions(AF* af,
+                             BitSet* arguments, 
+                             ListNode* (*stable_extensions)(AF* af),
+                             Map* subextensions) {
+    // printf("\nARGUMENTS: %d\n", count_bits(arguments)); 
+    // log_set(arguments);
+    // printf("Hashed lists: %d\n", subextensions->element_count);
+    ListNode* first_extension = MAP_GET(arguments, subextensions);
+    if (first_extension) {
+        // printf("Solution is taken from the hash\n");
+        return first_extension;
+    }
+
+    BitSet* component = create_bitset(af->size);
+    find_source_component(af, arguments, component);
+
+    ListNode* component_extension = get_component_extensions(af, component, stable_extensions, subextensions);
+    if (count_bits(component) == count_bits(arguments)) {
+        free_bitset(component);
         return component_extension;
     }
-    restore_base_indices(component_extension, projection, af->size);
-    free_projected_argumentation_framework(projection);
 
     ListNode* head = create_node(NULL);
     ListNode* last_node = head;
 
     while (component_extension) {
-        printf("Arguments in component extension: %d\n", len_set(component_extension->c));
+        // printf("Arguments in component extension: %d\n", count_bits(component_extension->c));
         // log_set(component_extension->c);
-        PAF* residual_framework = extract_residual_framework(af, component, component_extension->c);
-        if (residual_framework) {
-            printf("Residual arguments: %d\n", residual_framework->af->size);
-            ListNode* residual_extension = scc_stable_extensions(residual_framework->af, stable_extensions);
-            restore_base_indices(residual_extension, residual_framework, af->size);
-            free_projected_argumentation_framework(residual_framework);
+        BitSet* residual_arguments = extract_residual_arguments(af, arguments, component, component_extension->c);
+        if (residual_arguments) {
+            // printf("Residual arguments: %d\n", count_bits(residual_arguments));
+            ListNode* residual_extension = compute_extensions(af, residual_arguments, stable_extensions, subextensions);
+            // free_bitset(residual_arguments);
 
             while (residual_extension) {
                 // printf("Component extension: ");
                 // log_set(residual_extension->c);
-
                 last_node->next = create_node(create_bitset(af->size));
                 last_node = last_node->next;
                 bitset_union(component_extension->c, residual_extension->c, last_node->c);
-                residual_extension = advance_and_free_extension(residual_extension);
+                // residual_extension = advance_and_free_extension(residual_extension);
+                residual_extension = residual_extension->next;
             }
-            component_extension = advance_and_free_extension(component_extension);
+            // component_extension = advance_and_free_extension(component_extension);
+            component_extension = component_extension->next;
         } else {
-            printf("Residual arguments: 0\n");
+            // printf("Residual arguments: 0\n");
             last_node->next = component_extension;
             last_node = last_node->next;
             component_extension = component_extension->next;
             last_node->next = NULL;
         }
     }
+    free_bitset(component); 
 
-    ListNode* first_extension = head->next;
+    first_extension = head->next;
     free_node(head);
+    MAP_PUT(arguments, first_extension, subextensions);
+    return first_extension;
+}
+
+
+void free_map_contents(Map* subextensions) {
+
+}
+
+ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) {
+    // maps a subset of arguments to a list of stable extensions of the induced argumentation subframework
+    Map subextensions;
+    MAP_INIT(&subextensions, MAP_SIZE);
+    BitSet* all_arguments = create_bitset(af->size);
+    set_bitset(all_arguments);
+    ListNode* first_extension = compute_extensions(af, all_arguments, stable_extensions, &subextensions);
+    // free_map_content(&subextensions);
     return first_extension;
 }

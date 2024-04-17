@@ -156,6 +156,16 @@ inline char bitset_is_emptyset(BitSet* bs) {
 	return(1);
 }
 
+inline unsigned short count_bits(BitSet* bs) {
+    unsigned short count = 0;
+    for (unsigned short i = 0; i < bs->size; ++i) {
+        if (TEST_BIT(bs, i)) {
+            ++count;
+        }
+    }
+	return count;
+}
+
 // Set all bits
 inline void set_bitset(BitSet* bs) {
 	int i;
@@ -165,5 +175,13 @@ inline void set_bitset(BitSet* bs) {
 		bs->elements[i] = ~(0UL);
 }
 
+// key for hashing
+inline BITSET_BASE_TYPE get_key(BitSet* bs) {
+	BITSET_BASE_TYPE key = 0;
+	for (int i = 0; i < bs->base_count; ++i) {
+		key ^= bs->elements[i];
+	}
+	return key;
+}
 
 #endif /* BITSET_BITSET_H_ */

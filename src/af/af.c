@@ -98,23 +98,17 @@ AF* transpose_argumentation_framework(AF *af) {
 	return(t_af);
 }
 
-PAF* project_argumentation_framework(AF *af, bool *mask) {
+PAF* project_argumentation_framework(AF *af, BitSet *mask) {
 	PAF *paf = calloc(1, sizeof(PAF));
 	assert(paf != NULL);
 
-    unsigned short size = 0;
-    for (unsigned short i = 0; i < af->size; ++i) {
-        if (mask[i]) {
-            ++size;
-        }
-    }
-
+    unsigned short size = count_bits(mask);
 	assert(size > 0);
 
     paf->index_mapping = calloc(size, sizeof(unsigned short));
     unsigned short j = 0;
     for (unsigned short i = 0; i < af->size; ++i) {
-        if (mask[i]) {
+        if (TEST_BIT(mask, i)) {
             paf->index_mapping[j++] = i;
         }
     }
