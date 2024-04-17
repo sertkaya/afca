@@ -96,6 +96,36 @@ ImplicationSet* attacks_to_implications_partially_reduced(AF* attacks) {
 	return imps;
 }
 
+ImplicationNode* attacks_to_implications_reduced(AF* attacks, unsigned short step) {
+	// create a list of edge implications;
+	// reduce the list after processing outgoing edges of every _step_ vertices
+	ImplicationNode* head = NULL;
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+	for (unsigned short i = 0; i < attacks->size; ++i) {
+		if (i > 0 && 0 == i % step) {
+			printf("%d vertices processed.\nImplications before reduction: %d\n", i, count_implications(head));
+			head = reduce_implications(head);
+			printf("Implications after reduction: %d\n", count_implications(head));
+		}
+		for (unsigned short j = 0; j < attacks->size; ++j) {
+			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
+				BitSet* lhs = create_bitset(attacks->size);
+				copy_bitset(attacked_by->graph[i], lhs);
+
+				BitSet *rhs = create_bitset(attacks->size);
+				SET_BIT(rhs, j);
+
+				head = create_implication_node(create_implication(lhs, rhs), head);
+			}
+		}
+	}
+	printf("All vertices processed.\nImplications before reduction: %d\n", count_implications(head));
+	head = reduce_implications(head);
+	printf("Implications after reduction: %d\n", count_implications(head));
+	return head;
+}
+
+
 // Extra implications for stable extensions.
 // {a} U B -> A where B is the set of attackers of "a".
 void add_our_implications(AF* attacks, ImplicationSet *imps) {
@@ -343,7 +373,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 // compute lectically next set closed under imps and implications of
 // the form {a} U B —> \bot, where B is the set of all attackers of a 
-bool next_dominating_closure(BitSet* closure, ImplicationSet* imps, AF* attacked) {
+bool next_dominating_closure(BitSet* closure, ImplicationNode* imps, AF* attacked) {
 	bool next = false;
 	BitSet* new_closure = create_bitset(closure->size);
 	for (unsigned short i = closure->size - 1; i >= 0; --i) {
@@ -351,7 +381,7 @@ bool next_dominating_closure(BitSet* closure, ImplicationSet* imps, AF* attacked
 			RESET_BIT(closure, i);
 		} else {
 			SET_BIT(closure, i);
-			naive_closure(closure, imps, new_closure);
+			compute_closure(closure, imps, new_closure);
 			next = true;
 			for (unsigned short j = 0; j < i; ++j) { // lectic-order test || domination test: complement must attack all arguments in new_closure
 				if (TEST_BIT(new_closure, j) && (!TEST_BIT(closure, j) || bitset_is_subset(attacked->graph[j], new_closure))) {
@@ -378,19 +408,12 @@ bool next_dominating_closure(BitSet* closure, ImplicationSet* imps, AF* attacked
 }
 
 void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
-	ImplicationSet* edge_implications = attacks_to_implications_partially_reduced(attacks);
-	printf("Implications size: %d\n", edge_implications->size);
-
-	ImplicationSet* imps = edge_implications; //reduce_adm(attacks, edge_implications);
-	// free_implication_set(edge_implications);
-	// printf("\nImps reduced size: %d\n\n", imps->size);
+	ImplicationNode* imps = attacks_to_implications_reduced(attacks, 10);
 
 	AF* attacked = transpose_argumentation_framework(attacks);
 
-	BitSet* empty = create_bitset(attacks->size);
 	BitSet* closure = create_bitset(attacks->size);
-	naive_closure(empty, imps, closure);
-	free_bitset(empty);
+	close(closure, imps);
 
 	BitSet* complement = create_bitset(attacks->size);
 	do {
@@ -404,5 +427,5 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	free_argumentation_framework(attacked);
 	free_bitset(closure);
 	free_bitset(complement);
-	free_implication_set(imps);
+	free_implication_node(imps, true);
 }
