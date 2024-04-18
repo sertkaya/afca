@@ -147,21 +147,14 @@ void compute_closure(BitSet* x, ImplicationNode* head, BitSet* c) {
 
 ImplicationNode* reduce_implications(ImplicationNode* head) {
 	ImplicationNode* cur = head;
-	ImplicationNode* prev = NULL;
 	while (cur) {
-		if (prev) {
-			prev->next = cur->next;
-			close(cur->implication->rhs, head);
-			prev->next = cur;
-		} else {	// cur == head
-			close(cur->implication->rhs, head->next);
-		}
-		prev = cur;
+		bitset_union(cur->implication->lhs, cur->implication->rhs, cur->implication->rhs);
+		close(cur->implication->rhs, head);
 		cur = cur->next;
 	}
 
 	cur = head;
-	prev = NULL;
+	ImplicationNode* prev = NULL;
 	while (cur) {
 		if (prev) {
 			prev->next = cur->next;
