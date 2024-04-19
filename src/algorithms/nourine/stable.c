@@ -17,6 +17,9 @@
 #include "stable.h"
 #include "implications.h"
 
+
+extern int CLOSURE_COUNT;
+
 ImplicationSet *attacks_to_implications(AF* attacks) {
 	ImplicationSet *imps = create_implication_set();
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -409,6 +412,7 @@ bool next_dominating_closure(BitSet* closure, ImplicationNode* imps, AF* attacke
 
 void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	ImplicationNode* imps = attacks_to_implications_reduced(attacks, 10);
+	printf("Closure count: %d\n", CLOSURE_COUNT);
 
 	AF* attacked = transpose_argumentation_framework(attacks);
 
@@ -427,5 +431,7 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	free_argumentation_framework(attacked);
 	free_bitset(closure);
 	free_bitset(complement);
-	free_implication_node(imps, true);
+	free_implication_node(imps, true, true);
+
+	printf("%d\n", CLOSURE_COUNT);
 }
