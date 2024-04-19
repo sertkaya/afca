@@ -54,7 +54,7 @@ typedef struct implication_node ImplicationNode;
 
 ImplicationNode *create_implication_node(Implication* i, ImplicationNode* next);
 
-void free_implication_node(ImplicationNode* node, bool free_tail);
+void free_implication_node(ImplicationNode* node, bool free_tail, bool free_impl);
 
 void add_implication(Implication *imp, ImplicationSet *imps);
 
