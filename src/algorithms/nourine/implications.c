@@ -23,6 +23,8 @@
 #include "../bitset/bitset.h"
 #include "implications.h"
 
+// int CLOSURE_COUNT = 0;
+
 Implication *create_implication(BitSet *lhs, BitSet *rhs) {
 	Implication *imp = (Implication*) calloc(1, sizeof(Implication));
 	assert(imp != NULL);
@@ -126,13 +128,14 @@ void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 	free_bitset(tmp);
 }
 
-/*
-void close(BitSet* x, ImplicationNode* head) {
+
+void close2(BitSet* x, ImplicationNode* head) {
 	BitSet* before = create_bitset(x->size);
 	do {
 		copy_bitset(x, before);
 		ImplicationNode* cur = head;
 		while (cur) {
+			// CLOSURE_COUNT++;
 			if (bitset_is_subset(cur->implication->lhs, x)) {
 				bitset_union(x, cur->implication->rhs, x);
 			}
@@ -141,7 +144,7 @@ void close(BitSet* x, ImplicationNode* head) {
 	} while (!bitset_is_equal(before, x));
 	free_bitset(before);
 }
-*/
+
 
 ImplicationNode* copy_implication_list(ImplicationNode* head)
 {
@@ -170,6 +173,7 @@ void close(BitSet* x, ImplicationNode* head) {
 		ImplicationNode* cur = copy_head;
 		ImplicationNode* prev = NULL;
 		while (cur) {
+			// CLOSURE_COUNT++;
 			if (bitset_is_subset(cur->implication->lhs, x)) {
 				bitset_union(x, cur->implication->rhs, x);
 				if (prev) {
@@ -210,11 +214,12 @@ ImplicationNode* reduce_implications(ImplicationNode* head) {
 
 	cur = head;
 	ImplicationNode* prev = NULL;
+	BitSet* closure = create_bitset(head->implication->lhs->size);
 	while (cur) {
 		if (prev) {
 			prev->next = cur->next;
-			close(cur->implication->lhs, head);
-			if (bitset_is_equal(cur->implication->lhs, cur->implication->rhs)) {
+			compute_closure(cur->implication->lhs, head, closure);
+			if (bitset_is_equal(closure, cur->implication->rhs)) {
 				free_implication_node(cur, false, true);
 				cur = prev->next;
 			} else {
@@ -223,8 +228,8 @@ ImplicationNode* reduce_implications(ImplicationNode* head) {
 				cur = cur->next;
 			}
 		} else {	// cur == head
-			close(cur->implication->lhs, head->next);
-			if (bitset_is_equal(cur->implication->lhs, cur->implication->rhs)) {
+			compute_closure(cur->implication->lhs, head->next, closure);
+			if (bitset_is_equal(closure, cur->implication->rhs)) {
 				cur = head->next;
 				free_implication_node(head, false, true);
 				head = cur;
@@ -234,6 +239,7 @@ ImplicationNode* reduce_implications(ImplicationNode* head) {
 			}
 		}
 	}
+	free_bitset(closure);
 	return head;
 }
 

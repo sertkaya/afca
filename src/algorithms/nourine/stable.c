@@ -17,6 +17,8 @@
 #include "stable.h"
 #include "implications.h"
 
+// extern int CLOSURE_COUNT;
+
 ImplicationSet *attacks_to_implications(AF* attacks) {
 	ImplicationSet *imps = create_implication_set();
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -479,6 +481,7 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 		current = current->next;
 	}
 	*/
+	// printf("Closure count: %d\n", CLOSURE_COUNT);
 
 	AF* attacked = transpose_argumentation_framework(attacks);
 
@@ -540,3 +543,6 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	free_implication_node(imps, true, true);
 	// free_implication_node(imps_adm_reduced, true);
 }
+
+	// printf("%d\n", CLOSURE_COUNT);
+// }
