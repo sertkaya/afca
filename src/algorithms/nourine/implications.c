@@ -58,25 +58,6 @@ void print_implication_set(ImplicationSet *imps) {
 		print_implication(imps->elements[i]);
 }
 
-ImplicationSet *create_implication_set() {
-	ImplicationSet *imps = (ImplicationSet*) calloc(1, sizeof(ImplicationSet));
-	assert(imps != NULL);
-	imps->size = 0;
-	imps->elements = NULL;
-
-	return(imps);
-}
-
-unsigned long free_implication_set(ImplicationSet *imps) {
-	unsigned long freed_bytes = 0;
-	int i;
-	for (i = 0; i < imps->size; ++i)
-		freed_bytes += free_implication(imps->elements[i]);
-	freed_bytes += sizeof(ImplicationSet);
-	free(imps);
-	return(freed_bytes);
-}
-
 ImplicationNode* create_implication_node(Implication* i, ImplicationNode* next) {
 	ImplicationNode* node = (ImplicationNode*) calloc(1, sizeof(ImplicationNode));
 	assert(node != NULL);
@@ -101,53 +82,7 @@ void free_implication_node(ImplicationNode* node, bool free_tail, bool free_impl
 	}
 }
 
-void add_implication(Implication *imp, ImplicationSet *imps) {
-	Implication** tmp;
-	tmp = realloc(imps->elements, (imps->size + 1) * sizeof(Implication*));
-	assert(tmp != NULL);
-	imps->elements = tmp;
-	imps->elements[imps->size] = imp;
-	++imps->size;
-}
-
-// Compute closure of x under imps and store in c
-void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
-	int i;
-	// TODO: optimize!
-	copy_bitset(x, c);
-	BitSet *tmp = create_bitset(x->size);
-	do {
-		copy_bitset(c, tmp);
-		for (i = 0; i < imps->size; ++i) {
-			if (bitset_is_subset(imps->elements[i]->lhs, c)) {
-				bitset_union(c, imps->elements[i]->rhs, c);
-				// SET_BIT(c, imps->elements[i]->rhs);
-			}
-		}
-	} while (!bitset_is_equal(tmp, c));
-	free_bitset(tmp);
-}
-
-
-void close2(BitSet* x, ImplicationNode* head) {
-	BitSet* before = create_bitset(x->size);
-	do {
-		copy_bitset(x, before);
-		ImplicationNode* cur = head;
-		while (cur) {
-			// CLOSURE_COUNT++;
-			if (bitset_is_subset(cur->implication->lhs, x)) {
-				bitset_union(x, cur->implication->rhs, x);
-			}
-			cur = cur->next;
-		}
-	} while (!bitset_is_equal(before, x));
-	free_bitset(before);
-}
-
-
-ImplicationNode* copy_implication_list(ImplicationNode* head)
-{
+ImplicationNode* copy_implication_list(ImplicationNode* head) {
 	if (!head) {
 		return  NULL;
 	}
@@ -163,7 +98,6 @@ ImplicationNode* copy_implication_list(ImplicationNode* head)
 
 	return copy_head;
 }
-
 
 void close(BitSet* x, ImplicationNode* head) {
 	ImplicationNode* copy_head = copy_implication_list(head);
@@ -197,12 +131,10 @@ void close(BitSet* x, ImplicationNode* head) {
 	}
 }
 
-
 void compute_closure(BitSet* x, ImplicationNode* head, BitSet* c) {
 	copy_bitset(x, c);
 	close(c, head);
 }
-
 
 ImplicationNode* reduce_implications(ImplicationNode* head) {
 	ImplicationNode* cur = head;
@@ -252,3 +184,69 @@ unsigned int count_implications(ImplicationNode* head) {
 	return n;
 
 }
+
+
+/*
+ImplicationSet *create_implication_set() {
+	ImplicationSet *imps = (ImplicationSet*) calloc(1, sizeof(ImplicationSet));
+	assert(imps != NULL);
+	imps->size = 0;
+	imps->elements = NULL;
+
+	return(imps);
+}
+
+unsigned long free_implication_set(ImplicationSet *imps) {
+	unsigned long freed_bytes = 0;
+	int i;
+	for (i = 0; i < imps->size; ++i)
+		freed_bytes += free_implication(imps->elements[i]);
+	freed_bytes += sizeof(ImplicationSet);
+	free(imps);
+	return(freed_bytes);
+}
+void add_implication(Implication *imp, ImplicationSet *imps) {
+	Implication** tmp;
+	tmp = realloc(imps->elements, (imps->size + 1) * sizeof(Implication*));
+	assert(tmp != NULL);
+	imps->elements = tmp;
+	imps->elements[imps->size] = imp;
+	++imps->size;
+}
+
+// Compute closure of x under imps and store in c
+void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
+	int i;
+	// TODO: optimize!
+	copy_bitset(x, c);
+	BitSet *tmp = create_bitset(x->size);
+	do {
+		copy_bitset(c, tmp);
+		for (i = 0; i < imps->size; ++i) {
+			if (bitset_is_subset(imps->elements[i]->lhs, c)) {
+				bitset_union(c, imps->elements[i]->rhs, c);
+				// SET_BIT(c, imps->elements[i]->rhs);
+			}
+		}
+	} while (!bitset_is_equal(tmp, c));
+	free_bitset(tmp);
+}
+
+
+void close2(BitSet* x, ImplicationNode* head) {
+	BitSet* before = create_bitset(x->size);
+	do {
+		copy_bitset(x, before);
+		ImplicationNode* cur = head;
+		while (cur) {
+			// CLOSURE_COUNT++;
+			if (bitset_is_subset(cur->implication->lhs, x)) {
+				bitset_union(x, cur->implication->rhs, x);
+			}
+			cur = cur->next;
+		}
+	} while (!bitset_is_equal(before, x));
+	free_bitset(before);
+}
+
+*/
