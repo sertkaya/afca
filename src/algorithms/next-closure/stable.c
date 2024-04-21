@@ -21,7 +21,7 @@
 #include "../bitset/bitset.h"
 
 // Compute the next conflict-free closure coming after "current" and store it in "next"
-char next_closure(AF* not_attacks, AF* attacks, BitSet* current, BitSet* next) {
+char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, BitSet* next) {
 	int i,j;
 	BitSet* tmp = create_bitset(attacks->size);
 
@@ -83,7 +83,7 @@ void stable_extensions_nc(AF *attacks, FILE *outfile) {
 	int concept_count = 0, stable_extension_count = 0;
 
 	while (1) {
-		if (!next_closure(not_attacks, attacks, tmp, c))
+		if (!next_conflict_free_closure(not_attacks, attacks, tmp, c))
 			break;
 		++concept_count;
 		// up-arrow of c
@@ -116,7 +116,7 @@ void one_stable_extension_nc(AF* attacks, FILE *outfile) {
 	int concept_count = 0;
 
 	while (1) {
-		if (!next_closure(not_attacks, attacks, tmp, c))
+		if (!next_conflict_free_closure(not_attacks, attacks, tmp, c))
 			break;
 		++concept_count;
 

@@ -19,86 +19,7 @@
 
 // extern int CLOSURE_COUNT;
 
-ImplicationSet *attacks_to_implications(AF* attacks) {
-	ImplicationSet *imps = create_implication_set();
-	AF* attacked_by = transpose_argumentation_framework(attacks);
-
-	int i, j;
-	// Implications from the Nourine paper.
-	for (i = 0; i < attacks->size; ++i) {
-		for (j = 0; j < attacks->size; ++j) {
-			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
-				BitSet *lhs = create_bitset(attacks->size);
-				copy_bitset(attacked_by->graph[i], lhs);
-
-				BitSet *rhs = create_bitset(attacks->size);
-				SET_BIT(rhs, j);
-
-				Implication *imp = create_implication(lhs, rhs);
-				add_implication(imp, imps);
-			}
-		}
-	}
-
-/*
-	// Self-attacks. This is part of "reducing implications" in the paper.
-	for (i = 0; i < attacks->size; ++i)
-		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
-			BitSet *lhs = create_bitset(attacks->size);
-			BitSet *rhs = create_bitset(attacks->size);
-			SET_BIT(rhs, i);
-			Implication *imp = create_implication(lhs, rhs);
-			add_implication(imp, imps);
-		}
-*/
-
-/*
-	// Extra implications for stable extensions.
-	// {a} U B -> A where B is the set of attackers of "a".
-	for (i = 0; i < attacked_by->size; ++i) {
-		BitSet *lhs = create_bitset(attacked_by->size);
-		SET_BIT(lhs, i);
-		bitset_union(lhs, attacked_by->graph[i], lhs);
-
-		BitSet *rhs = create_bitset(attacked_by->size);
-		set_bitset(rhs);
-
-		Implication *imp = create_implication(lhs, rhs);
-		add_implication(imp, imps);
-	}
-	*/
-
-	return(imps);
-}
-
-ImplicationSet* attacks_to_implications_partially_reduced(AF* attacks) {
-	ImplicationSet* imps = create_implication_set();
-	AF* attacked_by = transpose_argumentation_framework(attacks);
-
-	BitSet* closure = create_bitset(attacks->size);
-	// Implications from the Nourine paper.
-	for (unsigned short i = 0; i < attacks->size; ++i) {
-		for (unsigned short j = 0; j < attacks->size; ++j) {
-			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
-				naive_closure(attacked_by->graph[i], imps, closure);
-				if (!TEST_BIT(closure, j)) {
-					BitSet *lhs = create_bitset(attacks->size);
-					copy_bitset(attacked_by->graph[i], lhs);
-
-					BitSet *rhs = create_bitset(attacks->size);
-					SET_BIT(rhs, j);
-
-					Implication *imp = create_implication(lhs, rhs);
-					add_implication(imp, imps);
-				}
-			}
-		}
-	}
-	free_bitset(closure);
-	return imps;
-}
-
-ImplicationNode* attacks_to_implications_reduced(AF* attacks, unsigned short step) {
+ImplicationNode* edge_implications_reduced(AF* attacks, unsigned short step) {
 	// create a list of edge implications;
 	// reduce the list after processing outgoing edges of every _step_ vertices
 	ImplicationNode* head = NULL;
@@ -127,10 +48,19 @@ ImplicationNode* attacks_to_implications_reduced(AF* attacks, unsigned short ste
 	return head;
 }
 
+ImplicationNode* self_attack_implications(AF* attacks, ImplicationNode *imps) {
+	for (int i = 0; i < attacks->size; ++i)
+		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
+			BitSet *lhs = create_bitset(attacks->size);
+			BitSet *rhs = create_bitset(attacks->size);
+			SET_BIT(rhs, i);
+			imps = create_implication_node(create_implication(lhs, rhs), imps);
+		}
+}
 
-// Extra implications for stable extensions.
+// Our implications for stable extensions.
 // {a} U B -> A where B is the set of attackers of "a".
-void add_our_implications(AF* attacks, ImplicationSet *imps) {
+ImplicationNode* stable_extensions_implications(AF* attacks, ImplicationNode *imps) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	int i;
 	for (i = 0; i < attacked_by->size; ++i) {
@@ -141,28 +71,98 @@ void add_our_implications(AF* attacks, ImplicationSet *imps) {
 		BitSet *rhs = create_bitset(attacked_by->size);
 		set_bitset(rhs);
 
-		Implication *imp = create_implication(lhs, rhs);
-		add_implication(imp, imps);
+		imps = create_implication_node(create_implication(lhs, rhs), imps);
 	}
+	free_argumentation_framework(attacked_by);
 }
 
+bool next_closure(BitSet* closure, ImplicationNode* imps, AF* attacked) {
+	bool next = false;
+	BitSet* new_closure = create_bitset(closure->size);
+	for (unsigned short i = closure->size - 1; i >= 0; --i) {
+		if (TEST_BIT(closure, i)) {
+			RESET_BIT(closure, i);
+		} else {
+			SET_BIT(closure, i);
+			compute_closure(closure, imps, new_closure);
+			next = true;
+			for (unsigned short j = 0; j < i; ++j) { // lectic-order test || domination test: complement must attack all arguments in new_closure
+				if (TEST_BIT(new_closure, j) && (!TEST_BIT(closure, j))) {
+					next = false;
+					break;
+				}
+			}
+			if (next) {
+				copy_bitset(new_closure, closure);
+				break;
+			} else {
+				RESET_BIT(closure, i);
+			}
+		}
+	}
+	free_bitset(new_closure);
+	return next;
+}
 
-ImplicationNode *reduce_adm(AF* attacks, ImplicationNode *imps) {
+void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
+	ImplicationNode* imps = edge_implications_reduced(attacks, 100);
+	imps = self_attack_implications(attacks, imps);
+	imps = stable_extensions_implications(attacks, imps);
+
+	// printf("Closure count: %d\n", CLOSURE_COUNT);
+
+	AF* attacked = transpose_argumentation_framework(attacks);
+
+	BitSet* closure = create_bitset(attacks->size);
+	close(closure, imps);
+
+	BitSet* complement = create_bitset(attacks->size);
+	do {
+		print_bitset(closure, stdout);
+		printf("\n");
+		complement_bitset(closure, complement);
+		if (is_set_conflict_free(attacks, complement)) {
+			print_set(complement, outfile, "\n");
+			break;
+		}
+	} while (next_closure(closure, imps, attacked));
+
+	free_argumentation_framework(attacked);
+	free_bitset(closure);
+	free_bitset(complement);
+	free_implication_node(imps, true, true);
+}
+
+void stable_extensions_nourine(AF* attacks, FILE *outfile) {
+	ImplicationNode* imps = edge_implications_reduced(attacks, 100);
+	imps = self_attack_implications(attacks, imps);
+	imps = stable_extensions_implications(attacks, imps);
+
+	AF* attacked = transpose_argumentation_framework(attacks);
+
+	BitSet* closure = create_bitset(attacks->size);
+	close(closure, imps);
+
+	BitSet* complement = create_bitset(attacks->size);
+	do {
+		print_bitset(closure, stdout);
+		printf("\n");
+		complement_bitset(closure, complement);
+		if (is_set_conflict_free(attacks, complement)) {
+			print_set(complement, outfile, "\n");
+			// break;
+		}
+	} while (next_closure(closure, imps, attacked));
+
+	free_argumentation_framework(attacked);
+	free_bitset(closure);
+	free_bitset(complement);
+	free_implication_node(imps, true, true);
+}
+
+ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *imps) {
 	ImplicationNode *imps_r = NULL;
 	ImplicationNode *imps_r2 = NULL;
-
-	// int i;
-
-	// Self-attacks.
-	for (int i = 0; i < attacks->size; ++i)
-		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
-			BitSet *lhs = create_bitset(attacks->size);
-			BitSet *rhs = create_bitset(attacks->size);
-			SET_BIT(rhs, i);
-			imps_r2 = create_implication_node(create_implication(lhs, rhs), imps_r2);
-			// Implication *imp = create_implication(lhs, rhs);
-			// add_implication(imp, imps_r);
-		}
 
 	// Conflict type 1
 	BitSet *X_closure = create_bitset(attacks->size);
@@ -434,9 +434,9 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 }
 */
 
-
+/*
 // compute lectically next set closed under imps and implications of
-// the form {a} U B —> \bot, where B is the set of all attackers of a 
+// the form {a} U B —> \bot, where B is the set of all attackers of a
 bool next_dominating_closure(BitSet* closure, ImplicationNode* imps, AF* attacked) {
 	bool next = false;
 	BitSet* new_closure = create_bitset(closure->size);
@@ -470,79 +470,4 @@ bool next_dominating_closure(BitSet* closure, ImplicationNode* imps, AF* attacke
 	free_bitset(new_closure);
 	return next;
 }
-
-void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
-	ImplicationNode* imps = attacks_to_implications_reduced(attacks, 100);
-	ImplicationNode* imps_adm_reduced = reduce_adm(attacks, imps);
-	/*
-	ImplicationNode *current = imps;
-	while (current) {
-		print_implication(current->implication);
-		current = current->next;
-	}
-	*/
-	// printf("Closure count: %d\n", CLOSURE_COUNT);
-
-	AF* attacked = transpose_argumentation_framework(attacks);
-
-	BitSet* closure = create_bitset(attacks->size);
-	close(closure, imps_adm_reduced);
-	// close(closure, imps);
-
-	BitSet* complement = create_bitset(attacks->size);
-	do {
-		print_bitset(closure, stdout);
-		printf("\n");
-		complement_bitset(closure, complement);
-		if (is_set_conflict_free(attacks, complement)) {
-			print_set(complement, outfile, "\n");
-			break;
-		}
-	} while (next_dominating_closure(closure, imps_adm_reduced, attacked));
-	// } while (next_dominating_closure(closure, imps, attacked));
-
-	free_argumentation_framework(attacked);
-	free_bitset(closure);
-	free_bitset(complement);
-	free_implication_node(imps, true, true);
-	// free_implication_node(imps_adm_reduced, true);
-}
-
-void stable_extensions_nourine(AF* attacks, FILE *outfile) {
-	ImplicationNode* imps = attacks_to_implications_reduced(attacks, 100);
-	ImplicationNode* imps_adm_reduced = reduce_adm(attacks, imps);
-	/*
-	ImplicationNode *current = imps;
-	while (current) {
-		print_implication(current->implication);
-		current = current->next;
-	}
-	*/
-
-	AF* attacked = transpose_argumentation_framework(attacks);
-
-	BitSet* closure = create_bitset(attacks->size);
-	close(closure, imps_adm_reduced);
-	// close(closure, imps);
-
-	BitSet* complement = create_bitset(attacks->size);
-	do {
-		print_bitset(closure, stdout);
-		printf("\n");
-		complement_bitset(closure, complement);
-		if (is_set_conflict_free(attacks, complement)) {
-			print_set(complement, outfile, "\n");
-			// break;
-		}
-	} while (next_dominating_closure(closure, imps_adm_reduced, attacked));
-	// } while (next_dominating_closure(closure, imps, attacked));
-
-	free_argumentation_framework(attacked);
-	free_bitset(closure);
-	free_bitset(complement);
-	free_implication_node(imps, true, true);
-	// free_implication_node(imps_adm_reduced, true);
-}
-
-	// printf("%d\n", CLOSURE_COUNT);
-// }
+*/
