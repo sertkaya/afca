@@ -30,9 +30,9 @@ int main(int argc, char *argv[]) {
 
 	AF* af = read_af(fd);
 
-	ImplicationSet *imps = attacks_to_implications(af);
+	// ImplicationNode *imps = edge_implications_reduced(af, 10);
 
-	print_implication_set(imps);
+	// print_implication_set(imps);
 
 	BitSet *x = create_bitset(af->size);
 	SET_BIT(x, 2);
