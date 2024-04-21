@@ -62,6 +62,8 @@ ImplicationSet *attacks_to_implications(AF* attacks);
 
 void print_implication_set(ImplicationSet *imps);
 
+void print_implications(ImplicationNode *imps);
+
 // int CLOSURE_COUNT = 0;
 
 void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c);

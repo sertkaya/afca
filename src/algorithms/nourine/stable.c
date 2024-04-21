@@ -48,6 +48,26 @@ ImplicationNode* edge_implications_reduced(AF* attacks, unsigned short step) {
 	return head;
 }
 
+ImplicationNode* edge_implications(AF* attacks, unsigned short step) {
+	// create a list of edge implications;
+	ImplicationNode* head = NULL;
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+	for (unsigned short i = 0; i < attacks->size; ++i) {
+		for (unsigned short j = 0; j < attacks->size; ++j) {
+			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j) && !CHECK_ARG_ATTACKS_ARG(attacks, j, i)) {
+				BitSet* lhs = create_bitset(attacks->size);
+				copy_bitset(attacked_by->graph[i], lhs);
+
+				BitSet *rhs = create_bitset(attacks->size);
+				SET_BIT(rhs, j);
+
+				head = create_implication_node(create_implication(lhs, rhs), head);
+			}
+		}
+	}
+	return head;
+}
+
 ImplicationNode* self_attack_implications(AF* attacks, ImplicationNode *imps) {
 	for (int i = 0; i < attacks->size; ++i)
 		if (CHECK_ARG_ATTACKS_ARG(attacks, i, i)) {
@@ -56,6 +76,7 @@ ImplicationNode* self_attack_implications(AF* attacks, ImplicationNode *imps) {
 			SET_BIT(rhs, i);
 			imps = create_implication_node(create_implication(lhs, rhs), imps);
 		}
+	return(imps);
 }
 
 // Our implications for stable extensions.
@@ -74,90 +95,7 @@ ImplicationNode* stable_extensions_implications(AF* attacks, ImplicationNode *im
 		imps = create_implication_node(create_implication(lhs, rhs), imps);
 	}
 	free_argumentation_framework(attacked_by);
-}
-
-bool next_closure(BitSet* closure, ImplicationNode* imps, AF* attacked) {
-	bool next = false;
-	BitSet* new_closure = create_bitset(closure->size);
-	for (unsigned short i = closure->size - 1; i >= 0; --i) {
-		if (TEST_BIT(closure, i)) {
-			RESET_BIT(closure, i);
-		} else {
-			SET_BIT(closure, i);
-			compute_closure(closure, imps, new_closure);
-			next = true;
-			for (unsigned short j = 0; j < i; ++j) { // lectic-order test || domination test: complement must attack all arguments in new_closure
-				if (TEST_BIT(new_closure, j) && (!TEST_BIT(closure, j))) {
-					next = false;
-					break;
-				}
-			}
-			if (next) {
-				copy_bitset(new_closure, closure);
-				break;
-			} else {
-				RESET_BIT(closure, i);
-			}
-		}
-	}
-	free_bitset(new_closure);
-	return next;
-}
-
-void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
-	ImplicationNode* imps = edge_implications_reduced(attacks, 100);
-	imps = self_attack_implications(attacks, imps);
-	imps = stable_extensions_implications(attacks, imps);
-
-	// printf("Closure count: %d\n", CLOSURE_COUNT);
-
-	AF* attacked = transpose_argumentation_framework(attacks);
-
-	BitSet* closure = create_bitset(attacks->size);
-	close(closure, imps);
-
-	BitSet* complement = create_bitset(attacks->size);
-	do {
-		print_bitset(closure, stdout);
-		printf("\n");
-		complement_bitset(closure, complement);
-		if (is_set_conflict_free(attacks, complement)) {
-			print_set(complement, outfile, "\n");
-			break;
-		}
-	} while (next_closure(closure, imps, attacked));
-
-	free_argumentation_framework(attacked);
-	free_bitset(closure);
-	free_bitset(complement);
-	free_implication_node(imps, true, true);
-}
-
-void stable_extensions_nourine(AF* attacks, FILE *outfile) {
-	ImplicationNode* imps = edge_implications_reduced(attacks, 100);
-	imps = self_attack_implications(attacks, imps);
-	imps = stable_extensions_implications(attacks, imps);
-
-	AF* attacked = transpose_argumentation_framework(attacks);
-
-	BitSet* closure = create_bitset(attacks->size);
-	close(closure, imps);
-
-	BitSet* complement = create_bitset(attacks->size);
-	do {
-		print_bitset(closure, stdout);
-		printf("\n");
-		complement_bitset(closure, complement);
-		if (is_set_conflict_free(attacks, complement)) {
-			print_set(complement, outfile, "\n");
-			// break;
-		}
-	} while (next_closure(closure, imps, attacked));
-
-	free_argumentation_framework(attacked);
-	free_bitset(closure);
-	free_bitset(complement);
-	free_implication_node(imps, true, true);
+	return(imps);
 }
 
 ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *imps) {
@@ -177,9 +115,6 @@ ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *im
 	while (current) {
 		// print_implication(current->implication);
 		// printf("\n");
-	// for (i = 0; i < imps->size; ++i) {
-	// 	if ((i%1000) == 0)
-	// 		printf("%d\n", i);
 		if (bitset_is_emptyset(current->implication->lhs)) {
 		// if (bitset_is_emptyset(imps->elements[i]->lhs)) {
 			BitSet *new_lhs = create_bitset(attacks->size);
@@ -187,14 +122,6 @@ ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *im
 			copy_bitset(current->implication->rhs, rhs);
 			// copy_bitset(imps->elements[i]->rhs, rhs);
 			imps_r = create_implication_node(create_implication(new_lhs, rhs), imps_r);
-			/*
-			++size;
-			if (size % 1000 == 0) {
-				printf("Implications before reduction: %d\n", count_implications(imps_r));
-				imps_r = reduce_implications(imps_r);
-				printf("Implications after reduction: %d\n", count_implications(imps_r));
-			}
-			*/
 			// Implication *imp = create_implication(new_lhs, rhs);
 			// add_implication(imp, imps_r);
 			current = current->next;
@@ -230,14 +157,6 @@ ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *im
 				// bitset_set_minus(imps->elements[i]->lhs, T, new_lhs);
 				SET_BIT(rhs, z);
 				imps_r = create_implication_node(create_implication(new_lhs, rhs), imps_r);
-				/*
-				++size;
-				if (size % 1000 == 0) {
-					printf("Implications before reduction: %d\n", count_implications(imps_r));
-					imps_r = reduce_implications(imps_r);
-					printf("Implications after reduction: %d\n", count_implications(imps_r));
-				}
-				*/
 				// Implication *imp = create_implication(new_lhs, rhs);
 				// add_implication(imp, imps_r);
 			}
@@ -245,10 +164,12 @@ ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *im
 		current = current->next;
 	}
 
-	printf("After conflict type 1:\n");
+	printf("After conflict type 1: %d\n", count_implications(imps_r));
+	/*
 	printf("Implications before reduction: %d\n", count_implications(imps_r));
 	imps_r = reduce_implications(imps_r);
 	printf("Implications after reduction: %d\n", count_implications(imps_r));
+	*/
 
 	// Conflict type 2
 	BitSet *Gamma_t = create_bitset(attacks->size);
@@ -306,10 +227,12 @@ ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *im
 		current = current->next;
 	}
 
-	printf("After conflict type 2:\n");
+	printf("After conflict type 2: %d\n", count_implications(imps_r2));
+	/*
 	printf("Implications before reduction: %d\n", count_implications(imps_r2));
 	// imps_r2 = reduce_implications(imps_r2);
 	printf("Implications after reduction: %d\n", count_implications(imps_r2));
+	*/
 
 	free_bitset(X_closure);
 	free_bitset(empty);
@@ -326,6 +249,107 @@ ImplicationNode* conflict_type_1_2_implications(AF* attacks, ImplicationNode *im
 
 	return(imps_r2);
 }
+
+bool next_closure(BitSet* closure, ImplicationNode* imps, AF* attacked) {
+	bool next = false;
+	BitSet* new_closure = create_bitset(closure->size);
+	for (unsigned short i = closure->size - 1; i >= 0; --i) {
+		if (TEST_BIT(closure, i)) {
+			RESET_BIT(closure, i);
+		} else {
+			SET_BIT(closure, i);
+			compute_closure(closure, imps, new_closure);
+			next = true;
+			for (unsigned short j = 0; j < i; ++j) { // lectic-order test || domination test: complement must attack all arguments in new_closure
+				if (TEST_BIT(new_closure, j) && (!TEST_BIT(closure, j))) {
+					next = false;
+					break;
+				}
+			}
+			if (next) {
+				copy_bitset(new_closure, closure);
+				break;
+			} else {
+				RESET_BIT(closure, i);
+			}
+		}
+	}
+	free_bitset(new_closure);
+	return next;
+}
+
+void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
+	// ImplicationNode* imps = edge_implications_reduced(attacks, 100);
+	ImplicationNode* imps = edge_implications(attacks, 100);
+	printf("Edge implications: %d\n", count_implications(imps));
+	print_implications(imps);
+
+	imps = self_attack_implications(attacks, imps);
+	printf("Self attack implications:%d\n", count_implications(imps));
+	print_implications(imps);
+
+	imps = conflict_type_1_2_implications(attacks, imps);
+	printf("Conflict type 1-2 implications:%d\n", count_implications(imps));
+	print_implications(imps);
+
+	// imps = stable_extensions_implications(attacks, imps);
+	// printf("Stable Extentions implications:%d\n", count_implications(imps));
+	// print_implications(imps);
+
+	// printf("Closure count: %d\n", CLOSURE_COUNT);
+	// printf("Implications before reduction: %d\n", count_implications(imps));
+	// imps = reduce_implications(imps);
+	// printf("Implications after reduction: %d\n", count_implications(imps));
+
+	AF* attacked = transpose_argumentation_framework(attacks);
+
+	BitSet* closure = create_bitset(attacks->size);
+	close(closure, imps);
+
+	BitSet* complement = create_bitset(attacks->size);
+	do {
+		// print_bitset(closure, stdout);
+		// printf("\n");
+		complement_bitset(closure, complement);
+		if (is_set_conflict_free(attacks, complement)) {
+			print_set(complement, outfile, "\n");
+			break;
+		}
+	} while (next_closure(closure, imps, attacked));
+
+	free_argumentation_framework(attacked);
+	free_bitset(closure);
+	free_bitset(complement);
+	free_implication_node(imps, true, true);
+}
+
+void stable_extensions_nourine(AF* attacks, FILE *outfile) {
+	ImplicationNode* imps = edge_implications_reduced(attacks, 100);
+	imps = self_attack_implications(attacks, imps);
+	imps = stable_extensions_implications(attacks, imps);
+
+	AF* attacked = transpose_argumentation_framework(attacks);
+
+	BitSet* closure = create_bitset(attacks->size);
+	close(closure, imps);
+
+	BitSet* complement = create_bitset(attacks->size);
+	do {
+		print_bitset(closure, stdout);
+		printf("\n");
+		complement_bitset(closure, complement);
+		if (is_set_conflict_free(attacks, complement)) {
+			print_set(complement, outfile, "\n");
+			// break;
+		}
+	} while (next_closure(closure, imps, attacked));
+
+	free_argumentation_framework(attacked);
+	free_bitset(closure);
+	free_bitset(complement);
+	free_implication_node(imps, true, true);
+}
+
 
 /*
 void stable_extensions_nourine(AF* attacks, FILE *outfile) {

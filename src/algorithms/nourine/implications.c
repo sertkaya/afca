@@ -52,10 +52,11 @@ void print_implication(Implication *imp) {
 	printf("\n");
 }
 
-void print_implication_set(ImplicationSet *imps) {
-	int i;
-	for (i = 0; i < imps->size; ++i)
-		print_implication(imps->elements[i]);
+void print_implications(ImplicationNode *n) {
+	while (n) {
+		print_implication(n->implication);
+		n = n->next;
+	}
 }
 
 ImplicationNode* create_implication_node(Implication* i, ImplicationNode* next) {
@@ -99,6 +100,7 @@ ImplicationNode* copy_implication_list(ImplicationNode* head) {
 	return copy_head;
 }
 
+/*
 void close(BitSet* x, ImplicationNode* head) {
 	ImplicationNode* copy_head = copy_implication_list(head);
 	BitSet* before = create_bitset(x->size);
@@ -129,6 +131,23 @@ void close(BitSet* x, ImplicationNode* head) {
 	if (copy_head) {
 		free_implication_node(copy_head, true, false);
 	}
+}
+*/
+
+void close(BitSet* x, ImplicationNode* head) {
+	BitSet* before = create_bitset(x->size);
+	do {
+		copy_bitset(x, before);
+		ImplicationNode* cur = head;
+		while (cur) {
+			// CLOSURE_COUNT++;
+			if (bitset_is_subset(cur->implication->lhs, x)) {
+				bitset_union(x, cur->implication->rhs, x);
+			}
+			cur = cur->next;
+		}
+	} while (!bitset_is_equal(before, x));
+	free_bitset(before);
 }
 
 void compute_closure(BitSet* x, ImplicationNode* head, BitSet* c) {
@@ -214,6 +233,12 @@ void add_implication(Implication *imp, ImplicationSet *imps) {
 	++imps->size;
 }
 
+void print_implication_set(ImplicationSet *imps) {
+	int i;
+	for (i = 0; i < imps->size; ++i)
+		print_implication(imps->elements[i]);
+}
+
 // Compute closure of x under imps and store in c
 void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 	int i;
@@ -232,21 +257,5 @@ void naive_closure(BitSet *x, ImplicationSet *imps, BitSet *c) {
 	free_bitset(tmp);
 }
 
-
-void close2(BitSet* x, ImplicationNode* head) {
-	BitSet* before = create_bitset(x->size);
-	do {
-		copy_bitset(x, before);
-		ImplicationNode* cur = head;
-		while (cur) {
-			// CLOSURE_COUNT++;
-			if (bitset_is_subset(cur->implication->lhs, x)) {
-				bitset_union(x, cur->implication->rhs, x);
-			}
-			cur = cur->next;
-		}
-	} while (!bitset_is_equal(before, x));
-	free_bitset(before);
-}
 
 */
