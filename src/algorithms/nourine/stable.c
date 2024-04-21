@@ -241,7 +241,7 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	// print_implications(imps);
 
 	imps = conflict_type_1_2_implications(attacks, imps);
-	// printf("Conflict type 1-2 implications:%d\n", count_implications(imps));
+	printf("Conflict type 1-2 implications:%d\n", count_implications(imps));
 	// print_implications(imps);
 
 	imps = self_attack_implications(attacks, imps);
@@ -264,8 +264,6 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 
 	BitSet* complement = create_bitset(attacks->size);
 	do {
-		// print_bitset(closure, stdout);
-		// printf("\n");
 		complement_bitset(closure, complement);
 		if (is_set_conflict_free(attacks, complement)) {
 			print_set(complement, outfile, "\n");
@@ -280,9 +278,27 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 }
 
 void stable_extensions_nourine(AF* attacks, FILE *outfile) {
-	ImplicationNode* imps = edge_implications_reduced(attacks, 100);
+	// ImplicationNode* imps = edge_implications_reduced(attacks, 100);
+	ImplicationNode* imps = edge_implications(attacks, 100);
+	printf("Edge implications: %d\n", count_implications(imps));
+	// print_implications(imps);
+
+	imps = conflict_type_1_2_implications(attacks, imps);
+	printf("Conflict type 1-2 implications:%d\n", count_implications(imps));
+	// print_implications(imps);
+
 	imps = self_attack_implications(attacks, imps);
+	printf("After self attack implications:%d\n", count_implications(imps));
+	// print_implications(imps);
+
 	imps = stable_extensions_implications(attacks, imps);
+	printf("After stable extentions implications:%d\n", count_implications(imps));
+	// print_implications(imps);
+
+	// printf("Closure count: %d\n", CLOSURE_COUNT);
+	printf("Implications before reduction: %d\n", count_implications(imps));
+	imps = reduce_implications(imps);
+	printf("Implications after reduction: %d\n", count_implications(imps));
 
 	AF* attacked = transpose_argumentation_framework(attacks);
 
@@ -291,8 +307,6 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
 	BitSet* complement = create_bitset(attacks->size);
 	do {
-		print_bitset(closure, stdout);
-		printf("\n");
 		complement_bitset(closure, complement);
 		if (is_set_conflict_free(attacks, complement)) {
 			print_set(complement, outfile, "\n");
