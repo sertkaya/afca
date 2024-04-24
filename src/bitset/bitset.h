@@ -31,13 +31,13 @@ typedef struct bitset BitSet;
 
 // A BitSet is an array of BITSET_BASE_TYPE
 struct bitset {
-	unsigned short size;
+	unsigned int size;
 	unsigned short base_count;
 	BITSET_BASE_TYPE* elements;
 };
 
 // Create an empty bitset of the given size and return the address.
-BitSet* create_bitset(unsigned short);
+BitSet* create_bitset(unsigned int);
 
 // Free the memory allocated for the bitset bs.
 // Returns the number of bytes freed
@@ -156,9 +156,9 @@ inline char bitset_is_emptyset(BitSet* bs) {
 	return(1);
 }
 
-inline unsigned short count_bits(BitSet* bs) {
-    unsigned short count = 0;
-    for (unsigned short i = 0; i < bs->size; ++i) {
+inline unsigned int count_bits(BitSet* bs) {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < bs->size; ++i) {
         if (TEST_BIT(bs, i)) {
             ++count;
         }

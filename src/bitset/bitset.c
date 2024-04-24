@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-BitSet* create_bitset(unsigned short size) {
+BitSet* create_bitset(unsigned int size) {
 
 	BitSet* bs = (BitSet*) calloc(1,  sizeof(BitSet));
 	assert(bs != NULL);
