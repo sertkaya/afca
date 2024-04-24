@@ -23,7 +23,7 @@
 
 struct argumentation_framework {
 	// Number of arguments
-	unsigned short size;
+	unsigned int size;
 	// The adjacency matrix: array of bitsets
 	BitSet **graph;
 };
@@ -34,7 +34,7 @@ typedef struct argumentation_framework AF;
 struct projected_argumentation_framework {
 	AF* af;
 	// index_mapping[i] is the index of the ith argument of af in the original framework
-	unsigned short* index_mapping;
+	unsigned int* index_mapping;
 };
 
 typedef struct projected_argumentation_framework PAF;
@@ -153,6 +153,6 @@ AF* transpose_argumentation_framework(AF *af);
 
 PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
-BitSet* project_back(BitSet* bs, PAF* paf, unsigned short base_size);
+BitSet* project_back(BitSet* bs, PAF* paf, unsigned int base_size);
 
 #endif /* AF_AF_H_ */
