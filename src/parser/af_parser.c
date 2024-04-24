@@ -24,7 +24,8 @@
 #include "../af/af.h"
 
 AF* read_af(FILE* input_fd) {
-	int arg_count = 0, att_count = 0;
+	long unsigned int arg_count = 0;
+	long unsigned int att_count = 0;
 
 	int rc = fscanf(input_fd, "p af %d", &arg_count);
 
