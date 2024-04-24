@@ -253,9 +253,11 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	// print_implications(imps);
 
 	// printf("Closure count: %d\n", CLOSURE_COUNT);
+	/*
 	printf("Implications before reduction: %d\n", count_implications(imps));
 	imps = reduce_implications(imps);
 	printf("Implications after reduction: %d\n", count_implications(imps));
+	*/
 
 	AF* attacked = transpose_argumentation_framework(attacks);
 
@@ -284,7 +286,7 @@ void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 	// print_implications(imps);
 
 	imps = conflict_type_1_2_implications(attacks, imps);
-	printf("Conflict type 1-2 implications:%d\n", count_implications(imps));
+	// printf("Conflict type 1-2 implications:%d\n", count_implications(imps));
 	// print_implications(imps);
 
 	imps = self_attack_implications(attacks, imps);

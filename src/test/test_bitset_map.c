@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	// initialize it
 	MAP_INIT(&map, MAP_INITIAL_SIZE);
 	// put (x,s) to the map
-	MAP_PUT((uint64_t) x, s, &map);
+	MAP_PUT(x, s, &map);
 
 	// iterate over the map
 	MapIterator map_it;
