@@ -24,7 +24,7 @@
 #include "../af/af.h"
 
 AF* read_af(FILE* input_fd) {
-	long unsigned int arg_count = 0;
+	unsigned int arg_count = 0;
 	long unsigned int att_count = 0;
 
 	int rc = fscanf(input_fd, "p af %d", &arg_count);
@@ -46,8 +46,8 @@ AF* read_af(FILE* input_fd) {
 	} while (rc != EOF);
 
 	printf("Argument count: %d\n", arg_count);
-	printf("Attacks count : %d\n", att_count);
-	printf("Density : %.4lf\n", ((double) att_count) / (arg_count * arg_count));
+	printf("Attacks count : %lu\n", att_count);
+	printf("Density : %lf\n", ((double) att_count) / (arg_count * arg_count));
 
 	return(af);
 }

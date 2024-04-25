@@ -26,6 +26,7 @@
 
 #define TEST_SIZE 10000
 #define MAP_SIZE 100
+#define BITSET_SIZE			TEST_SIZE
 
 int main(int argc, char *argv[]) {
 	struct timeval start_time, stop_time;
@@ -40,10 +41,13 @@ int main(int argc, char *argv[]) {
 	MAP_INIT(&map, map_size);
 	printf("%d put operations .........................: ", test_size);
 	fflush(stdout);
+
+	BitSet*  x = create_bitset(BITSET_SIZE);
 	START_TIMER(start_time);
 	for (i = 1; i < test_size + 1; ++i) {
+		SET_BIT(x, i);
 		tmp[i] = i;
-		MAP_PUT(i, (void*) tmp[i], &map);
+		MAP_PUT(x, (void*) tmp[i], &map);
 	}
 	STOP_TIMER(stop_time);
 	printf("%.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
