@@ -21,9 +21,10 @@
 
 #include "../bitset/bitset.h"
 
+
 struct argumentation_framework {
 	// Number of arguments
-	unsigned int size;
+	SIZE_TYPE size;
 	// The adjacency matrix: array of bitsets
 	BitSet **graph;
 };
@@ -34,14 +35,14 @@ typedef struct argumentation_framework AF;
 struct projected_argumentation_framework {
 	AF* af;
 	// index_mapping[i] is the index of the ith argument of af in the original framework
-	unsigned int* index_mapping;
+	SIZE_TYPE* index_mapping;
 };
 
 typedef struct projected_argumentation_framework PAF;
 
 
 // Create argumentation framework with the given number of arguments
-AF* create_argumentation_framework(int size);
+AF* create_argumentation_framework(SIZE_TYPE size);
 
 // Free the space allocated for af
 // Return the number of bytes freed
@@ -66,8 +67,7 @@ void print_argumentation_framework(AF *af);
 // Check if set s attacks argument arg
 // Return 1 if yes, 0 otherwise
 inline char check_set_attacks_arg(AF* af, BitSet* s, int arg) {
-	int i;
-	for (i = 0; i < af->size; ++i)
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (TEST_BIT(s,i) && CHECK_ARG_ATTACKS_ARG(af, i, arg))
 			return(1);
 	return(0);
@@ -91,10 +91,9 @@ int is_conflict_free(Context* attacks, BitSet* x) {
 
 // TODO: compare to the above. Which is more efficient?
 inline char is_set_conflict_free(AF* af, BitSet* s) {
-	int i,j;
-	for (i = 0; i < af->size; ++i)
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (TEST_BIT(s, i))
-			for (j = i; j < af->size; ++j)
+			for (SIZE_TYPE j = i; j < af->size; ++j)
 				if (TEST_BIT(s, j) && (CHECK_ARG_ATTACKS_ARG(af, i, j) || CHECK_ARG_ATTACKS_ARG(af, j, i)))
 					return(0);
 	return(1);
@@ -104,13 +103,11 @@ inline char is_set_conflict_free(AF* af, BitSet* s) {
 // (up-arrow in FCA terms) Put the result in r
 // inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
 static inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
-	int i;
-
 	// First fill r
 	// TODO: Improve efficiency?
 	set_bitset(r);
 
-	for (i = 0; i < af->size; ++i)
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (TEST_BIT(s, i))
 			bitset_intersection(r, af->graph[i], r);
 }
@@ -119,12 +116,10 @@ static inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
 // (down-arrow in FCA terms) Put the result in r
 // inline void get_total_attackers(AF* af, BitSet* s, BitSet* r) {
 static inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
-	int i;
-
 	// TODO: Improve efficiency?
 	reset_bitset(r);
 
-	for (i = 0; i < af->size; ++i)
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (bitset_is_subset(s, af->graph[i]))
 			SET_BIT(r, i);
 }
@@ -134,13 +129,11 @@ static inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
 // In FCA: down-up-arrow closure operator on the formal context)
 // inline void get_common_victims_of_total_attackers(AF* af, BitSet* s, BitSet* r) {
 static inline void down_up_arrow(AF* af, BitSet* s, BitSet* r) {
-	int i;
-
 	// First fill r
 	// TODO: Improve efficiency?
 	set_bitset(r);
 
-	for (i = 0; i < af->size; ++i) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		if (bitset_is_subset(s, af->graph[i])) {
 			bitset_intersection(r, af->graph[i], r);
 		}
@@ -151,8 +144,10 @@ AF* complement_argumentation_framework(AF *af );
 
 AF* transpose_argumentation_framework(AF *af);
 
+AF* create_conflict_framework(AF* af);	// make it undirected
+
 PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
-BitSet* project_back(BitSet* bs, PAF* paf, unsigned int base_size);
+BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);
 
 #endif /* AF_AF_H_ */

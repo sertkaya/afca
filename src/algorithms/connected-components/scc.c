@@ -6,10 +6,10 @@
 #define MAP_SIZE 	101
 
 
-void dfs(AF* af, unsigned short i, BitSet* arguments, BitSet* visited) {
+void dfs(AF* af, SIZE_TYPE i, BitSet* arguments, BitSet* visited) {
     SET_BIT(visited, i);
     // assume that vertex 0 is already visited
-    for (unsigned short j = 1; j < af->size; ++j) { 
+    for (SIZE_TYPE j = 1; j < af->size; ++j) { 
         if (TEST_BIT(arguments, j) && 
             !TEST_BIT(visited, j) && 
             TEST_BIT(af->graph[i], j)) {
@@ -20,11 +20,11 @@ void dfs(AF* af, unsigned short i, BitSet* arguments, BitSet* visited) {
 
 
 void backward_dfs(AF* af,
-                  unsigned short i,
+                  SIZE_TYPE i,
                   BitSet* arguments, 
                   BitSet* visited) {
     SET_BIT(visited, i);
-    for (unsigned short j = 0; j < af->size; ++j) {
+    for (SIZE_TYPE j = 0; j < af->size; ++j) {
         if (TEST_BIT(arguments, j) && 
             !TEST_BIT(visited, j) && 
             TEST_BIT(af->graph[j], i)) {
@@ -39,8 +39,8 @@ void backward_dfs(AF* af,
 // component must be empty
 void find_source_component(AF* af, BitSet* arguments, BitSet* component) {
     // find a vertex in a source component
-    unsigned short source;
-    for (unsigned short i = 0; i < af->size; ++i) {
+    SIZE_TYPE source;
+    for (SIZE_TYPE i = 0; i < af->size; ++i) {
         if (TEST_BIT(arguments, i) && !TEST_BIT(component, i)) {
             source = i;
             dfs(af, i, arguments, component);
@@ -54,7 +54,7 @@ void find_source_component(AF* af, BitSet* arguments, BitSet* component) {
 }
 
 
-void restore_base_indices(ListNode* node, PAF* paf, unsigned short base_size) {
+void restore_base_indices(ListNode* node, PAF* paf, SIZE_TYPE base_size) {
     while (node) {
         BitSet* projected_extension = node->c;
         node->c = project_back(node->c, paf, base_size);
@@ -78,7 +78,7 @@ ListNode* advance_and_free_extension(ListNode* node) {
 
 
 void log_set(BitSet* bs) {
-	for (unsigned short i = 0; i < bs->size; ++i)
+	for (SIZE_TYPE i = 0; i < bs->size; ++i)
 		if (TEST_BIT(bs, i))
 			printf("%d", 1);
 		else
@@ -91,7 +91,7 @@ BitSet* extract_residual_arguments(AF* af, BitSet* arguments, BitSet* source_com
     BitSet* remainder = create_bitset(af->size);
     // add arguments outside source_component not attacked by component_extension
     bool something_remains = false;
-	for (unsigned short i = 0; i < af->size; ++i) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		if (TEST_BIT(arguments, i) && !TEST_BIT(source_component, i) && !check_set_attacks_arg(af, component_extension, i)) {
             SET_BIT(remainder, i);
             something_remains = true;

@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-BitSet* create_bitset(unsigned int size) {
+BitSet* create_bitset(SIZE_TYPE size) {
 
 	BitSet* bs = (BitSet*) calloc(1,  sizeof(BitSet));
 	assert(bs != NULL);
@@ -42,8 +42,7 @@ int free_bitset(BitSet* bs) {
 }
 
 void print_bitset(BitSet* bs, FILE *outfile) {
-	int i;
-	for (i = 0; i < bs->size; ++i)
+	for (SIZE_TYPE i = 0; i < bs->size; ++i)
 		if (TEST_BIT(bs, i))
 			fprintf(outfile, "%d", 1);
 		else
@@ -51,9 +50,8 @@ void print_bitset(BitSet* bs, FILE *outfile) {
 }
 
 void print_set(BitSet* bs, FILE *outfile, const char *end) {
-	int i;
 	fprintf(outfile, "[ ");
-	for (i = 0; i < bs->size; ++i)
+	for (SIZE_TYPE i = 0; i < bs->size; ++i)
 		if (TEST_BIT(bs, i))
 			fprintf(outfile, "%d ", i+1);
 	fprintf(outfile, "]%s", end);
