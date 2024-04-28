@@ -25,7 +25,7 @@
 #include "../bitset/bitset.h"
 #include <stdbool.h>
 
-AF* create_argumentation_framework(int size) {
+AF* create_argumentation_framework(SIZE_TYPE size) {
 	AF *af = calloc(1, sizeof(AF));
 	assert(af != NULL);
 
@@ -43,8 +43,8 @@ AF* create_argumentation_framework(int size) {
 }
 
 int free_argumentation_framework(AF* af) {
-	int i, freed_bytes = 0;
-	for (i = 0; i < af->size; ++i) {
+	int freed_bytes = 0;
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		freed_bytes += free_bitset(af->graph[i]);
 	}
 	free(af->graph);
@@ -57,7 +57,7 @@ int free_argumentation_framework(AF* af) {
 
 int free_projected_argumentation_framework(PAF* paf) {
 	free(paf->index_mapping);
-	int freed_bytes = paf->af->size * sizeof(unsigned int);
+	int freed_bytes = paf->af->size * sizeof(SIZE_TYPE);
 	freed_bytes += free_argumentation_framework(paf->af);
 	free(paf);
 	return freed_bytes + sizeof(PAF);
@@ -65,9 +65,7 @@ int free_projected_argumentation_framework(PAF* paf) {
 
 
 void print_argumentation_framework(AF* af) {
-	int i;
-
-	for (i = 0; i < af->size; ++i) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		print_bitset(af->graph[i], stdout);
 		printf("\n");
 	}
@@ -78,8 +76,7 @@ AF* complement_argumentation_framework(AF *af ){
 
 	c_af->size = af->size;
 
-	int i;
-	for (i = 0; i < af->size; ++i)
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		complement_bitset(af->graph[i], c_af->graph[i]);
 
 	return(c_af);
@@ -90,32 +87,50 @@ AF* transpose_argumentation_framework(AF *af) {
 
 	t_af->size = af->size;
 
-	int i,j;
-	for (i = 0; i < af->size; ++i)
-		for (j = 0; j < af->size; ++j)
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		for (SIZE_TYPE j = 0; j < af->size; ++j)
 			if (TEST_BIT(af->graph[i], j))
 				SET_BIT(t_af->graph[j], i);
 	return(t_af);
+}
+
+AF* create_conflict_framework(AF* af) {
+	// make it undirected and take loops into account
+	AF* conflicts = create_argumentation_framework(af->size);
+
+	conflicts->size = af->size;
+
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		bool iconflict = TEST_BIT(af->graph[i], i);
+		for (SIZE_TYPE j = i; j < af->size; ++j) {
+			if (iconflict || TEST_BIT(af->graph[i], j) || TEST_BIT(af->graph[j], i) || TEST_BIT(af->graph[j], j)) {
+				SET_BIT(conflicts->graph[i], j);
+				SET_BIT(conflicts->graph[j], i);
+			}
+		}
+	}
+
+	return conflicts;
 }
 
 PAF* project_argumentation_framework(AF *af, BitSet *mask) {
 	PAF *paf = calloc(1, sizeof(PAF));
 	assert(paf != NULL);
 
-    unsigned int size = count_bits(mask);
+    SIZE_TYPE size = count_bits(mask);
 	assert(size > 0);
 
-    paf->index_mapping = calloc(size, sizeof(unsigned int));
-    unsigned int j = 0;
-    for (unsigned int i = 0; i < af->size; ++i) {
+    paf->index_mapping = calloc(size, sizeof(SIZE_TYPE));
+    SIZE_TYPE j = 0;
+    for (SIZE_TYPE i = 0; i < af->size; ++i) {
         if (TEST_BIT(mask, i)) {
             paf->index_mapping[j++] = i;
         }
     }
 
     paf->af = create_argumentation_framework(size);
-    for (unsigned int i = 0; i < size; ++i) {
-        for (unsigned int j = 0; j < size; ++j) {
+    for (SIZE_TYPE i = 0; i < size; ++i) {
+        for (SIZE_TYPE j = 0; j < size; ++j) {
             if (TEST_BIT(af->graph[paf->index_mapping[i]], paf->index_mapping[j])) {
 				SET_BIT(paf->af->graph[i], j);
             }
@@ -126,9 +141,9 @@ PAF* project_argumentation_framework(AF *af, BitSet *mask) {
 }
 
 
-BitSet* project_back(BitSet* bs, PAF* paf, unsigned int base_size) {
+BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size) {
 	BitSet* res = create_bitset(base_size);
-	for (unsigned int i = 0; i < paf->af->size; ++i) {
+	for (SIZE_TYPE i = 0; i < paf->af->size; ++i) {
 		if (TEST_BIT(bs, i)) {
 			SET_BIT(res, paf->index_mapping[i]);
 		}

@@ -35,7 +35,7 @@ void free_concept(AF *af, Concept *c) {
 	free(c);
 }
 
-int add(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
+int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
 	int stable_extension_count = 0;
 
     ListNode *head = *phead;
@@ -92,7 +92,7 @@ int add(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FI
 
 				// "lectic-order test"
 				char is_new_intent_closed = 1;
-				for (int j = 0; j < i; ++j) {
+				for (SIZE_TYPE j = 0; j < i; ++j) {
 					if (!(TEST_BIT((c->intent),j)) && (bitset_is_subset(new_extent, argument_extents[j]))) {
 						is_new_intent_closed = 0;
 						free_bitset(new_extent);
@@ -155,9 +155,9 @@ void incremental_stable_extensions_norris(AF* attacks, FILE *outfile) {
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
-	for (int i = 0; i < not_attacks->size; ++i) {
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		argument_extents[i] = create_bitset(not_attacks->size);
-		for (int j = 0; j < not_attacks->size; ++j) {
+		for (SIZE_TYPE j = 0; j < not_attacks->size; ++j) {
 			if (TEST_BIT(not_attacks->graph[j], i)) {
 				SET_BIT(argument_extents[i], j);
 			}
@@ -166,7 +166,7 @@ void incremental_stable_extensions_norris(AF* attacks, FILE *outfile) {
 
 	BitSet* intent = create_bitset(attacks->size);  // empty set
 	BitSet* extent = create_bitset(attacks->size);
-    for (int i = 0; i < attacks->size; ++i) {       // full set
+    for (SIZE_TYPE i = 0; i < attacks->size; ++i) {       // full set
         SET_BIT(extent, i);
     }
 	BitSet* not_attacked = create_bitset(attacks->size);
@@ -176,7 +176,7 @@ void incremental_stable_extensions_norris(AF* attacks, FILE *outfile) {
 
 	int stable_extension_count = 0;
 
-	for (int i = 0; i < not_attacks->size; ++i) {
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		stable_extension_count += add(not_attacks, i, &head, argument_extents, outfile);
 	}
 
@@ -185,13 +185,13 @@ void incremental_stable_extensions_norris(AF* attacks, FILE *outfile) {
 
 	free_concept(attacks, c);
 	free_node(head);
-	for (int i = 0; i < not_attacks->size; ++i)
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
 	free_argumentation_framework(not_attacks);
 }
 
-int add_one(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
+int add_one(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
     ListNode *head = *phead;
 	ListNode *prev = NULL;
 	ListNode *cur = head;
@@ -248,7 +248,7 @@ int add_one(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents
 
 				// "lectic-order test"
 				char is_new_intent_closed = 1;
-				for (int j = 0; j < i; ++j) {
+				for (SIZE_TYPE j = 0; j < i; ++j) {
 					if (!(TEST_BIT((c->intent),j)) && (bitset_is_subset(new_extent, argument_extents[j]))) {
 						is_new_intent_closed = 0;
 						free_bitset(new_extent);
@@ -311,9 +311,9 @@ void one_stable_extension_norris(AF* attacks, FILE *outfile) {
 	AF *not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
-	for (int i = 0; i < not_attacks->size; ++i) {
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		argument_extents[i] = create_bitset(not_attacks->size);
-		for (int j = 0; j < not_attacks->size; ++j) {
+		for (SIZE_TYPE j = 0; j < not_attacks->size; ++j) {
 			if (TEST_BIT(not_attacks->graph[j], i)) {
 				SET_BIT(argument_extents[i], j);
 			}
@@ -322,7 +322,7 @@ void one_stable_extension_norris(AF* attacks, FILE *outfile) {
 
 	BitSet* intent = create_bitset(attacks->size);  // empty set
 	BitSet* extent = create_bitset(attacks->size);
-    for (int i = 0; i < attacks->size; ++i) {       // full set
+    for (SIZE_TYPE i = 0; i < attacks->size; ++i) {       // full set
         SET_BIT(extent, i);
     }
 	BitSet* not_attacked = create_bitset(attacks->size);
@@ -332,7 +332,7 @@ void one_stable_extension_norris(AF* attacks, FILE *outfile) {
 	Concept* c = create_concept(extent, intent, not_attacked);
 	ListNode* head = create_node(c);
 
-	for (int i = 0; i < not_attacks->size; ++i) {
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		if (add_one(not_attacks, i, &head, argument_extents, outfile))
 			break;
 	}
@@ -341,7 +341,7 @@ void one_stable_extension_norris(AF* attacks, FILE *outfile) {
 
 	free_concept(attacks, c);
 	free_node(head);
-	for (int i = 0; i < not_attacks->size; ++i)
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
 	free_argumentation_framework(not_attacks);
@@ -357,7 +357,7 @@ ListNode *insert_bitset(BitSet *bs, ListNode *prev) {
 }
 
 
-int add_to_list(AF* not_attacks, int i, ListNode **phead , BitSet** argument_extents, ListNode *extensions) {
+int add_to_list(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_extents, ListNode *extensions) {
 	int stable_extension_count = 0;
 
     ListNode *head = *phead;
@@ -416,7 +416,7 @@ int add_to_list(AF* not_attacks, int i, ListNode **phead , BitSet** argument_ext
 
 				// "lectic-order test"
 				char is_new_intent_closed = 1;
-				for (int j = 0; j < i; ++j) {
+				for (SIZE_TYPE j = 0; j < i; ++j) {
 					if (!(TEST_BIT((c->intent),j)) && (bitset_is_subset(new_extent, argument_extents[j]))) {
 						is_new_intent_closed = 0;
 						free_bitset(new_extent);
@@ -480,9 +480,9 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* argument_extents[attacks->size];
-	for (int i = 0; i < not_attacks->size; ++i) {
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		argument_extents[i] = create_bitset(not_attacks->size);
-		for (int j = 0; j < not_attacks->size; ++j) {
+		for (SIZE_TYPE j = 0; j < not_attacks->size; ++j) {
 			if (TEST_BIT(not_attacks->graph[j], i)) {
 				SET_BIT(argument_extents[i], j);
 			}
@@ -491,7 +491,7 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 
 	BitSet* intent = create_bitset(attacks->size);  // empty set
 	BitSet* extent = create_bitset(attacks->size);
-    for (int i = 0; i < attacks->size; ++i) {       // full set
+    for (SIZE_TYPE i = 0; i < attacks->size; ++i) {       // full set
         SET_BIT(extent, i);
     }
 	BitSet* not_attacked = create_bitset(attacks->size);
@@ -501,7 +501,7 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 
 	int stable_extension_count = 0;
 	ListNode* extensions = create_node(NULL);
-	for (int i = 0; i < not_attacks->size; ++i) {
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		stable_extension_count += add_to_list(not_attacks, i, &head, argument_extents, extensions);
 	}
 
@@ -510,7 +510,7 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 
 	free_concept(attacks, c);
 	free_node(head);
-	for (int i = 0; i < not_attacks->size; ++i)
+	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
 	free_argumentation_framework(not_attacks);

@@ -22,10 +22,9 @@
 
 // Compute the next conflict-free closure coming after "current" and store it in "next"
 char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, BitSet* next) {
-	int i,j;
 	BitSet* tmp = create_bitset(attacks->size);
 
-	for (i = not_attacks->size - 1; i >= 0; --i) {
+	for (int i = not_attacks->size - 1; i >= 0; --i) {
 		if (TEST_BIT(current, i))
 			RESET_BIT(current, i);
 		else {
@@ -55,7 +54,7 @@ char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, B
 			// TODO: optimize!
 			bitset_set_minus(next, current, tmp);
 			char canonicity_test_passed = 1;
-			for (j = 0; j < i; ++j)
+			for (SIZE_TYPE j = 0; j < i; ++j)
 				// check if next \ current contains a bit larger than i
 				if (TEST_BIT(tmp, j)) {
 					canonicity_test_passed = 0;
