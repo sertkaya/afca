@@ -404,7 +404,7 @@ void print_unit_implication(UnitImplication* imp) {
 	print_set(imp->lhs, stdout, "");
 	printf("-> ");
 	// print_bitset(imp->lhs, stdout);
-	printf("%d\n", imp->rhs);
+	printf("%d\n", imp->rhs + 1);
 }
 
 void print_unit_implications(UnitImplicationNode* head) {
@@ -606,7 +606,7 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	do {
 		imps = update_conflicts(conflicts, imps);
 	} while (remove_conflicts(imps, conflicts));
-	// print_unit_implications(imps);
+	print_unit_implications(imps);
 
 	BitSet* closure = create_bitset(attacks->size);
 	unit_close(closure, imps);
