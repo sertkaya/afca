@@ -334,7 +334,7 @@ void one_stable_extension_nourine2(AF* attacks, FILE *outfile) {
 	free_implication_node(imps, true, true);
 }
 
-void stable_extensions_nourine(AF* attacks, FILE *outfile) {
+void stable_extensions_nourine2(AF* attacks, FILE *outfile) {
 	// ImplicationNode* imps = edge_implications_reduced(attacks, 100);
 	ImplicationNode* imps = edge_implications(attacks, 100);
 	printf("Edge implications: %d\n", count_implications(imps));
@@ -599,14 +599,14 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 }
 
 
-void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
+void stable_extensions_via_implications(AF* attacks, bool single_extension, FILE* outfile) {
 	AF* attacked = transpose_argumentation_framework(attacks);
 	AF* conflicts = create_conflict_framework(attacks);
 	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
 	do {
 		imps = update_conflicts(conflicts, imps);
 	} while (remove_conflicts(imps, conflicts));
-	print_unit_implications(imps);
+	// print_unit_implications(imps);
 
 	BitSet* closure = create_bitset(attacks->size);
 	unit_close(closure, imps);
@@ -616,7 +616,9 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 		complement_bitset(closure, complement);
 		if (is_set_conflict_free(attacks, complement)) {
 			print_set(complement, outfile, "\n");
-			break;
+			if (single_extension) {
+				break;
+			}
 		}
 	} while (next_dominating_closure(closure, imps, attacked));
 
@@ -627,7 +629,13 @@ void one_stable_extension_nourine(AF* attacks, FILE *outfile) {
 	free_unit_implication_node(imps, true, true);
 }
 
+void one_stable_extension_nourine(AF* attacks, FILE* outfile) {
+	stable_extensions_via_implications(attacks, true, outfile);
+}
 
+void stable_extensions_nourine(AF* attacks, FILE* outfile) {
+	stable_extensions_via_implications(attacks, false, outfile);
+}
 /*
 void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
