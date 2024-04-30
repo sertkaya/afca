@@ -501,9 +501,9 @@ unsigned int count_unit_implications(UnitImplicationNode* head) {
 
 
 UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) {
-	printf("Implications before reduction: %d\n", count_unit_implications(impl));
+	// printf("Implications before reduction: %d\n", count_unit_implications(impl));
 	impl = reduce_unit_implications(impl);
-	printf("Implications after reduction: %d\n", count_unit_implications(impl));
+	// printf("Implications after reduction: %d\n", count_unit_implications(impl));
 	for (SIZE_TYPE i = 0; i < conflicts->size; ++i) {
 		unit_close(conflicts->graph[i], impl);
 	}
@@ -520,7 +520,7 @@ UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) 
 			}
 		}
 	}
-	printf("Conflicts updated.\n");
+	// printf("Conflicts updated.\n");
 	return impl;
 }
 
@@ -538,7 +538,7 @@ bool remove_conflicts(UnitImplicationNode* head, AF* conflicts) {
 		head = head->next;
 	}
 	free_bitset(diff);
-	printf("Done.\n");
+	// printf("Done.\n");
 	return updated;
 }
 
