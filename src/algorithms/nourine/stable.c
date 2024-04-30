@@ -568,6 +568,7 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 	bool next = false;
 	BitSet* new_closure = create_bitset(closure->size);
 	for (int i = closure->size - 1; i >= 0; --i) {
+		assert(next == false);
 		if (TEST_BIT(closure, i)) {
 			RESET_BIT(closure, i);
 		} else {
@@ -580,10 +581,12 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 					break;
 				}
 			}
-			for (SIZE_TYPE j = i; j < closure->size; ++j) {
-				if (TEST_BIT(new_closure, j) && bitset_is_subset(attacked->graph[j], new_closure)) {	// domination test
-					next = false;
-					break;
+			if (next) {
+				for (SIZE_TYPE j = i; j < closure->size; ++j) {
+					if (TEST_BIT(new_closure, j) && bitset_is_subset(attacked->graph[j], new_closure)) {	// domination test
+						next = false;
+						break;
+					}
 				}
 			}
 			if (next) {
@@ -595,6 +598,9 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 		}
 	}
 	free_bitset(new_closure);
+	if (count_bits(closure) == closure->size) {
+		printf("CLOSURE FULL\n");
+	}
 	return next;
 }
 
@@ -641,23 +647,25 @@ ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
 	BitSet* closure = create_bitset(attacks->size);
 	unit_close(closure, imps);
 
-	BitSet* complement = create_bitset(attacks->size);
 	ListNode* head = NULL;
-	do {
-		complement_bitset(closure, complement);
-		if (is_set_conflict_free(attacks, complement)) {
-			BitSet* extension = create_bitset(complement->size);
-			copy_bitset(complement, extension);
-			ListNode* node = create_node(extension);
-			node->next = head;
-			head = node;
-		}
-	} while (next_dominating_closure(closure, imps, attacked));
+	if (count_bits(closure) < closure->size) {
+		BitSet* complement = create_bitset(attacks->size);
+		do {
+			complement_bitset(closure, complement);
+			if (is_set_conflict_free(attacks, complement)) {
+				BitSet* extension = create_bitset(complement->size);
+				copy_bitset(complement, extension);
+				ListNode* node = create_node(extension);
+				node->next = head;
+				head = node;
+			}
+		} while (next_dominating_closure(closure, imps, attacked));
+		free_bitset(complement);
+	}
 
 	free_argumentation_framework(attacked);
 	free_argumentation_framework(conflicts);
 	free_bitset(closure);
-	free_bitset(complement);
 	free_unit_implication_node(imps, true, true);
 	
 	return head;
