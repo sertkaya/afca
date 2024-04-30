@@ -36,8 +36,8 @@ void print_extension(BitSet* ext, FILE* outfile) {
 }
 
 
-void run_cc_norris(AF* af, FILE* output, bool scc) {
-	ListNode* head = scc ? scc_stable_extensions(af, enumerate_stable_extensions_norris) : wcc_stable_extensions(af, enumerate_stable_extensions_norris);
+void run_cc(AF* af, ListNode* (*stable_extensions)(AF* af), FILE* output, bool scc) {
+	ListNode* head = scc ? scc_stable_extensions(af, stable_extensions) : wcc_stable_extensions(af, stable_extensions);
 	ListNode* node = head;
 
 	while (node) {
@@ -56,6 +56,16 @@ void run_cc_norris(AF* af, FILE* output, bool scc) {
 }
 
 
+void run_cc_norris(AF* af, FILE* output, bool scc) {
+	run_cc(af, enumerate_stable_extensions_norris, output, scc);
+}
+
+
+void run_cc_nourine(AF* af, FILE* output, bool scc) {
+	run_cc(af, enumerate_stable_extensions_via_implications, output, scc);
+}
+
+
 void usage(char* program) {
 	fprintf(stderr, "Usage: %s -i input-file -o output-file -c\n", program);
 }
@@ -67,7 +77,7 @@ int main(int argc, char *argv[]) {
 	int c;
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris] -p [SE-ST, EE-ST] -f input -o output\n";
+	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] -p [SE-ST, EE-ST] -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "a:p:f:o:v")) != -1)
 		switch (c) {
@@ -103,7 +113,8 @@ int main(int argc, char *argv[]) {
 			strcmp(algorithm, "norris") != 0 &&
 			strcmp(algorithm, "nourine") != 0 &&
 			strcmp(algorithm, "wcc-norris") != 0 &&
-			strcmp(algorithm, "scc-norris") != 0) ||
+			strcmp(algorithm, "scc-norris") != 0 &&
+			strcmp(algorithm, "scc-nourine") != 0) ||
 			(strcmp(problem, "SE-ST") != 0 && strcmp(problem, "EE-ST") != 0)) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
@@ -137,42 +148,53 @@ int main(int argc, char *argv[]) {
 
 	// compute the extensions
 	if (strcmp(algorithm, "norris") == 0) {
-		if (strcmp(problem, "EE-ST") == 0)
+		if (strcmp(problem, "EE-ST") == 0) {
 			incremental_stable_extensions_norris(af, output);
-		else if (strcmp(problem, "SE-ST") == 0)
+		} else if (strcmp(problem, "SE-ST") == 0) {
 			one_stable_extension_norris(af, output);
-		else
+		} else {
 			wrong_argument_flag = 1;
-	}
-	else if (strcmp(algorithm, "next-closure") == 0) {
-		if (strcmp(problem, "EE-ST") == 0)
+		}
+	} else if (strcmp(algorithm, "next-closure") == 0) {
+		if (strcmp(problem, "EE-ST") == 0) {
 			stable_extensions_nc(af, output);
-		else if (strcmp(problem, "SE-ST") == 0)
+		} else if (strcmp(problem, "SE-ST") == 0) {
 			one_stable_extension_nc(af, output);
-		else
+		} else {
 			wrong_argument_flag = 1;
-	}
-	else if (strcmp(algorithm, "nourine") == 0) {
-		if (strcmp(problem, "EE-ST") == 0)
+		}
+	} else if (strcmp(algorithm, "nourine") == 0) {
+		if (strcmp(problem, "EE-ST") == 0) {
 			stable_extensions_nourine(af, output);
-		else if (strcmp(problem, "SE-ST") == 0)
+		} else if (strcmp(problem, "SE-ST") == 0) {
 			one_stable_extension_nourine(af, output);
-		else
+		} else {
 			wrong_argument_flag = 1;
-	}
-	else if (strcmp(algorithm, "wcc-norris") == 0) {
+		}
+	} else if (strcmp(algorithm, "wcc-norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			run_cc_norris(af, output, false);
-		}
-		else
+		} else {
 			wrong_argument_flag = 1;
-	}
-	else if (strcmp(algorithm, "scc-norris") == 0) {
+		}
+	} else if (strcmp(algorithm, "scc-norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			run_cc_norris(af, output, true);
-		}
-		else
+		} else {
 			wrong_argument_flag = 1;
+		}
+	} else if (strcmp(algorithm, "wcc-norris") == 0) {
+		if (strcmp(problem, "EE-ST") == 0) {
+			run_cc_nourine(af, output, false);
+		} else {
+			wrong_argument_flag = 1;
+		}
+	} else if (strcmp(algorithm, "scc-nourine") == 0) {
+		if (strcmp(problem, "EE-ST") == 0) {
+			run_cc_nourine(af, output, true);
+		} else {
+			wrong_argument_flag = 1;
+		}
 	}
 	if (wrong_argument_flag) {
 		fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
