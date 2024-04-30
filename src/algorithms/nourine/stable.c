@@ -629,6 +629,40 @@ void stable_extensions_via_implications(AF* attacks, bool single_extension, FILE
 	free_unit_implication_node(imps, true, true);
 }
 
+ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
+	AF* attacked = transpose_argumentation_framework(attacks);
+	AF* conflicts = create_conflict_framework(attacks);
+	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
+	do {
+		imps = update_conflicts(conflicts, imps);
+	} while (remove_conflicts(imps, conflicts));
+	// print_unit_implications(imps);
+
+	BitSet* closure = create_bitset(attacks->size);
+	unit_close(closure, imps);
+
+	BitSet* complement = create_bitset(attacks->size);
+	ListNode* head = NULL;
+	do {
+		complement_bitset(closure, complement);
+		if (is_set_conflict_free(attacks, complement)) {
+			BitSet* extension = create_bitset(complement->size);
+			copy_bitset(complement, extension);
+			ListNode* node = create_node(extension);
+			node->next = head;
+			head = node;
+		}
+	} while (next_dominating_closure(closure, imps, attacked));
+
+	free_argumentation_framework(attacked);
+	free_argumentation_framework(conflicts);
+	free_bitset(closure);
+	free_bitset(complement);
+	free_unit_implication_node(imps, true, true);
+	
+	return head;
+}
+
 void one_stable_extension_nourine(AF* attacks, FILE* outfile) {
 	stable_extensions_via_implications(attacks, true, outfile);
 }
@@ -636,6 +670,7 @@ void one_stable_extension_nourine(AF* attacks, FILE* outfile) {
 void stable_extensions_nourine(AF* attacks, FILE* outfile) {
 	stable_extensions_via_implications(attacks, false, outfile);
 }
+
 /*
 void stable_extensions_nourine(AF* attacks, FILE *outfile) {
 
