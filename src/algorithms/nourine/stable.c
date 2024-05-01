@@ -526,7 +526,7 @@ UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) 
 
 // replace A --> b by A \ B --> b, where B are arguments conflicting with b
 bool remove_conflicts(UnitImplicationNode* head, AF* conflicts) {
-	printf("Removing conflicts...\n");
+	// printf("Removing conflicts...\n");
 	BitSet* diff = create_bitset(conflicts->size);
 	bool updated = false;
 	while (head) {
