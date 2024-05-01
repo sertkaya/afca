@@ -643,7 +643,6 @@ ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
 		imps = update_conflicts(conflicts, imps);
 	} while (remove_conflicts(imps, conflicts));
 	// print_unit_implications(imps);
-	printf("imps done\n");
 
 	BitSet* closure = create_bitset(attacks->size);
 	unit_close(closure, imps);
