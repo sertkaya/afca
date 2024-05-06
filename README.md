@@ -53,6 +53,9 @@ $ ./affca -a <algorithm> -p <problem> -o <output file> -f <input file>
 Test files for the submission to JELIA 2023 are available under:
 https://drive.google.com/file/d/188zYTf68OSvdtBYdUCxeJ0Jq4s6xHwrD/view?usp=sharing
 
+Test files for the submission to KR 2024 are available under:
+https://drive.google.com/file/d/15q1FVtfeMecol77feXOhl5DbwVU4WAoU/view?usp=drive_link
+
 # Scripts
 A bunch of scripts for processing the input frameworks are provieded under the "scripts" directory.
 ```
