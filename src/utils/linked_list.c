@@ -44,3 +44,12 @@ ListNode *insert_node(void *c, ListNode *prev) {
 	prev->next->next = next;
 	return prev->next;
 }
+
+size_t count_nodes(ListNode* node) {
+	size_t n = 0;
+	while (node) {
+		++n;
+		node = node->next;
+	}
+	return n;
+}
