@@ -22,4 +22,6 @@ ListNode *free_node(ListNode *n);
 
 ListNode *insert_node(void *c, ListNode *prev);
 
+size_t count_nodes(ListNode* node);
+
 #endif /* UTILS_LINKED_LIST_H_ */

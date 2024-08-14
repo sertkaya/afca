@@ -192,10 +192,6 @@ ListNode* compute_extensions(AF* af,
 }
 
 
-void free_map_contents(Map* subextensions) {
-
-}
-
 ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) {
     // maps a subset of arguments to a list of stable extensions of the induced argumentation subframework
     Map subextensions;

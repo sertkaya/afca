@@ -36,6 +36,12 @@ void print_extension(BitSet* ext, FILE* outfile) {
 }
 
 
+void run_scc_norris_count(AF* af, FILE* output) {
+	fprintf(output, "%lu", scc_count_stable_etensions(af, enumerate_stable_extensions_norris));
+	free_argumentation_framework(af);
+}
+
+
 void run_cc(AF* af, ListNode* (*stable_extensions)(AF* af), FILE* output, bool scc) {
 	ListNode* head = scc ? scc_stable_extensions(af, stable_extensions) : wcc_stable_extensions(af, stable_extensions);
 	ListNode* node = head;
@@ -115,7 +121,7 @@ int main(int argc, char *argv[]) {
 			strcmp(algorithm, "wcc-norris") != 0 &&
 			strcmp(algorithm, "scc-norris") != 0 &&
 			strcmp(algorithm, "scc-nourine") != 0) ||
-			(strcmp(problem, "SE-ST") != 0 && strcmp(problem, "EE-ST") != 0)) {
+			(strcmp(problem, "SE-ST") != 0 && strcmp(problem, "EE-ST") != 0 && strcmp(problem, "CE-ST") != 0)) {
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -180,6 +186,8 @@ int main(int argc, char *argv[]) {
 	} else if (strcmp(algorithm, "scc-norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			run_cc_norris(af, output, true);
+		} else if (strcmp(problem, "CE-ST") == 0) {
+			run_scc_norris_count(af, output);
 		} else {
 			wrong_argument_flag = 1;
 		}
