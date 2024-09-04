@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			wrong_argument_flag = 1;
 		}
-	} else if (strcmp(algorithm, "wcc-norris") == 0) {
+	} else if (strcmp(algorithm, "wcc-nourine") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			run_cc_nourine(af, output, false);
 		} else {
