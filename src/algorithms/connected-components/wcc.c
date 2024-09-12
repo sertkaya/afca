@@ -38,6 +38,7 @@ ListNode* wcc(AF* af, unsigned short* n) {
             undirected_dfs(af, i, visited, mask);
             ListNode* new_component = create_node(mask);
             new_component->next = first_component;
+            // TODO: new_component->c is not set! Causes segmentation fault later.
             first_component = new_component;
             (*n)++;
         }
