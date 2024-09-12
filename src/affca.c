@@ -25,51 +25,9 @@
 #include "algorithms/next-closure/stable.h"
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
-#include "algorithms/connected-components/wcc.h"
-#include "algorithms/connected-components/scc.h"
+#include "algorithms/connected-components/cc.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
-
-
-void print_extension(BitSet* ext, FILE* outfile) {
-	print_set(ext, outfile, "\n");
-}
-
-
-void run_scc_norris_count(AF* af, FILE* output) {
-	fprintf(output, "%lu", scc_count_stable_etensions(af, enumerate_stable_extensions_norris));
-	free_argumentation_framework(af);
-}
-
-
-void run_cc(AF* af, ListNode* (*stable_extensions)(AF* af), FILE* output, bool scc) {
-	ListNode* head = scc ? scc_stable_extensions(af, stable_extensions) : wcc_stable_extensions(af, stable_extensions);
-	ListNode* node = head;
-
-	while (node) {
-		print_extension(node->c, output);
-		node = node->next;
-	}
-
-	while (head) {
-		ListNode* next = head->next;
-		free_bitset((BitSet*) head->c);
-		free(head);
-		head = next;
-	}
-
-	free_argumentation_framework(af);
-}
-
-
-void run_cc_norris(AF* af, FILE* output, bool scc) {
-	run_cc(af, enumerate_stable_extensions_norris, output, scc);
-}
-
-
-void run_cc_nourine(AF* af, FILE* output, bool scc) {
-	run_cc(af, enumerate_stable_extensions_via_implications, output, scc);
-}
 
 
 void usage(char* program) {
@@ -120,6 +78,7 @@ int main(int argc, char *argv[]) {
 			strcmp(algorithm, "nourine") != 0 &&
 			strcmp(algorithm, "wcc-norris") != 0 &&
 			strcmp(algorithm, "scc-norris") != 0 &&
+			strcmp(algorithm, "wcc-nourine") != 0 &&
 			strcmp(algorithm, "scc-nourine") != 0) ||
 			(strcmp(problem, "SE-ST") != 0 && strcmp(problem, "EE-ST") != 0 && strcmp(problem, "CE-ST") != 0)) {
 		fprintf(stderr, usage, argv[0]);
