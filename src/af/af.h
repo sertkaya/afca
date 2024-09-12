@@ -150,4 +150,6 @@ PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
 BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);
 
+AF* sort_af(AF *af);
+
 #endif /* AF_AF_H_ */

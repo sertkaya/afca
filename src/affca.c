@@ -95,6 +95,9 @@ int main(int argc, char *argv[]) {
 	// Read the file into an argumentation framework.
 	AF *af = read_af(input_fd);
 
+	// Sort the af
+	AF *s_af = sort_af(af);
+
 	STOP_TIMER(stop_time);
 	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
@@ -122,9 +125,9 @@ int main(int argc, char *argv[]) {
 		}
 	} else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
-			ee_st_next_closure(af, output);
+			ee_st_next_closure(s_af, output);
 		} else if (strcmp(problem, "SE-ST") == 0) {
-			se_st_next_closure(af, output);
+			se_st_next_closure(s_af, output);
 		} else {
 			wrong_argument_flag = 1;
 		}
