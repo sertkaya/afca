@@ -114,25 +114,25 @@ int main(int argc, char *argv[]) {
 	// compute the extensions
 	if (strcmp(algorithm, "norris") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
-			incremental_stable_extensions_norris(af, output);
+			ee_st_norris(af, output);
 		} else if (strcmp(problem, "SE-ST") == 0) {
-			one_stable_extension_norris(af, output);
+			se_st_norris(af, output);
 		} else {
 			wrong_argument_flag = 1;
 		}
 	} else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
-			stable_extensions_nc(af, output);
+			ee_st_next_closure(af, output);
 		} else if (strcmp(problem, "SE-ST") == 0) {
-			one_stable_extension_nc(af, output);
+			se_st_next_closure(af, output);
 		} else {
 			wrong_argument_flag = 1;
 		}
 	} else if (strcmp(algorithm, "nourine") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
-			stable_extensions_nourine(af, output);
+			ee_st_nourine(af, output);
 		} else if (strcmp(problem, "SE-ST") == 0) {
-			one_stable_extension_nourine(af, output);
+			se_st_nourine(af, output);
 		} else {
 			wrong_argument_flag = 1;
 		}

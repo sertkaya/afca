@@ -22,8 +22,8 @@
 #include "../../utils/linked_list.h"
 
 
-void stable_extensions_nourine(AF* c, FILE *f);
+void ee_st_nourine(AF* c, FILE *f);
 
-void one_stable_extension_nourine(AF* c, FILE *f);
+void se_st_nourine(AF* c, FILE *f);
 
 ListNode* enumerate_stable_extensions_via_implications(AF* attacks);

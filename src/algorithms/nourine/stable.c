@@ -671,11 +671,11 @@ ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
 	return head;
 }
 
-void one_stable_extension_nourine(AF* attacks, FILE* outfile) {
+void se_st_nourine(AF* attacks, FILE* outfile) {
 	stable_extensions_via_implications(attacks, true, outfile);
 }
 
-void stable_extensions_nourine(AF* attacks, FILE* outfile) {
+void ee_st_nourine(AF* attacks, FILE* outfile) {
 	stable_extensions_via_implications(attacks, false, outfile);
 }
 
