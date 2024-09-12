@@ -29,21 +29,17 @@
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
-
-void usage(char* program) {
-	fprintf(stderr, "Usage: %s -i input-file -o output-file -c\n", program);
-}
-
 int main(int argc, char *argv[]) {
 	FILE* input_fd;
 	FILE* output;
 
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0;
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
+	int sort_type = 0;
 	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] -p [SE-ST, EE-ST] -f input -o output\n";
 
-	while ((c = getopt(argc, argv, "a:p:f:o:v")) != -1)
+	while ((c = getopt(argc, argv, "a:p:f:o:v:s")) != -1)
 		switch (c) {
 		case 'a':
 			algorithm_flag = 1;
@@ -63,6 +59,10 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'v':
 			verbose_flag = 1;
+			break;
+		case 's':
+			sort_flag = 1;
+			// sort_type = atoi(optarg);
 			break;
 		case '?':
 			wrong_argument_flag = 1;
@@ -93,10 +93,15 @@ int main(int argc, char *argv[]) {
 	START_TIMER(start_time);
 
 	// Read the file into an argumentation framework.
-	AF *af = read_af(input_fd);
+	AF *input_af = read_af(input_fd);
 
 	// Sort the af
-	AF *s_af = sort_af(af);
+	AF *af = input_af;
+	if (sort_flag) {
+		printf("Sorting...\n");
+		af = sort_af(input_af);
+	}
+	// TODO: free the input_af? Needed for mapping back the sorted af
 
 	STOP_TIMER(stop_time);
 	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
@@ -125,9 +130,9 @@ int main(int argc, char *argv[]) {
 		}
 	} else if (strcmp(algorithm, "next-closure") == 0) {
 		if (strcmp(problem, "EE-ST") == 0) {
-			ee_st_next_closure(s_af, output);
+			ee_st_next_closure(af, output);
 		} else if (strcmp(problem, "SE-ST") == 0) {
-			se_st_next_closure(s_af, output);
+			se_st_next_closure(af, output);
 		} else {
 			wrong_argument_flag = 1;
 		}
