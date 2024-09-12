@@ -70,7 +70,7 @@ char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, B
 	return(0);
 }
 
-void stable_extensions_nc(AF *attacks, FILE *outfile) {
+void ee_st_next_closure(AF *attacks, FILE *outfile) {
 
 	AF *not_attacks = complement_argumentation_framework(attacks);
 
@@ -104,7 +104,7 @@ void stable_extensions_nc(AF *attacks, FILE *outfile) {
 	free_argumentation_framework(not_attacks);
 }
 
-void one_stable_extension_nc(AF* attacks, FILE *outfile) {
+void se_st_next_closure(AF* attacks, FILE *outfile) {
 
 	AF* not_attacks = complement_argumentation_framework(attacks);
 

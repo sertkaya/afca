@@ -19,8 +19,8 @@
 
 #include "../../af/af.h"
 
-void stable_extensions_nc(AF* af, FILE *f);
+void ee_st_next_closure(AF* af, FILE *f);
 
-void one_stable_extension_nc(AF* af, FILE *f);
+void se_st_next_closure(AF* af, FILE *f);
 
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */

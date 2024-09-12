@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 	AF* af = read_af(fd);
 	// print_context(c);
 
-	incremental_stable_extensions_norris(af, stdout);
+	ee_st_norris(af, stdout);
 
 	return(0);
 }
