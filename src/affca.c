@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <getopt.h>
 
+#include "af/sort.h"
 #include "algorithms/next-closure/stable.h"
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
@@ -98,10 +99,9 @@ int main(int argc, char *argv[]) {
 	// Sort the af
 	AF *af = input_af;
 	if (sort_flag) {
-		printf("Sorting...\n");
 		af = sort_af(input_af);
 	}
-	// TODO: free the input_af? Needed for mapping back the sorted af
+	// TODO: free the input_af? Needed for mapping back the sorted af?
 
 	STOP_TIMER(stop_time);
 	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
@@ -132,7 +132,12 @@ int main(int argc, char *argv[]) {
 		if (strcmp(problem, "EE-ST") == 0) {
 			ee_st_next_closure(af, output);
 		} else if (strcmp(problem, "SE-ST") == 0) {
-			se_st_next_closure(af, output);
+			BitSet *st_ext = se_st_next_closure(af);
+			print_set(st_ext, output, "\n");
+			BitSet *x = map_indices_back(st_ext);
+			print_set(x, output, "\n");
+			free_bitset(st_ext);
+			free_bitset(x);
 		} else {
 			wrong_argument_flag = 1;
 		}
