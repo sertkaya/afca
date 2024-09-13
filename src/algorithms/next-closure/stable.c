@@ -104,7 +104,7 @@ void ee_st_next_closure(AF *attacks, FILE *outfile) {
 	free_argumentation_framework(not_attacks);
 }
 
-void se_st_next_closure(AF* attacks, FILE *outfile) {
+BitSet *se_st_next_closure(AF* attacks) {
 
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
@@ -122,16 +122,18 @@ void se_st_next_closure(AF* attacks, FILE *outfile) {
 		up_arrow(not_attacks, c, c_up);
 
 		if (bitset_is_equal(c, c_up)) {
-			print_set(c, outfile, "\n");
-			break;
+			printf("Number of concepts generated: %d\n", concept_count);
+			free_bitset(tmp);
+			free_bitset(c_up);
+			free_argumentation_framework(not_attacks);
+			return(c);
 		}
 		copy_bitset(c, tmp);
 	}
 	printf("Number of concepts generated: %d\n", concept_count);
-
 	free_bitset(tmp);
 	free_bitset(c);
 	free_bitset(c_up);
-
 	free_argumentation_framework(not_attacks);
+	return(NULL);
 }

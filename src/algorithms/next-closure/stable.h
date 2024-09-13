@@ -21,6 +21,7 @@
 
 void ee_st_next_closure(AF* af, FILE *f);
 
-void se_st_next_closure(AF* af, FILE *f);
+// Computes a single stable extension if there are any, and returns it
+BitSet *se_st_next_closure(AF* af);
 
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */
