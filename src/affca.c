@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 	int sort_type = 0;
 	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] -p [SE-ST, EE-ST] -f input -o output\n";
 
-	while ((c = getopt(argc, argv, "a:p:f:o:v:s")) != -1)
+	while ((c = getopt(argc, argv, "a:p:f:o:v:s:")) != -1)
 		switch (c) {
 		case 'a':
 			algorithm_flag = 1;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case 's':
 			sort_flag = 1;
-			// sort_type = atoi(optarg);
+			sort_type = atoi(optarg);
 			break;
 		case '?':
 			wrong_argument_flag = 1;
@@ -126,7 +126,10 @@ int main(int argc, char *argv[]) {
 	// Sort the af
 	AF *af = input_af;
 	if (sort_flag) {
-		af = sort_af(input_af);
+		START_TIMER(start_time);
+		af = sort_af(input_af, sort_type);
+		STOP_TIMER(stop_time);
+		printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
 	// TODO: free the input_af? Needed for mapping back the sorted af?
 
@@ -168,19 +171,17 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 		case SE_ST:
+			BitSet *se = NULL;
 			switch (alg) {
 				case NEXT_CLOSURE:
-					BitSet *st_ext = se_st_next_closure(af);
-					print_set(st_ext, output, "\n");
-					BitSet *x = map_indices_back(st_ext);
-					print_set(x, output, "\n");
-					free_bitset(st_ext);
-					free_bitset(x);
+					se = se_st_next_closure(af);
 					break;
 				case NORRIS:
+					// se = se_st_norris(af, output);
 					se_st_norris(af, output);
 					break;
 				case NOURINE:
+					// se = se_st_nourine(af, output);
 					se_st_nourine(af, output);
 					break;
 				case SCC_NORRIS:
@@ -190,6 +191,16 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);
+			}
+			if (sort_flag) {
+				// map back the indices if af was sorted before
+				BitSet *x = map_indices_back(se);
+				print_set(x, output, "\n");
+				free_bitset(x);
+			}
+			else {
+				print_set(se, output, "\n");
+				free_bitset(se);
 			}
 			break;
 		case CE_ST:
