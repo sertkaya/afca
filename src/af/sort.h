@@ -6,7 +6,9 @@
 #define SORT_H
 #include "af.h"
 
-AF* sort_af(AF *af);
+enum sort_type {ATTACKER_COUNT, VICTIM_COUNT, VICTIMS_DIVIDED_BY_ATTACKERS, ATTACKERS_DIVIDED_BY_VICTIMS};
+
+AF* sort_af(AF *af, int sort_type);
 
 BitSet *map_indices_back(BitSet *s);
 

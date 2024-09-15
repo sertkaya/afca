@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "af.h"
+#include "sort.h"
+
 
 struct index_value {
 	int index; // index of the argument
@@ -18,7 +20,7 @@ int cmp(const void *v1, const void *v2) {
 		return(0);
 }
 
-AF* sort_af(AF *af) {
+AF* sort_af(AF *af, int sort_type) {
 	AF *s_af = create_argumentation_framework(af->size);
 
 	index_value_pairs = calloc(af->size, sizeof(struct index_value));
@@ -26,44 +28,34 @@ AF* sort_af(AF *af) {
 
 	int i,j;
 
-	// number of attacks
-	/*
-	for (i = 0; i < c->size; ++i) {
-		index_value_pairs[i].index = i;
-		index_value_pairs[i].value = bitset_get_length(c->a[i]);
-	}
-	*/
-
-
-	// number of attacked_by
-	/*
-	for (i = 0; i < c->size; ++i) {
-		index_value_pairs[i].index = i;
-		index_value_pairs[i].value = 0;
-		for (j = 0; j < c->size; ++j)
-			if (TEST_BIT(c->a[j], i))
-				++index_value_pairs[i].value;
-	}
-	*/
-
-	int attacks_count = 0, attacked_by_count = 0;
+	int victim_count = 0, attacker_count = 0;
 	for (i = 0; i < af->size; ++i) {
 		index_value_pairs[i].index = i;
-		attacks_count = count_bits(af->graph[i]);
-		attacked_by_count = 0;
+		victim_count = count_bits(af->graph[i]);
+		attacker_count = 0;
 		for (j = 0; j < af->size; ++j)
 			if (TEST_BIT(af->graph[j], i))
-				++attacked_by_count;
+				++attacker_count;
 
-		// if (attacks_count == 0)
-		// 	attacks_count = 1;
-		// index_value_pairs[i].value = ((double) attacks_count) / (0.5 * attacked_by_count);
-		// index_value_pairs[i].value = ((double) attacked_by_count) / attacks_count;
-		index_value_pairs[i].value = ((double) attacks_count) / attacked_by_count;
-		// index_value_pairs[i].value = ((double) attacked_by_count) + 2 *  attacks_count;
-		// index_value_pairs[i].value = ((double) attacks_count);
-		// index_value_pairs[i].value = ((double) attacked_by_count) ;
-	}
+		// if (victim_count == 0)
+		// 	victim_count = 1;
+		// index_value_pairs[i].value = ((double) victim_count) / (0.5 * attacker_count);
+		// index_value_pairs[i].value = ((double) attacker_count) / victim_count;
+		// index_value_pairs[i].value = ((double) attacker_count) + 2 *  victim_count;
+   		switch (sort_type) {
+   			case VICTIM_COUNT:
+			index_value_pairs[i].value = ((double) victim_count);
+    		break;
+    	case ATTACKER_COUNT:
+			index_value_pairs[i].value = ((double) attacker_count) ;
+        	break;
+    	case VICTIMS_DIVIDED_BY_ATTACKERS:
+			index_value_pairs[i].value = ((double) victim_count) / attacker_count;
+        	break;
+    	default:
+        	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", sort_type);
+		}
+    }
 
 	// sort the index-value pairs according to value
 	qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp);
