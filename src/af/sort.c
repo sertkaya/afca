@@ -40,8 +40,8 @@ AF* sort_af(AF *af, int sort_type) {
 		// if (victim_count == 0)
 		// 	victim_count = 1;
 		// index_value_pairs[i].value = ((double) victim_count) / (0.5 * attacker_count);
-		// index_value_pairs[i].value = ((double) attacker_count) / victim_count;
 		// index_value_pairs[i].value = ((double) attacker_count) + 2 *  victim_count;
+        // TOOD: move this outside the loop. Use function pointers.
    		switch (sort_type) {
    			case VICTIM_COUNT:
 			index_value_pairs[i].value = ((double) victim_count);
@@ -51,6 +51,9 @@ AF* sort_af(AF *af, int sort_type) {
         	break;
     	case VICTIMS_DIVIDED_BY_ATTACKERS:
 			index_value_pairs[i].value = ((double) victim_count) / attacker_count;
+        	break;
+        case ATTACKERS_DIVIDED_BY_VICTIMS:
+			index_value_pairs[i].value = ((double) attacker_count) / victim_count;
         	break;
     	default:
         	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", sort_type);
