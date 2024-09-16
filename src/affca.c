@@ -32,12 +32,12 @@
 
 int main(int argc, char *argv[]) {
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0;
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, sort_direction_flag;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	int sort_type = 0;
+	int sort_type = 0, sort_direction = 0;
 	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] -p [SE-ST, EE-ST] -f input -o output\n";
 
-	while ((c = getopt(argc, argv, "a:p:f:o:v:s:")) != -1)
+	while ((c = getopt(argc, argv, "a:p:f:o:v:s:d:")) != -1)
 		switch (c) {
 		case 'a':
 			algorithm_flag = 1;
@@ -61,6 +61,10 @@ int main(int argc, char *argv[]) {
 		case 's':
 			sort_flag = 1;
 			sort_type = atoi(optarg);
+			break;
+		case 'd':
+			sort_direction_flag = 1;
+			sort_direction = atoi(optarg);
 			break;
 		case '?':
 			wrong_argument_flag = 1;
@@ -127,7 +131,7 @@ int main(int argc, char *argv[]) {
 	AF *af = input_af;
 	if (sort_flag) {
 		START_TIMER(start_time);
-		af = sort_af(input_af, sort_type);
+		af = sort_af(input_af, sort_type, sort_direction);
 		STOP_TIMER(stop_time);
 		printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
