@@ -24,6 +24,6 @@
 
 void ee_st_nourine(AF* c, FILE *f);
 
-void se_st_nourine(AF* c, FILE *f);
+BitSet* se_st_nourine(AF* c);
 
 ListNode* enumerate_stable_extensions_via_implications(AF* attacks);
