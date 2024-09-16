@@ -11,11 +11,19 @@ struct index_value {
 
 struct index_value *index_value_pairs = NULL;
 
-int cmp(const void *v1, const void *v2) {
+int cmp_ascending(const void *v1, const void *v2) {
 	if ((((struct index_value*) v1)-> value) > (((struct index_value*) v2)-> value))
 		return(1);
 	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
 		return(-1);
+	else
+		return(0);
+}
+int cmp_descending(const void *v1, const void *v2) {
+	if ((((struct index_value*) v1)-> value) > (((struct index_value*) v2)-> value))
+		return(-1);
+	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+		return(1);
 	else
 		return(0);
 }
@@ -36,7 +44,7 @@ double attackers_divided_by_victims(int victim_count, int attacker_count) {
   return(((double) attacker_count) / victim_count);
 }
 
-AF* sort_af(AF *af, int sort_type) {
+AF* sort_af(AF *af, int sort_type, int sort_direction) {
 	AF *s_af = create_argumentation_framework(af->size);
 
 	index_value_pairs = calloc(af->size, sizeof(struct index_value));
@@ -79,7 +87,10 @@ AF* sort_af(AF *af, int sort_type) {
     }
 
 	// sort the index-value pairs according to value
-	qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp);
+    if (sort_direction == SORT_ASCENDING)
+		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_ascending);
+    else
+		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_descending);
 
 	// fill in the new af sorted
 	for (i = 0; i < af->size; ++i) {
