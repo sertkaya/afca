@@ -181,8 +181,7 @@ int main(int argc, char *argv[]) {
 					se_st_norris(af, output);
 					break;
 				case NOURINE:
-					// se = se_st_nourine(af, output);
-					se_st_nourine(af, output);
+					se = se_st_nourine(af);
 					break;
 				case SCC_NORRIS:
 				case WCC_NORRIS:
