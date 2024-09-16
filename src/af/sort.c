@@ -20,14 +20,48 @@ int cmp(const void *v1, const void *v2) {
 		return(0);
 }
 
+double victim_count(int victim_count, int attacker_count) {
+  return((double) victim_count);
+}
+
+double attacker_count(int victim_count, int attacker_count) {
+  return((double) attacker_count);
+}
+
+double victims_divided_by_attackers(int victim_count, int attacker_count) {
+  return(((double) victim_count) / attacker_count);
+}
+
+double attackers_divided_by_victims(int victim_count, int attacker_count) {
+  return(((double) attacker_count) / victim_count);
+}
+
 AF* sort_af(AF *af, int sort_type) {
 	AF *s_af = create_argumentation_framework(af->size);
 
 	index_value_pairs = calloc(af->size, sizeof(struct index_value));
 	assert(index_value_pairs != NULL);
 
-	int i,j;
+    double (*metric_function)(int, int) = NULL;
+   	switch (sort_type) {
+   		case VICTIM_COUNT:
+    		metric_function = &victim_count;
+    		break;
+    	case ATTACKER_COUNT:
+    		metric_function = &attacker_count;
+        	break;
+    	case VICTIMS_DIVIDED_BY_ATTACKERS:
+    		metric_function = &victims_divided_by_attackers;
+        	break;
+        case ATTACKERS_DIVIDED_BY_VICTIMS:
+    		metric_function = &attackers_divided_by_victims;
+        	break;
+    	default:
+        	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", sort_type);
+    		metric_function = &victims_divided_by_attackers;
+	}
 
+	int i,j;
 	int victim_count = 0, attacker_count = 0;
 	for (i = 0; i < af->size; ++i) {
 		index_value_pairs[i].index = i;
@@ -37,27 +71,11 @@ AF* sort_af(AF *af, int sort_type) {
 			if (TEST_BIT(af->graph[j], i))
 				++attacker_count;
 
+		index_value_pairs[i].value = metric_function(victim_count, attacker_count);
 		// if (victim_count == 0)
 		// 	victim_count = 1;
 		// index_value_pairs[i].value = ((double) victim_count) / (0.5 * attacker_count);
 		// index_value_pairs[i].value = ((double) attacker_count) + 2 *  victim_count;
-        // TOOD: move this outside the loop. Use function pointers.
-   		switch (sort_type) {
-   			case VICTIM_COUNT:
-			index_value_pairs[i].value = ((double) victim_count);
-    		break;
-    	case ATTACKER_COUNT:
-			index_value_pairs[i].value = ((double) attacker_count) ;
-        	break;
-    	case VICTIMS_DIVIDED_BY_ATTACKERS:
-			index_value_pairs[i].value = ((double) victim_count) / attacker_count;
-        	break;
-        case ATTACKERS_DIVIDED_BY_VICTIMS:
-			index_value_pairs[i].value = ((double) attacker_count) / victim_count;
-        	break;
-    	default:
-        	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", sort_type);
-		}
     }
 
 	// sort the index-value pairs according to value
