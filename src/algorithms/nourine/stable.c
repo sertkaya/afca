@@ -700,15 +700,18 @@ BitSet* se_st_nourine(AF* attacks) {
 	unit_close(closure, imps);
 
 	BitSet* complement = create_bitset(attacks->size);
+	int closure_count = 0;
 	do {
-		print_bitset(closure, stdout);
-		printf("\n");
+		++closure_count;
+		// print_bitset(closure, stdout);
+		// printf("\n");
 		complement_bitset(closure, complement);
 		if (is_set_conflict_free(attacks, complement)) {
 			free_argumentation_framework(attacked);
 			free_argumentation_framework(conflicts);
 			free_bitset(closure);
 			free_unit_implication_node(imps, true, true);
+			printf("Closure count: %d\n", closure_count);
 			return(complement);
 		}
 	} while (next_dominating_closure(closure, imps, attacked));

@@ -12,18 +12,18 @@ struct index_value {
 struct index_value *index_value_pairs = NULL;
 
 int cmp_ascending(const void *v1, const void *v2) {
-	if ((((struct index_value*) v1)-> value) > (((struct index_value*) v2)-> value))
-		return(1);
-	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+	if ((((struct index_value*) v1)-> value) < (((struct index_value*) v2)-> value))
 		return(-1);
+	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+		return(1);
 	else
 		return(0);
 }
 int cmp_descending(const void *v1, const void *v2) {
-	if ((((struct index_value*) v1)-> value) > (((struct index_value*) v2)-> value))
-		return(-1);
-	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+	if ((((struct index_value*) v1)-> value) < (((struct index_value*) v2)-> value))
 		return(1);
+	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+		return(-1);
 	else
 		return(0);
 }
