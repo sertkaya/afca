@@ -148,6 +148,7 @@ int main(int argc, char *argv[]) {
 
 	START_TIMER(start_time);
 
+	// TODO: Think about a matrix with pointers to relevant functions.
 	switch(prob) {
 		case EE_ST:
 			switch (alg) {

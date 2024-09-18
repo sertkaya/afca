@@ -14,7 +14,7 @@ struct index_value *index_value_pairs = NULL;
 int cmp_ascending(const void *v1, const void *v2) {
 	if ((((struct index_value*) v1)-> value) < (((struct index_value*) v2)-> value))
 		return(-1);
-	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+	else if ((((struct index_value*) v2)-> value) < (((struct index_value*) v1)-> value))
 		return(1);
 	else
 		return(0);
@@ -22,7 +22,7 @@ int cmp_ascending(const void *v1, const void *v2) {
 int cmp_descending(const void *v1, const void *v2) {
 	if ((((struct index_value*) v1)-> value) < (((struct index_value*) v2)-> value))
 		return(1);
-	else if ((((struct index_value*) v2)-> value) > (((struct index_value*) v1)-> value))
+	else if ((((struct index_value*) v2)-> value) < (((struct index_value*) v1)-> value))
 		return(-1);
 	else
 		return(0);
@@ -42,6 +42,10 @@ double victims_divided_by_attackers(int victim_count, int attacker_count) {
 
 double attackers_divided_by_victims(int victim_count, int attacker_count) {
   return(((double) attacker_count) / victim_count);
+}
+
+double victims_minus_attackers(int victim_count, int attacker_count) {
+  return(((double) victim_count) - attacker_count);
 }
 
 AF* sort_af(AF *af, int sort_type, int sort_direction) {
@@ -64,6 +68,9 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
         case ATTACKERS_DIVIDED_BY_VICTIMS:
     		metric_function = &attackers_divided_by_victims;
         	break;
+        case VICTIMS_MINUS_ATTACKERS:
+    		metric_function = &victims_minus_attackers;
+            break;
     	default:
         	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", sort_type);
     		metric_function = &victims_divided_by_attackers;
@@ -87,10 +94,10 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
     }
 
 	// sort the index-value pairs according to value
-    if (sort_direction == SORT_ASCENDING)
-		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_ascending);
-    else
+    if (sort_direction == SORT_DESCENDING)
 		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_descending);
+    else
+		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_ascending);
 
 	// fill in the new af sorted
 	for (i = 0; i < af->size; ++i) {
