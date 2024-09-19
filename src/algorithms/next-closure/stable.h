@@ -18,8 +18,9 @@
 #define AF_STABLE_EXTENSIONS_NC_H_
 
 #include "../../af/af.h"
+#include "../../utils/list.h"
 
-void ee_st_next_closure(AF* af, FILE *f);
+List* ee_st_next_closure(AF* af);
 
 // Computes a single stable extension if there are any, and returns it
 BitSet *se_st_next_closure(AF* af);

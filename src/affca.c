@@ -32,7 +32,7 @@
 
 int main(int argc, char *argv[]) {
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, sort_direction_flag;
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0;
 	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] -p [SE-ST, EE-ST] -f input -o output\n";
@@ -63,7 +63,6 @@ int main(int argc, char *argv[]) {
 			sort_type = atoi(optarg);
 			break;
 		case 'd':
-			sort_direction_flag = 1;
 			sort_direction = atoi(optarg);
 			break;
 		case '?':
@@ -149,11 +148,12 @@ int main(int argc, char *argv[]) {
 	START_TIMER(start_time);
 
 	// TODO: Think about a matrix with pointers to relevant functions.
+	List *result = NULL;
 	switch(prob) {
 		case EE_ST:
 			switch (alg) {
 				case NEXT_CLOSURE:
-					ee_st_next_closure(af, output);
+					result = ee_st_next_closure(af);
 					break;
 				case NORRIS:
 					ee_st_norris(af, output);
@@ -173,6 +173,25 @@ int main(int argc, char *argv[]) {
 				case WCC_NOURINE:
 					run_cc_nourine(af, output, false);
 					break;
+			}
+			if (sort_flag) {
+				// map back the indices if af was sorted before
+				int i;
+				for (i = 0; i < result->size; ++i) {
+					BitSet *x = map_indices_back(result->elements[i]);
+					print_set(x, output, "\n");
+					free_bitset(x);
+					free_bitset(result->elements[i]);
+				}
+				list_free(result);
+			}
+			else {
+				int i;
+				for (i = 0; i < result->size; ++i) {
+					print_set((BitSet*) (result->elements[i]), output, "\n");
+					free_bitset(result->elements[i]);
+				}
+				list_free(result);
 			}
 			break;
 		case SE_ST:
