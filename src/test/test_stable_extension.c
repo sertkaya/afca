@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	AF* af = read_af(fd);
 	// print_context(c);
 
-	ee_st_next_closure(af, stdout);
+	ee_st_next_closure(af);
 
 	return(0);
 }
