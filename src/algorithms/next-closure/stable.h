@@ -20,9 +20,9 @@
 #include "../../af/af.h"
 #include "../../utils/list.h"
 
-List* ee_st_next_closure(AF* af);
+void ee_st_next_closure(AF* af, List* result);
 
 // Computes a single stable extension if there are any, and returns it
-BitSet *se_st_next_closure(AF* af);
+void *se_st_next_closure(AF* af, BitSet* result);
 
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */
