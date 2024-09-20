@@ -20,9 +20,13 @@
 #include "../../af/af.h"
 #include "../../utils/list.h"
 
+// Computes all stable extensions and puts them into result
 void ee_st_next_closure(AF* af, List* result);
 
-// Computes a single stable extension if there are any, and returns it
+// Computes a single stable extension if there are any, and puts it into result
 void *se_st_next_closure(AF* af, BitSet* result);
+
+// Computes a stable extension containging arg (if there is any), and put it into result
+void dc_st_next_closure(AF* af, int argument, BitSet* result);
 
 #endif /* AF_STABLE_EXTENSIONS_NC_H_ */

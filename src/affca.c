@@ -32,14 +32,15 @@
 
 int main(int argc, char *argv[]) {
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0;
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	int sort_type = 0, sort_direction = 0;
-	static char usage[] = "Usage: %s -a [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] -p [SE-ST, EE-ST] -f input -o output\n";
+	int sort_type = 0, sort_direction = 0, argument;
+	static char usage[] = "Usage: %s -l [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] "
+					      "-p [SE-ST, EE-ST, DC-ST] -a argument -f input -o output\n";
 
-	while ((c = getopt(argc, argv, "a:p:f:o:v:s:d:")) != -1)
+	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
 		switch (c) {
-		case 'a':
+		case 'l':
 			algorithm_flag = 1;
 			algorithm = optarg;
 			break;
@@ -64,6 +65,10 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'd':
 			sort_direction = atoi(optarg);
+			break;
+		case 'a':
+			argument_flag = 1;
+			argument = atoi(optarg);
 			break;
 		case '?':
 			wrong_argument_flag = 1;
@@ -96,7 +101,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	enum prob_type {EE_ST, SE_ST, CE_ST};
+	enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST};
 	enum prob_type prob;
 	if (strcmp(problem, "EE-ST") == 0)
 		prob = EE_ST;
@@ -104,6 +109,13 @@ int main(int argc, char *argv[]) {
 		prob = SE_ST;
 	else if (strcmp(problem, "CE-ST") == 0)
 		prob = CE_ST;
+	else if (strcmp(problem, "DC-ST") == 0) {
+		prob = DC_ST;
+		if (!argument_flag) {
+			fprintf(stderr, usage, argv[0]);
+			exit(EXIT_FAILURE);
+		}
+	}
 	else {
 		fprintf(stderr, "Unknown problem %s\n", problem);
 		fprintf(stderr, usage, argv[0]);
@@ -194,17 +206,17 @@ int main(int argc, char *argv[]) {
 			list_free(result);
 			break;
 		case SE_ST:
-			BitSet *r = create_bitset(af->size);
+			BitSet *result_se = create_bitset(af->size);
 			switch (alg) {
 				case NEXT_CLOSURE:
-					se_st_next_closure(af, r);
+					se_st_next_closure(af, result_se);
 					break;
 				case NORRIS:
 					// se = se_st_norris(af, output);
 					se_st_norris(af, output);
 					break;
 				case NOURINE:
-					se_st_nourine(af, r);
+					se_st_nourine(af, result_se);
 					break;
 				case SCC_NORRIS:
 				case WCC_NORRIS:
@@ -216,14 +228,49 @@ int main(int argc, char *argv[]) {
 			}
 			if (sort_flag) {
 				// map back the indices if af was sorted before
-				BitSet *x = map_indices_back(r);
+				BitSet *x = map_indices_back(result_se);
 				print_set(x, output, "\n");
 				free_bitset(x);
 			}
 			else {
-				print_set(r, output, "\n");
+				print_set(result_se, output, "\n");
 			}
-			free_bitset(r);
+			free_bitset(result_se);
+			break;
+		case DC_ST:
+			// On the command line arguments are named starting from 1. Internally, they start from 0:
+			--argument;
+			BitSet *result_dc =  create_bitset(af->size);
+			switch (alg) {
+				case NEXT_CLOSURE:
+					dc_st_next_closure(af, argument, result_dc);
+					break;
+				case NORRIS:
+				case NOURINE:
+				case SCC_NORRIS:
+				case WCC_NORRIS:
+				case SCC_NOURINE:
+				case WCC_NOURINE:
+					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+					fclose(output);
+					exit(EXIT_FAILURE);
+			}
+		    if (bitset_is_emptyset(result_dc)) {
+				// No stable extension containing argument
+			    fprintf(output, "NO\n");
+		    }
+			else {
+				if (sort_flag) {
+					// map back the indices if af was sorted before
+					BitSet *x = map_indices_back(result_dc);
+					print_set(x, output, "\n");
+					free_bitset(x);
+				}
+				else {
+					print_set(result_dc, output, "\n");
+				}
+				free_bitset(result_dc);
+			}
 			break;
 		case CE_ST:
 			switch (alg) {
