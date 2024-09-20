@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
-	static char usage[] = "Usage: %s -l [next-closure | norris | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] "
+	static char usage[] = "Usage: %s -l [next-closure | norris | norris-bu | nourine | scc-norris | wcc-norris | scc-nourine | wcc-nourine] "
 					      "-p [SE-ST, EE-ST, DC-ST] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	enum alg_type {NEXT_CLOSURE , NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, SCC_NOURINE, WCC_NOURINE};
+	enum alg_type {NEXT_CLOSURE , NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
 	enum alg_type alg;
 	if (strcmp(algorithm, "next-closure") ==0)
 		alg = NEXT_CLOSURE;
@@ -91,6 +91,8 @@ int main(int argc, char *argv[]) {
 		alg = SCC_NORRIS;
 	else if (strcmp(algorithm, "wcc-norris") ==0)
 		alg = WCC_NORRIS;
+	else if (strcmp(algorithm, "norris-bu") == 0)
+		alg = NORRIS_BU;
 	else if (strcmp(algorithm, "scc-nourine") ==0)
 		alg = SCC_NOURINE;
 	else if (strcmp(algorithm, "wcc-nourine") ==0)
@@ -161,7 +163,7 @@ int main(int argc, char *argv[]) {
 
 	// TODO: Think about a matrix with pointers to relevant functions.
 	switch(prob) {
-		case EE_ST:
+		case EE_ST: {
 			List *result = list_create();
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -179,6 +181,8 @@ int main(int argc, char *argv[]) {
 				case WCC_NORRIS:
 					run_cc_norris(af, output, false);
 					break;
+				case NORRIS_BU:
+					run_norris_bu(af, output);
 				case SCC_NOURINE:
 					run_cc_nourine(af, output, true);
 					break;
@@ -205,7 +209,8 @@ int main(int argc, char *argv[]) {
 			}
 			list_free(result);
 			break;
-		case SE_ST:
+		}
+		case SE_ST: {
 			BitSet *result_se = create_bitset(af->size);
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -220,6 +225,7 @@ int main(int argc, char *argv[]) {
 					break;
 				case SCC_NORRIS:
 				case WCC_NORRIS:
+				case NORRIS_BU:
 				case SCC_NOURINE:
 				case WCC_NOURINE:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
@@ -237,6 +243,7 @@ int main(int argc, char *argv[]) {
 			}
 			free_bitset(result_se);
 			break;
+		}
 		case DC_ST:
 			// On the command line arguments are named starting from 1. Internally, they start from 0:
 			--argument;
@@ -246,6 +253,7 @@ int main(int argc, char *argv[]) {
 					dc_st_next_closure(af, argument, result_dc);
 					break;
 				case NORRIS:
+				case NORRIS_BU:
 				case NOURINE:
 				case SCC_NORRIS:
 				case WCC_NORRIS:
@@ -278,6 +286,7 @@ int main(int argc, char *argv[]) {
 					run_scc_norris_count(af, output);
 					break;
 				case NEXT_CLOSURE:
+				case NORRIS_BU:
 				case NOURINE:
 				case SCC_NORRIS:
 				case WCC_NORRIS:
