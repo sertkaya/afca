@@ -71,7 +71,7 @@ char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, B
 	return(0);
 }
 
-List* ee_st_next_closure(AF *attacks) {
+void ee_st_next_closure(AF *attacks, List* result) {
 
 	AF *not_attacks = complement_argumentation_framework(attacks);
 
@@ -81,7 +81,6 @@ List* ee_st_next_closure(AF *attacks) {
 	BitSet* c_up = create_bitset(attacks->size);
 
 	int concept_count = 0, stable_extension_count = 0;
-	List* result = list_create();
 	while (1) {
 		if (!next_conflict_free_closure(not_attacks, attacks, tmp, c))
 			break;
@@ -107,10 +106,10 @@ List* ee_st_next_closure(AF *attacks) {
 
 	free_argumentation_framework(not_attacks);
 
-	return(result);
+	return;
 }
 
-BitSet *se_st_next_closure(AF* attacks) {
+void se_st_next_closure(AF* attacks, BitSet* result) {
 
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
@@ -128,11 +127,8 @@ BitSet *se_st_next_closure(AF* attacks) {
 		up_arrow(not_attacks, c, c_up);
 
 		if (bitset_is_equal(c, c_up)) {
-			printf("Number of concepts generated: %d\n", concept_count);
-			free_bitset(tmp);
-			free_bitset(c_up);
-			free_argumentation_framework(not_attacks);
-			return(c);
+			copy_bitset(c, result);
+			break;
 		}
 		copy_bitset(c, tmp);
 	}
@@ -141,5 +137,5 @@ BitSet *se_st_next_closure(AF* attacks) {
 	free_bitset(c);
 	free_bitset(c_up);
 	free_argumentation_framework(not_attacks);
-	return(NULL);
+	return;
 }

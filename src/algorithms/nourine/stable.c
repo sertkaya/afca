@@ -515,9 +515,9 @@ unsigned int count_unit_implications(UnitImplicationNode* head) {
 
 
 UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) {
-	printf("Implications before reduction: %d\n", count_unit_implications(impl));
+	// printf("Implications before reduction: %d\n", count_unit_implications(impl));
 	impl = reduce_unit_implications(impl);
-	printf("Implications after reduction: %d\n", count_unit_implications(impl));
+	// printf("Implications after reduction: %d\n", count_unit_implications(impl));
 	for (SIZE_TYPE i = 0; i < conflicts->size; ++i) {
 		unit_close(conflicts->graph[i], impl);
 	}
@@ -534,13 +534,13 @@ UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) 
 			}
 		}
 	}
-	printf("Conflicts updated.\n");
+	// printf("Conflicts updated.\n");
 	return impl;
 }
 
 // replace A --> b by A \ B --> b, where B are arguments conflicting with b
 bool remove_conflicts(UnitImplicationNode* head, AF* conflicts) {
-	printf("Removing conflicts...\n");
+	// printf("Removing conflicts...\n");
 	BitSet* diff = create_bitset(conflicts->size);
 	bool updated = false;
 	while (head) {
@@ -552,7 +552,7 @@ bool remove_conflicts(UnitImplicationNode* head, AF* conflicts) {
 		head = head->next;
 	}
 	free_bitset(diff);
-	printf("Done.\n");
+	// printf("Done.\n");
 	return updated;
 }
 
@@ -633,8 +633,8 @@ void stable_extensions_via_implications(AF* attacks, bool single_extension, FILE
 
 	BitSet* complement = create_bitset(attacks->size);
 	do {
-		print_bitset(closure, stdout);
-		printf("\n");
+		// print_bitset(closure, stdout);
+		// printf("\n");
 		complement_bitset(closure, complement);
 		if (is_set_conflict_free(attacks, complement)) {
 			print_set(complement, outfile, "\n");
@@ -687,14 +687,14 @@ ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
 	return head;
 }
 
-BitSet* se_st_nourine(AF* attacks) {
+void se_st_nourine(AF* attacks, BitSet* result) {
 	AF* attacked = transpose_argumentation_framework(attacks);
 	AF* conflicts = create_conflict_framework(attacks);
 	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
 	do {
 		imps = update_conflicts(conflicts, imps);
 	} while (remove_conflicts(imps, conflicts));
-	print_unit_implications(imps);
+	// print_unit_implications(imps);
 
 	BitSet* closure = create_bitset(attacks->size);
 	unit_close(closure, imps);
@@ -712,10 +712,12 @@ BitSet* se_st_nourine(AF* attacks) {
 			free_bitset(closure);
 			free_unit_implication_node(imps, true, true);
 			printf("Closure count: %d\n", closure_count);
-			return(complement);
+			copy_bitset(complement, result);
+			break;
+			// return(complement);
 		}
 	} while (next_dominating_closure(closure, imps, attacked));
-	return(NULL);
+	return;
 }
 
 void ee_st_nourine(AF* attacks, FILE* outfile) {
