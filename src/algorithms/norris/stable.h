@@ -28,4 +28,9 @@ void se_st_norris(AF* af, FILE *outfile);
 
 ListNode* enumerate_stable_extensions_norris(AF* af);
 
+ListNode* enumerate_stable_extensions_norris_bottom_up(AF* af);
+
+void run_norris_bu(AF* af, FILE* output);
+
+
 #endif /* AF_STABLE_EXTENSIONS_NORRIS_H_ */
