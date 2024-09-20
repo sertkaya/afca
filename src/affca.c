@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
 					ee_st_norris(af, output);
 					break;
 				case NOURINE:
-					ee_st_nourine(af, output);
+					ee_st_nourine(af, result);
 					break;
 				case SCC_NORRIS:
 					run_cc_norris(af, output, true);
