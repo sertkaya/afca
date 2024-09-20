@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
 	// TODO: Think about a matrix with pointers to relevant functions.
 	switch(prob) {
-		case EE_ST:
+		case EE_ST: {
 			List *result = list_create();
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -193,7 +193,8 @@ int main(int argc, char *argv[]) {
 			}
 			list_free(result);
 			break;
-		case SE_ST:
+		}
+		case SE_ST: {
 			BitSet *r = create_bitset(af->size);
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -225,6 +226,7 @@ int main(int argc, char *argv[]) {
 			}
 			free_bitset(r);
 			break;
+		}
 		case CE_ST:
 			switch (alg) {
 				case NORRIS:
