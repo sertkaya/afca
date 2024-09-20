@@ -110,7 +110,6 @@ void ee_st_next_closure(AF *attacks, List* result) {
 }
 
 void se_st_next_closure(AF* attacks, BitSet* result) {
-
 	AF* not_attacks = complement_argumentation_framework(attacks);
 
 	BitSet* tmp = create_bitset(attacks->size);
@@ -138,4 +137,87 @@ void se_st_next_closure(AF* attacks, BitSet* result) {
 	free_bitset(c_up);
 	free_argumentation_framework(not_attacks);
 	return;
+}
+
+void dc_st_next_closure(AF* attacks, int argument, BitSet* result) {
+	if (CHECK_ARG_ATTACKS_ARG(attacks, argument, argument))
+		return;
+
+	int i;
+	int *mapping = (int *) calloc(attacks->size, sizeof(int));
+	assert(mapping != NULL);
+	// first fill the mapping with the usual indices
+	for (i = 0; i < attacks->size; ++i) {
+		mapping[i] = i;
+	}
+	// move the conflicting arguments to the beginning
+	int p = 0, temp = 0, index_argument = argument;
+	// the mask will be used later for terminating the next-closure loop
+	BitSet* mask = create_bitset(attacks->size);
+	for (i = 0; i < attacks->size; ++i) {
+		if ((CHECK_ARG_ATTACKS_ARG(attacks, i, argument) || CHECK_ARG_ATTACKS_ARG(attacks, argument, i))) {
+			printf("i: %d\n", i);
+			temp = mapping[p];
+			mapping[p] = mapping[i];
+			mapping[i] = temp;
+			SET_BIT(mask, p);
+			++p;
+			// remember the index of the argument
+			if (mapping[i] == argument)
+				index_argument = i;
+		}
+	}
+	// move argument to right after the conflicting ones
+	temp = mapping[p];
+	mapping[p] = argument;
+	mapping[index_argument] = temp;
+
+	// display the mapping
+	// for (i = 0; i < attacks->size; ++i)
+	// 	printf("%d ", mapping[i] + 1);
+	// printf("\n");
+
+	AF *attacks_mapped = create_argumentation_framework(attacks->size);
+	// fill in the new af according to the mapping
+	int j;
+	for (i = 0; i < attacks->size; ++i) {
+		for (j = 0; j < attacks->size; ++j) {
+			if (TEST_BIT(attacks->graph[mapping[i]], mapping[j]))
+				SET_BIT(attacks_mapped->graph[i], j);
+		}
+	}
+
+	// complement of the mapped attacks relation
+	AF* not_attacks_mapped = complement_argumentation_framework(attacks_mapped);
+
+	// print_argumentation_framework(not_attacks_mapped);
+
+	BitSet* tmp = create_bitset(attacks->size);
+	// set the argument bit. this is the starting point
+	SET_BIT(tmp, argument);
+	BitSet* c = create_bitset(attacks->size);
+	BitSet* c_up = create_bitset(attacks->size);
+
+
+	int concept_count = 0;
+
+	while (is_bitset_intersection_empty(tmp, mask)) {
+		if (!next_conflict_free_closure(not_attacks_mapped, attacks_mapped, tmp, c))
+			break;
+		++concept_count;
+
+		up_arrow(not_attacks_mapped, c, c_up);
+
+		if (bitset_is_equal(c, c_up)) {
+			copy_bitset(c, result);
+			break;
+		}
+		copy_bitset(c, tmp);
+	}
+	printf("Number of concepts generated: %d\n", concept_count);
+	free_bitset(tmp);
+	free_bitset(c);
+	free_bitset(c_up);
+	free_argumentation_framework(attacks_mapped);
+	free_argumentation_framework(not_attacks_mapped);
 }
