@@ -209,6 +209,8 @@ void dc_st_next_closure(AF* attacks, int argument, BitSet* result) {
 		up_arrow(not_attacks_mapped, c, c_up);
 
 		if (bitset_is_equal(c, c_up)) {
+			// TODO:
+			// indices of result need to be mapped back to original indices
 			copy_bitset(c, result);
 			break;
 		}
