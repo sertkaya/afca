@@ -174,8 +174,8 @@ void dc_st_next_closure(AF* attacks, int argument, BitSet* result) {
 
 	// display the mapping
 	// for (i = 0; i < attacks->size; ++i)
-	// 	printf("%d ", mapping[i] + 1);
-	// printf("\n");
+	//  	printf("%d ", mapping[i]);
+	//  printf("\n");
 
 	AF *attacks_mapped = create_argumentation_framework(attacks->size);
 	// fill in the new af according to the mapping
@@ -194,13 +194,15 @@ void dc_st_next_closure(AF* attacks, int argument, BitSet* result) {
 
 	BitSet* tmp = create_bitset(attacks->size);
 	// set the argument bit. this is the starting point
-	SET_BIT(tmp, argument);
+	// SET_BIT(tmp, mapping[argument]);
+	SET_BIT(tmp, p);
 	BitSet* c = create_bitset(attacks->size);
 	BitSet* c_up = create_bitset(attacks->size);
 
-
 	int concept_count = 0;
 
+	print_bitset(tmp, stdout);
+	printf("\n");
 	while (is_bitset_intersection_empty(tmp, mask)) {
 		if (!next_conflict_free_closure(not_attacks_mapped, attacks_mapped, tmp, c))
 			break;
@@ -211,7 +213,10 @@ void dc_st_next_closure(AF* attacks, int argument, BitSet* result) {
 		if (bitset_is_equal(c, c_up)) {
 			// TODO:
 			// indices of result need to be mapped back to original indices
-			copy_bitset(c, result);
+			for (i = 0; i < c->size; ++i)
+				if (TEST_BIT(c, i))
+					SET_BIT(result, mapping[i]);
+			// copy_bitset(c, result);
 			break;
 		}
 		copy_bitset(c, tmp);
