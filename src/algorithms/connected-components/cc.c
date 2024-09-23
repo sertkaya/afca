@@ -57,6 +57,11 @@ void run_cc_norris(AF* af, FILE* output, bool scc) {
 }
 
 
+void run_cc_norris_bu(AF* af, FILE* output, bool scc) {
+	run_cc(af, enumerate_stable_extensions_norris_bottom_up, output, scc);
+}
+
+
 void run_cc_nourine(AF* af, FILE* output, bool scc) {
 	run_cc(af, enumerate_stable_extensions_via_implications, output, scc);
 }

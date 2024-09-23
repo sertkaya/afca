@@ -24,6 +24,8 @@ void run_cc(AF* af, ListNode* (*stable_extensions)(AF* af), FILE* output, bool s
 
 void run_cc_norris(AF* af, FILE* output, bool scc);
 
+void run_cc_norris_bu(AF* af, FILE* output, bool scc);
+
 void run_cc_nourine(AF* af, FILE* output, bool scc);
 
 #endif //CC_H

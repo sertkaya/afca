@@ -25,6 +25,18 @@ Concept* create_concept_bu(BitSet* extent, BitSet* intent) {
 }
 
 
+void arrow_up(AF* af, BitSet* s, BitSet* r) {
+    for (SIZE_TYPE i = 0; i < af->size; ++i) {  // full set
+        	SET_BIT(r, i);
+	}
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (TEST_BIT(s, i)) {
+			bitset_intersection(r, af->graph[i], r);
+		}
+	}
+}
+
+
 void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** pextensions) {
     ListNode* extensions = *pextensions;
 
@@ -54,7 +66,8 @@ void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** 
 
 			if (is_new_extent_closed) {
                 BitSet* up = create_bitset(not_attacks->size);
-                up_arrow(not_attacks, new_intent, up);
+                arrow_up(not_attacks, new_intent, up);
+
 				if (bitset_is_equal(new_intent, up)) {  // new_intent is stable
                     ListNode* ext = create_node(new_intent);
                     ext->next = extensions;
@@ -73,8 +86,8 @@ void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** 
         }
 		cur = cur->next;
 	}
-    phead = &head;
-    pextensions = &extensions;
+    *phead = head;
+    *pextensions = extensions;
 }
 
 
@@ -94,6 +107,7 @@ ListNode* enumerate_stable_extensions_norris_bottom_up(AF* af)
 
 	ListNode* extensions = NULL;
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
+		printf("\ni = %d\n", i);
 		add_to_list_bu(not_attacks, i, &head, &extensions);
 	}
 
