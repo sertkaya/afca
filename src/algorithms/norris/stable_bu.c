@@ -55,20 +55,18 @@ void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** 
 			if (is_new_extent_closed) {
                 BitSet* up = create_bitset(not_attacks->size);
                 up_arrow(not_attacks, new_intent, up);
-                if (bitset_is_subset(new_intent, up)) { // new_intent is conflict-free
-                    if (bitset_is_equal(new_intent, up)) {  // new_intent is stable
-                        ListNode* ext = create_node(new_intent);
-                        ext->next = extensions;
-                        extensions = ext;
-                    }
-                } else if (bitset_is_subset(up, new_intent)) {  // new_intent is a dominating set
-                    BitSet* new_extent = create_bitset(not_attacks->size);
-                    copy_bitset(c->extent, new_extent);
-                    SET_BIT(new_extent, i);
+				if (bitset_is_equal(new_intent, up)) {  // new_intent is stable
+                    ListNode* ext = create_node(new_intent);
+                    ext->next = extensions;
+                    extensions = ext;
+				} else if (bitset_is_subset(up, new_intent)) {	// new_intent is a dominating set
+					BitSet* new_extent = create_bitset(not_attacks->size);
+					copy_bitset(c->extent, new_extent);
+					SET_BIT(new_extent, i);
 
-                    ListNode* new_node = create_node(create_concept_bu(new_extent, new_intent));
-                    new_node->next = head;
-                    head = new_node;
+					ListNode* new_node = create_node(create_concept_bu(new_extent, new_intent));
+					new_node->next = head;
+					head = new_node;
                 }
                 free_bitset(up);
             }
