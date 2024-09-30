@@ -94,24 +94,27 @@ void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** 
 
 ListNode* enumerate_stable_extensions_norris_bottom_up(AF* af)
 {
-	concept_count_bu = 0;
-	AF* not_attacks = complement_argumentation_framework(af);
-
-	BitSet* extent = create_bitset(af->size);   // empty set
 	BitSet* intent = create_bitset(af->size);
     for (SIZE_TYPE i = 0; i < af->size; ++i) {  // full set
         SET_BIT(intent, i);
     }
-	Concept* c = create_concept_bu(extent, intent);
-	ListNode* head = create_node(c);
+	if (is_set_conflict_free(af, intent)) {
+		return create_node(intent);
+	}
 
+	concept_count_bu = 0;
+
+	ListNode* head = create_node(create_concept_bu(create_bitset(af->size), intent));
+
+	AF* not_attacks = complement_argumentation_framework(af);
 	ListNode* extensions = NULL;
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		printf("\ni = %d\n", i);
 		add_to_list_bu(not_attacks, i, &head, &extensions);
 	}
-
 	free_argumentation_framework(not_attacks);
+
+	printf("Number of created concepts: %d\n", concept_count_bu);
 
 	return extensions;
 }
