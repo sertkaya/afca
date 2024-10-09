@@ -10,8 +10,8 @@
 #include "../utils/linked_list.h"
 
 
-void undirected_dfs(AF* af, int i, bool* visited, bool* component) {
-    component[i] = true;
+void undirected_dfs(AF* af, int i, bool* visited, BitSet* component) {
+    SET_BIT(component, i);
     visited[i] = true;
     for (unsigned short j = 1; j < af->size; ++j) {
         if (!visited[j] && (TEST_BIT(af->graph[i], j) || TEST_BIT(af->graph[j], i))) {
@@ -23,7 +23,7 @@ void undirected_dfs(AF* af, int i, bool* visited, bool* component) {
 
 ListNode* wcc(AF* af, unsigned short* n) {
     // components are stored in ListNodes
-    // each component is stored as a boolean mask
+    // each component is stored as a BitSet mask
     bool visited[af->size];
     for (unsigned short i = 0; i < af->size; ++i) {
         visited[i] = false;
@@ -34,7 +34,7 @@ ListNode* wcc(AF* af, unsigned short* n) {
     
     for (unsigned short i = 0; i < af->size; ++i) {
         if (!visited[i]) {
-            bool* mask = calloc(sizeof(bool), af->size);
+            BitSet* mask = create_bitset(af->size);
             undirected_dfs(af, i, visited, mask);
             ListNode* new_component = create_node(mask);
             new_component->next = first_component;
@@ -43,7 +43,6 @@ ListNode* wcc(AF* af, unsigned short* n) {
             (*n)++;
         }
     }
-    
     return first_component;
 }
 
