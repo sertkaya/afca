@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../../utils/list.h"
+#include "../../utils/array_list.h"
 #include "stable.h"
 #include "implications.h"
 
@@ -618,10 +618,11 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 	return next;
 }
 
-void ee_st_nourine(AF* attacks, List* result) {
+ArrayList* ee_st_nourine(AF* attacks) {
 	AF* attacked = transpose_argumentation_framework(attacks);
 	AF* conflicts = create_conflict_framework(attacks);
 	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
+	ArrayList *result = array_list_create();
 	do {
 		imps = update_conflicts(conflicts, imps);
 	} while (remove_conflicts(imps, conflicts));
@@ -638,7 +639,7 @@ void ee_st_nourine(AF* attacks, List* result) {
 		if (is_set_conflict_free(attacks, complement)) {
 			BitSet *x = create_bitset(attacks->size);
 			copy_bitset(complement, x);
-			list_add(x, result);
+			array_list_add(x, result);
 		}
 	} while (next_dominating_closure(closure, imps, attacked));
 
@@ -647,6 +648,8 @@ void ee_st_nourine(AF* attacks, List* result) {
 	free_bitset(closure);
 	free_bitset(complement);
 	free_unit_implication_node(imps, true, true);
+
+	return(result);
 }
 
 ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {

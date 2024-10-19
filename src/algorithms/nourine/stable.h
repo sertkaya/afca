@@ -20,9 +20,9 @@
 #include "../../af/af.h"
 #include "../../bitset/bitset.h"
 #include "../../utils/linked_list.h"
-#include "../../utils/list.h"
+#include "../../utils/array_list.h"
 
-void ee_st_nourine(AF* c, List *result);
+ArrayList* ee_st_nourine(AF* c);
 
 void se_st_nourine(AF* c, BitSet* result);
 
