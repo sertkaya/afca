@@ -17,10 +17,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "list.h"
+#include "array_list.h"
 
-List* list_create() {
-	List* l = (List*) malloc(sizeof(List));
+ArrayList* array_list_create() {
+	ArrayList* l = (ArrayList*) malloc(sizeof(ArrayList));
 	assert(l != NULL);
  	l->size = 0;
 	l->elements = NULL;
@@ -28,43 +28,13 @@ List* list_create() {
 	return l;
 }
 
-int list_free(List* l) {
+int array_list_free(ArrayList* l) {
 	free(l->elements);
 	int freed_bytes = l->size * sizeof(void*);
 	free(l);
-	freed_bytes+= sizeof(List);
+	freed_bytes+= sizeof(ArrayList);
 
 	return freed_bytes;
 }
 
-int list_reset(List* l) {
-	free(l->elements);
-	int freed_bytes = l->size * sizeof(void*);
-	l->size = 0;
-	l->elements = NULL;
-
-	return freed_bytes;
-}
-
-extern inline char list_add(void* e, List* l);
-
-
-extern inline char list_remove(void* e, List* l);
-
-ListIterator* list_iterator_create(List* l) {
-	ListIterator* it = (ListIterator*) malloc(sizeof(ListIterator));
-	assert(it != NULL);
-	it->list = l;
-	it->current_index = 0;
-
-	return it;
-}
-
-
-extern inline void* list_iterator_next(ListIterator* it);
-
-int list_iterator_free(ListIterator* it) {
-	free(it);
-
-	return sizeof(ListIterator);
-}
+extern inline char array_list_add(void* e, ArrayList* l);

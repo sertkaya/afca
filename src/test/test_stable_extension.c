@@ -30,8 +30,7 @@ int main(int argc, char *argv[]) {
 	AF* af = read_af(fd);
 	// print_context(c);
 
-	List *result = list_create();
-	ee_st_next_closure(af, result);
+	ArrayList *result = ee_st_next_closure(af);
 
 	return(0);
 }
