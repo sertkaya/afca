@@ -66,7 +66,7 @@ void restore_base_indices(ListNode* node, PAF* paf, SIZE_TYPE base_size) {
 
 void free_extension_node(ListNode* node){
     free_bitset((BitSet*) node->c);
-    free_node(node);
+    free_list_node(node);
 }
 
 
@@ -152,7 +152,7 @@ ListNode* compute_extensions(AF* af,
         return component_extension;
     }
 
-    ListNode* head = create_node(NULL);
+    ListNode* head = create_list_node(NULL);
     ListNode* last_node = head;
 
     while (component_extension) {
@@ -167,7 +167,7 @@ ListNode* compute_extensions(AF* af,
             while (residual_extension) {
                 // printf("Component extension: ");
                 // log_set(residual_extension->c);
-                last_node->next = create_node(create_bitset(af->size));
+                last_node->next = create_list_node(create_bitset(af->size));
                 last_node = last_node->next;
                 bitset_union(component_extension->c, residual_extension->c, last_node->c);
                 // residual_extension = advance_and_free_extension(residual_extension);
@@ -186,7 +186,7 @@ ListNode* compute_extensions(AF* af,
     free_bitset(component); 
 
     first_extension = head->next;
-    free_node(head);
+    free_list_node(head);
     MAP_PUT(arguments, first_extension, subextensions);
     return first_extension;
 }

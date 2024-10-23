@@ -36,7 +36,7 @@ ListNode* wcc(AF* af, unsigned short* n) {
         if (!visited[i]) {
             BitSet* mask = create_bitset(af->size);
             undirected_dfs(af, i, visited, mask);
-            ListNode* new_component = create_node(mask);
+            ListNode* new_component = create_list_node(mask);
             new_component->next = first_component;
             // TODO: new_component->c is not set! Causes segmentation fault later.
             first_component = new_component;
@@ -52,7 +52,7 @@ void free_components(ListNode* first_component) {
     while (component) {
         ListNode* next = component->next;
         free(component->c);
-        free_node(component);
+        free_list_node(component);
         component = next;
     }
 }
@@ -142,7 +142,7 @@ ListNode* wcc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) 
                 // printf("Union: ");
                 // print_set(cur->c, stdout, "\n");
                 component_extension = component_extension->next;
-                cur->next = component_extension ? create_node(NULL) : next;
+                cur->next = component_extension ? create_list_node(NULL) : next;
                 cur = cur->next;
             } while (component_extension);
 

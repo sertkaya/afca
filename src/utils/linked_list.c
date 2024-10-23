@@ -21,7 +21,7 @@
 
 #include "linked_list.h"
 
-ListNode *create_node(void* c) {
+ListNode *create_list_node(void* c) {
 	ListNode *n = calloc(sizeof(ListNode), 1);
 	assert(n != NULL);
 	n->c = c;
@@ -30,7 +30,7 @@ ListNode *create_node(void* c) {
 }
 
 
-ListNode *free_node(ListNode *n) {
+ListNode *free_list_node(ListNode *n) {
 	// TODO: restructure code, improve
 	// n->c should be freed before, not the best implementation.
 	free(n);
@@ -38,11 +38,16 @@ ListNode *free_node(ListNode *n) {
 }
 
 
-ListNode *insert_node(void *c, ListNode *prev) {
-	ListNode *next = prev->next;
-	prev->next = create_node(c);
-	prev->next->next = next;
-	return prev->next;
+ListNode *insert_list_node(void *c, ListNode *head) {
+	ListNode *new_node = create_list_node(c);
+	new_node->next = head;
+	return(new_node);
+	/*
+	ListNode *next = head->next;
+	head->next = create_list_node(c);
+	head->next->next = next;
+	return head->next;
+	*/
 }
 
 size_t count_nodes(ListNode* node) {

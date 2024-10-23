@@ -618,7 +618,7 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 	return next;
 }
 
-void ee_st_nourine(AF* attacks, List* result) {
+ListNode* ee_st_nourine(AF* attacks) {
 	AF* attacked = transpose_argumentation_framework(attacks);
 	AF* conflicts = create_conflict_framework(attacks);
 	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
@@ -631,6 +631,8 @@ void ee_st_nourine(AF* attacks, List* result) {
 	unit_close(closure, imps);
 
 	BitSet* complement = create_bitset(attacks->size);
+
+	ListNode* result_list = NULL;
 	do {
 		// print_bitset(closure, stdout);
 		// printf("\n");
@@ -638,7 +640,7 @@ void ee_st_nourine(AF* attacks, List* result) {
 		if (is_set_conflict_free(attacks, complement)) {
 			BitSet *x = create_bitset(attacks->size);
 			copy_bitset(complement, x);
-			list_add(x, result);
+			result_list = insert_list_node(x, result_list);
 		}
 	} while (next_dominating_closure(closure, imps, attacked));
 
@@ -647,6 +649,8 @@ void ee_st_nourine(AF* attacks, List* result) {
 	free_bitset(closure);
 	free_bitset(complement);
 	free_unit_implication_node(imps, true, true);
+
+	return(result_list);
 }
 
 ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
@@ -669,7 +673,7 @@ ListNode* enumerate_stable_extensions_via_implications(AF* attacks) {
 			if (is_set_conflict_free(attacks, complement)) {
 				BitSet* extension = create_bitset(complement->size);
 				copy_bitset(complement, extension);
-				ListNode* node = create_node(extension);
+				ListNode* node = create_list_node(extension);
 				node->next = head;
 				head = node;
 			}

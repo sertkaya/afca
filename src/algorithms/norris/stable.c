@@ -76,11 +76,11 @@ int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_exten
 					// remove cur from the concept list
 					if (prev) {
 						free_concept(not_attacks, prev->next->c);
-						free_node(prev->next);
+						free_list_node(prev->next);
 						prev->next = cur;
 					} else {
 						free_concept(not_attacks, head->c);
-						free_node(head);
+						free_list_node(head);
 						head = cur;
 					}
 					continue;
@@ -122,7 +122,7 @@ int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_exten
 
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
 							Concept *new_concept = create_concept(new_extent, new_intent, new_not_attacked);
-							ListNode *new_node = create_node(new_concept);
+							ListNode *new_node = create_list_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
 							}
@@ -172,7 +172,7 @@ void ee_st_norris(AF* attacks, FILE *outfile) {
 	BitSet* not_attacked = create_bitset(attacks->size);
 	copy_bitset(extent, not_attacked);
 	Concept* c = create_concept(extent, intent, not_attacked);
-	ListNode* head = create_node(c);
+	ListNode* head = create_list_node(c);
 
 	int stable_extension_count = 0;
 
@@ -184,7 +184,7 @@ void ee_st_norris(AF* attacks, FILE *outfile) {
 	printf("Number of created concepts: %d\n", concept_count);
 
 	free_concept(attacks, c);
-	free_node(head);
+	free_list_node(head);
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
@@ -232,11 +232,11 @@ int add_one(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_e
 					// remove cur from the concept list
 					if (prev) {
 						free_concept(not_attacks, prev->next->c);
-						free_node(prev->next);
+						free_list_node(prev->next);
 						prev->next = cur;
 					} else {
 						free_concept(not_attacks, head->c);
-						free_node(head);
+						free_list_node(head);
 						head = cur;
 					}
 					continue;
@@ -278,7 +278,7 @@ int add_one(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_e
 
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
 							Concept *new_concept = create_concept(new_extent, new_intent, new_not_attacked);
-							ListNode *new_node = create_node(new_concept);
+							ListNode *new_node = create_list_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
 							}
@@ -330,7 +330,7 @@ void se_st_norris(AF* attacks, FILE *outfile) {
 	BitSet* conflict_free = create_bitset(attacks->size);
 	copy_bitset(extent, conflict_free);
 	Concept* c = create_concept(extent, intent, not_attacked);
-	ListNode* head = create_node(c);
+	ListNode* head = create_list_node(c);
 
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		if (add_one(not_attacks, i, &head, argument_extents, outfile))
@@ -340,7 +340,7 @@ void se_st_norris(AF* attacks, FILE *outfile) {
 	printf("Number of created concepts: %d\n", concept_count);
 
 	free_concept(attacks, c);
-	free_node(head);
+	free_list_node(head);
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
@@ -351,7 +351,7 @@ void se_st_norris(AF* attacks, FILE *outfile) {
 
 ListNode *insert_bitset(BitSet *bs, ListNode *prev) {
 	ListNode *next = prev->next;
-	prev->next = create_node(bs);
+	prev->next = create_list_node(bs);
 	prev->next->next = next;
 	return prev->next;
 }
@@ -400,11 +400,11 @@ int add_to_list(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argume
 					// remove cur from the concept list
 					if (prev) {
 						free_concept(not_attacks, prev->next->c);
-						free_node(prev->next);
+						free_list_node(prev->next);
 						prev->next = cur;
 					} else if (cur) {
 						free_concept(not_attacks, head->c);
-						free_node(head);
+						free_list_node(head);
 						head = cur;
 					}
 					continue;
@@ -445,7 +445,7 @@ int add_to_list(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argume
 
 						if (!bitset_is_equal(new_conflict_free, new_intent)) {
 							Concept *new_concept = create_concept(new_extent, new_intent, new_not_attacked);
-							ListNode *new_node = create_node(new_concept);
+							ListNode *new_node = create_list_node(new_concept);
 							if (new_head) {
 								new_node->next = new_head;
 							}
@@ -497,10 +497,10 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 	BitSet* not_attacked = create_bitset(attacks->size);
 	copy_bitset(extent, not_attacked);
 	Concept* c = create_concept(extent, intent, not_attacked);
-	ListNode* head = create_node(c);
+	ListNode* head = create_list_node(c);
 
 	int stable_extension_count = 0;
-	ListNode* extensions = create_node(NULL);
+	ListNode* extensions = create_list_node(NULL);
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
 		stable_extension_count += add_to_list(not_attacks, i, &head, argument_extents, extensions);
 	}
@@ -509,14 +509,14 @@ ListNode* enumerate_stable_extensions_norris(AF* attacks)
 	// printf("Number of created concepts: %d\n", concept_count);
 
 	free_concept(attacks, c);
-	free_node(head);
+	free_list_node(head);
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i)
 		free_bitset(argument_extents[i]);
 
 	free_argumentation_framework(not_attacks);
 
 	ListNode* first_extension = extensions->next;
-	free_node(extensions);
+	free_list_node(extensions);
 	return first_extension;
 }
 
