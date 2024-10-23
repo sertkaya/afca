@@ -170,11 +170,15 @@ inline SIZE_TYPE count_bits(BitSet* bs) {
 
 // Set all bits
 inline void set_bitset(BitSet* bs) {
-	int i;
+	// int i;
 
-	for (i = 0; i < bs->base_count; ++i)
+	//for (i = 0; i < bs->base_count; ++i)
 		// bs->elements[i] = -1;
-		bs->elements[i] = ~(0UL);
+	//	bs->elements[i] = ~(0UL);
+
+	for (SIZE_TYPE i = 0; i < bs->size; ++i) {
+		SET_BIT(bs, i);
+	}
 }
 
 // key for hashing

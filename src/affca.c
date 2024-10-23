@@ -23,6 +23,7 @@
 #include <getopt.h>
 
 #include "af/sort.h"
+#include "algorithms/next-closure/preferred.h"
 #include "algorithms/next-closure/stable.h"
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
@@ -30,13 +31,32 @@
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
+
+void dump_and_free_extensions(ArrayList* extensions, FILE* output)
+{
+	for (size_t i = 0; i < extensions->size; ++i) {
+		print_set((BitSet*) (extensions->elements[i]), output, "\n");
+		free_bitset(extensions->elements[i]);
+	}
+	array_list_free(extensions);
+}
+
+
+void print_not_supported(char* problem, char* algorithm, FILE* output)
+{
+	fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+	fclose(output);
+	exit(EXIT_FAILURE);
+}
+
+
 int main(int argc, char *argv[]) {
 	int c;
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
 	static char usage[] = "Usage: %s -l [next-closure | norris | norris-bu | nourine | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine] "
-					      "-p [SE-ST, EE-ST, DC-ST] -a argument -f input -o output\n";
+					      "-p [SE-ST, EE-ST, DC-ST, EE-PR] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
 		switch (c) {
@@ -105,7 +125,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST};
+	enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR};
 	enum prob_type prob;
 	if (strcmp(problem, "EE-ST") == 0)
 		prob = EE_ST;
@@ -119,6 +139,8 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, usage, argv[0]);
 			exit(EXIT_FAILURE);
 		}
+	} else if (strcmp(problem, "EE-PR") == 0) {
+		prob = EE_PR;
 	}
 	else {
 		fprintf(stderr, "Unknown problem %s\n", problem);
@@ -306,6 +328,12 @@ int main(int argc, char *argv[]) {
 					exit(EXIT_FAILURE);
 			}
 			break;
+		case EE_PR:
+			if (alg == NEXT_CLOSURE) {
+				dump_and_free_extensions(ee_pr_next_closure(af), output);
+			} else {
+				print_not_supported(problem, algorithm, output);
+			}
 	}
 
 	STOP_TIMER(stop_time);
