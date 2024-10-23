@@ -21,9 +21,8 @@
 
 #include "../../af/af.h"
 #include "../../utils/linked_list.h"
-#include "../../utils/array_list.h"
 
-ArrayList* ee_st_norris(AF* af);
+void ee_st_norris(AF* af, FILE *f);
 
 void se_st_norris(AF* af, FILE *outfile);
 
