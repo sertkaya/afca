@@ -166,16 +166,16 @@ int main(int argc, char *argv[]) {
 	// TODO: Think about a matrix with pointers to relevant functions.
 	switch(prob) {
 		case EE_ST: {
-			ArrayList *extensions = NULL;
+			List *result = list_create();
 			switch (alg) {
 				case NEXT_CLOSURE:
-					extensions = ee_st_next_closure(af);
+					ee_st_next_closure(af, result);
 					break;
 				case NORRIS:
 					ee_st_norris(af, output);
 					break;
 				case NOURINE:
-					extensions = ee_st_nourine(af);
+					ee_st_nourine(af, result);
 					break;
 				case SCC_NORRIS:
 					run_cc_norris(af, output, true);
@@ -199,21 +199,21 @@ int main(int argc, char *argv[]) {
 			if (sort_flag) {
 				// map back the indices if af was sorted before
 				int i;
-				for (i = 0; i < extensions->size; ++i) {
-					BitSet *x = map_indices_back(extensions->elements[i]);
+				for (i = 0; i < result->size; ++i) {
+					BitSet *x = map_indices_back(result->elements[i]);
 					print_set(x, output, "\n");
 					free_bitset(x);
-					free_bitset(extensions->elements[i]);
+					free_bitset(result->elements[i]);
 				}
 			}
 			else {
 				int i;
-				for (i = 0; i < extensions->size; ++i) {
-					print_set((BitSet*) (extensions->elements[i]), output, "\n");
-					free_bitset(extensions->elements[i]);
+				for (i = 0; i < result->size; ++i) {
+					print_set((BitSet*) (result->elements[i]), output, "\n");
+					free_bitset(result->elements[i]);
 				}
 			}
-			array_list_free(extensions);
+			list_free(result);
 			break;
 		}
 		case SE_ST: {

@@ -18,10 +18,10 @@
 #define AF_STABLE_EXTENSIONS_NC_H_
 
 #include "../../af/af.h"
-#include "../../utils/array_list.h"
+#include "../../utils/list.h"
 
 // Computes all stable extensions and puts them into result
-ArrayList* ee_st_next_closure(AF* af);
+void ee_st_next_closure(AF* af, List* result);
 
 // Computes a single stable extension if there are any, and puts it into result
 void *se_st_next_closure(AF* af, BitSet* result);
