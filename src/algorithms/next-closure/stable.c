@@ -15,11 +15,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <inttypes.h>
 
 #include "../af/af.h"
 #include "../bitset/bitset.h"
-#include "../../utils/list.h"
+#include "../../utils/linked_list.h"
 
 // Compute the next conflict-free closure coming after "current" and store it in "next"
 char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, BitSet* next) {
@@ -71,7 +73,7 @@ char next_conflict_free_closure(AF* not_attacks, AF* attacks, BitSet* current, B
 	return(0);
 }
 
-void ee_st_next_closure(AF *attacks, List* result) {
+ListNode* ee_st_next_closure(AF *attacks) {
 
 	AF *not_attacks = complement_argumentation_framework(attacks);
 
@@ -81,6 +83,8 @@ void ee_st_next_closure(AF *attacks, List* result) {
 	BitSet* c_up = create_bitset(attacks->size);
 
 	int concept_count = 0, stable_extension_count = 0;
+
+	ListNode* result_list = NULL;
 	while (1) {
 		if (!next_conflict_free_closure(not_attacks, attacks, tmp, c))
 			break;
@@ -92,7 +96,7 @@ void ee_st_next_closure(AF *attacks, List* result) {
 			BitSet *st_ext = create_bitset(attacks->size);
 			++stable_extension_count;
 			copy_bitset(c, st_ext);
-			list_add(st_ext, result);
+			result_list = insert_list_node(st_ext, result_list);
 			// print_set(c, stdout, "\n");
 		}
 		copy_bitset(c, tmp);
@@ -106,7 +110,7 @@ void ee_st_next_closure(AF *attacks, List* result) {
 
 	free_argumentation_framework(not_attacks);
 
-	return;
+	return(result_list);
 }
 
 void se_st_next_closure(AF* attacks, BitSet* result) {

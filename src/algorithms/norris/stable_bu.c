@@ -1,8 +1,9 @@
 #include <stdlib.h>
 
 
-#include "../af/af.h"
-#include "../utils/linked_list.h"
+#include "../../bitset/bitset.h"
+#include "../../af/af.h"
+#include "../../utils/linked_list.h"
 
 
 struct concept {
@@ -69,7 +70,7 @@ void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** 
                 arrow_up(not_attacks, new_intent, up);
 
 				if (bitset_is_equal(new_intent, up)) {  // new_intent is stable
-                    ListNode* ext = create_node(new_intent);
+                    ListNode* ext = create_list_node(new_intent);
                     ext->next = extensions;
                     extensions = ext;
 				} else if (bitset_is_subset(up, new_intent)) {	// new_intent is a dominating set
@@ -77,7 +78,7 @@ void add_to_list_bu(AF* not_attacks, SIZE_TYPE i, ListNode** phead , ListNode** 
 					copy_bitset(c->extent, new_extent);
 					SET_BIT(new_extent, i);
 
-					ListNode* new_node = create_node(create_concept_bu(new_extent, new_intent));
+					ListNode* new_node = create_list_node(create_concept_bu(new_extent, new_intent));
 					new_node->next = head;
 					head = new_node;
                 }
@@ -99,12 +100,12 @@ ListNode* enumerate_stable_extensions_norris_bottom_up(AF* af)
         SET_BIT(intent, i);
     }
 	if (is_set_conflict_free(af, intent)) {
-		return create_node(intent);
+		return create_list_node(intent);
 	}
 
 	concept_count_bu = 0;
 
-	ListNode* head = create_node(create_concept_bu(create_bitset(af->size), intent));
+	ListNode* head = create_list_node(create_concept_bu(create_bitset(af->size), intent));
 
 	AF* not_attacks = complement_argumentation_framework(af);
 	ListNode* extensions = NULL;

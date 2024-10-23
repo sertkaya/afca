@@ -18,10 +18,10 @@
 #define AF_STABLE_EXTENSIONS_NC_H_
 
 #include "../../af/af.h"
-#include "../../utils/list.h"
+#include "../../utils/linked_list.h"
 
-// Computes all stable extensions and puts them into result
-void ee_st_next_closure(AF* af, List* result);
+// Computes all stable extensions and returns a linked list of extensions
+ListNode* ee_st_next_closure(AF* af);
 
 // Computes a single stable extension if there are any, and puts it into result
 void *se_st_next_closure(AF* af, BitSet* result);
