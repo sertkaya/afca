@@ -32,13 +32,13 @@
 #include "utils/timer.h"
 
 
-void dump_and_free_extensions(ArrayList* extensions, FILE* output)
+void dump_and_free_extensions(List* extensions, FILE* output)
 {
 	for (size_t i = 0; i < extensions->size; ++i) {
 		print_set((BitSet*) (extensions->elements[i]), output, "\n");
 		free_bitset(extensions->elements[i]);
 	}
-	array_list_free(extensions);
+	list_free(extensions);
 }
 
 
