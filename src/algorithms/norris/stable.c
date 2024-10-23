@@ -6,7 +6,6 @@
 #include "../af/af.h"
 #include "../bitset/bitset.h"
 #include "../utils/linked_list.h"
-#include "../utils/array_list.h"
 
 struct concept {
 	BitSet* extent;
@@ -36,7 +35,7 @@ void free_concept(AF *af, Concept *c) {
 	free(c);
 }
 
-int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_extents, ArrayList *result) {
+int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
 	int stable_extension_count = 0;
 
     ListNode *head = *phead;
@@ -63,9 +62,7 @@ int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_exten
 				if (bitset_is_equal(c->intent, c->not_attacked)) {
 					// c->intent is a stable extension
 					++stable_extension_count;
-					// print_set(c->intent, outfile, "\n");
-					printf("**%d**\n", c->intent->size);
-					array_list_add(c->intent, result);
+					print_set(c->intent, outfile, "\n");
 					remove_cur = 1;
 				} else {
 					bitset_intersection(conflict_free, not_attacks->graph[i], conflict_free);
@@ -114,11 +111,9 @@ int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_exten
 					if (bitset_is_equal(new_intent, new_not_attacked)) {
 						// new_intent is a stable extension
 						++stable_extension_count;
-						// print_set(new_intent, outfile, "\n");
-						printf("**%d**\n", new_intent->size);
-						array_list_add(new_intent, result);
+						print_set(new_intent, outfile, "\n");
 						// TODO: deallocate memory for new_*
-						// free_bitset(new_intent);
+						free_bitset(new_intent);
 						free_bitset(new_extent);
 						free_bitset(new_not_attacked);
 					} else {
@@ -155,10 +150,9 @@ int add(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_exten
 	return stable_extension_count;
 }
 
-ArrayList* ee_st_norris(AF* attacks) {
+void ee_st_norris(AF* attacks, FILE *outfile) {
 	concept_count = 0;
 	AF* not_attacks = complement_argumentation_framework(attacks);
-	ArrayList *result = array_list_create();
 
 	BitSet* argument_extents[attacks->size];
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
@@ -183,7 +177,7 @@ ArrayList* ee_st_norris(AF* attacks) {
 	int stable_extension_count = 0;
 
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
-		stable_extension_count += add(not_attacks, i, &head, argument_extents, result);
+		stable_extension_count += add(not_attacks, i, &head, argument_extents, outfile);
 	}
 
 	printf("Number of stable extensions: %d\n", stable_extension_count);
@@ -195,8 +189,6 @@ ArrayList* ee_st_norris(AF* attacks) {
 		free_bitset(argument_extents[i]);
 
 	free_argumentation_framework(not_attacks);
-
-	return(result);
 }
 
 int add_one(AF* not_attacks, SIZE_TYPE i, ListNode **phead , BitSet** argument_extents, FILE *outfile) {
