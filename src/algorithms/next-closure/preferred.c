@@ -2,17 +2,6 @@
 #include "../../utils/linked_list.h"
 
 
-void print_screen(BitSet* s)
-{
-	for (SIZE_TYPE i = 0; i < s->size; ++i) {
-		if (TEST_BIT(s, i)) {
-			printf("%d ", i + 1);
-		}
-	}
-	printf("\n");
-}
-
-
 BitSet* next_conflict_free_intent(AF* not_attacks, AF* attacks, BitSet* previous) {
 	BitSet* current = create_bitset(attacks->size);
 	copy_bitset(previous, current);
@@ -97,7 +86,7 @@ bool is_conflict_free_set_admissible(BitSet* s, AF* not_attacks, BitSet* up, Bit
 }
 
 
-ArrayList* ee_pr_next_closure(AF* af)
+List* ee_pr_next_closure(AF* af)
 {
     BitSet* up = create_bitset(af->size);
     BitSet* down = create_bitset(af->size);
@@ -120,22 +109,14 @@ ArrayList* ee_pr_next_closure(AF* af)
 		if (prev_intent != c) {
 			free_bitset(prev_intent);
 		}
-		printf("c: ");
-		if (c) print_screen(c); else printf("0\n");
-		printf("New intent: ");
-		print_screen(new_intent);
         if (!c || bitset_is_subset(c, new_intent)) {  // still on the same computational branch
-			printf("still on the same computational branch\n");
             if (is_conflict_free_set_admissible(new_intent, not_attacks, up, down)) {
-				printf("new_intent is admissible\n");
                 if (c) {
 					free_bitset(c); // c is not maximal admissible
 				}
                 c = new_intent;
             }
         } else {    // c is maximal admissible on its computational branch
-			printf("add ");
-			print_screen(c);
             first_candidate = add_candidate(first_candidate, c);
 			c = is_conflict_free_set_admissible(new_intent, not_attacks, up, down) ? new_intent : 0;
         }
@@ -147,7 +128,7 @@ ArrayList* ee_pr_next_closure(AF* af)
 	free_bitset(down);
 	free_bitset(up);
 
-	ArrayList* extensions = array_list_create();
+	List* extensions = list_create();
 	extensions->size = count_nodes(first_candidate);
 	extensions->elements = calloc(extensions->size, sizeof(BitSet*));
 
