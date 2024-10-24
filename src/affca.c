@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 					result_list = ee_st_next_closure(af);
 					break;
 				case NORRIS:
-					ee_st_norris(af, output);
+					result_list = ee_st_norris(af);
 					break;
 				case NOURINE:
 					result_list = ee_st_nourine(af);

@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 	AF* af = read_af(fd);
 	// print_context(c);
 
-	ee_st_norris(af, stdout);
+	ee_st_norris(af);
 
 	return(0);
 }
