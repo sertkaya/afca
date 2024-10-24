@@ -22,7 +22,7 @@
 #include "../../af/af.h"
 #include "../../utils/linked_list.h"
 
-void ee_st_norris(AF* af, FILE *f);
+ListNode* ee_st_norris(AF* af);
 
 void se_st_norris(AF* af, FILE *outfile);
 
