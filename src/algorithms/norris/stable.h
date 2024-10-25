@@ -1,8 +1,6 @@
 /*
  * AFCA - argumentation framework using closed sets
  *
- * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,11 +20,9 @@
 #include "../../af/af.h"
 #include "../../utils/linked_list.h"
 
-void ee_st_norris(AF* af, FILE *f);
+ListNode* ee_st_norris(AF* af);
 
 void se_st_norris(AF* af, FILE *outfile);
-
-ListNode* enumerate_stable_extensions_norris(AF* af);
 
 ListNode* enumerate_stable_extensions_norris_bottom_up(AF* af);
 

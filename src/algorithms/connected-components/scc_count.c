@@ -9,7 +9,7 @@ void free_extension_list(ListNode* node){
     while (node) {
         ListNode* next = node->next;
         free_bitset((BitSet*) node->c);
-        free_node(node);
+        free_list_node(node);
         node = next;
     }
 }

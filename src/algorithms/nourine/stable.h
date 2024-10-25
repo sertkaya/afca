@@ -22,7 +22,7 @@
 #include "../../utils/linked_list.h"
 #include "../../utils/list.h"
 
-void ee_st_nourine(AF* c, List *result);
+ListNode* ee_st_nourine(AF* c);
 
 void se_st_nourine(AF* c, BitSet* result);
 
