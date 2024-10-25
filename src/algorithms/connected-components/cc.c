@@ -28,7 +28,7 @@ void print_extension(BitSet* ext, FILE* outfile) {
 }
 
 void run_scc_norris_count(AF* af, FILE* output) {
-	fprintf(output, "%lu", scc_count_stable_etensions(af, enumerate_stable_extensions_norris));
+	fprintf(output, "%lu", scc_count_stable_etensions(af, ee_st_norris));
 	free_argumentation_framework(af);
 }
 
@@ -53,7 +53,7 @@ void run_cc(AF* af, ListNode* (*stable_extensions)(AF* af), FILE* output, bool s
 
 
 void run_cc_norris(AF* af, FILE* output, bool scc) {
-	run_cc(af, enumerate_stable_extensions_norris, output, scc);
+	run_cc(af, ee_st_norris, output, scc);
 }
 
 
