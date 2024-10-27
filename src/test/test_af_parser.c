@@ -20,6 +20,7 @@
 
 #include "../parser/af_parser.h"
 #include "../af/af.h"
+#include "../bitset/bitset.h"
 
 int main(int argc, char *argv[]) {
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
 	print_bitset(bs, stdout);
 	printf("\n");
 
-	down_up_arrow(af, bs, r);
+	// down_up_arrow(af, bs, r);
 	printf("r: ");
 	print_bitset(r, stdout);
 	printf("\n");

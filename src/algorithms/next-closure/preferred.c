@@ -66,15 +66,16 @@ ListNode* add_candidate(ListNode* head, BitSet* c)
                 head = cur;
             }
             free_bitset(old->c);
-            free_node(old);
+            free_list_node(old);
         } else {
             prev = cur;
             cur = cur->next;
         }
     }
-    ListNode* new_head = create_node(c);
+    ListNode* new_head = create_list_node(c);
     new_head->next = head;
     return new_head;
+    // return(insert_list_node(c, head));
 }
 
 
@@ -86,7 +87,7 @@ bool is_conflict_free_set_admissible(BitSet* s, AF* not_attacks, BitSet* up, Bit
 }
 
 
-List* ee_pr_next_closure(AF* af)
+ListNode* ee_pr_next_closure(AF* af)
 {
     BitSet* up = create_bitset(af->size);
     BitSet* down = create_bitset(af->size);
@@ -127,7 +128,7 @@ List* ee_pr_next_closure(AF* af)
 	free_argumentation_framework(not_attacks);
 	free_bitset(down);
 	free_bitset(up);
-
+/*
 	List* extensions = list_create();
 	extensions->size = count_nodes(first_candidate);
 	extensions->elements = calloc(extensions->size, sizeof(BitSet*));
@@ -136,8 +137,10 @@ List* ee_pr_next_closure(AF* af)
 		extensions->elements[i] = first_candidate->c;
 		ListNode* prev = first_candidate;
 		first_candidate = prev->next;
-		free_node(prev);
+		free_list_node(prev);
 	}
 
 	return extensions;
+ */
+    return(first_candidate);
 }
