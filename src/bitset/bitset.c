@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdio.h>
+#include <math.h>
 #include <assert.h>
 
 BitSet* create_bitset(SIZE_TYPE size) {

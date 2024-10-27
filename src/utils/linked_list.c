@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "../bitset/bitset.h"
 #include "linked_list.h"
 
 ListNode *create_list_node(void* c) {
@@ -57,4 +58,11 @@ size_t count_nodes(ListNode* node) {
 		node = node->next;
 	}
 	return n;
+}
+
+void print_list(ListNode* head, void (*print_list_element)(BitSet *e, FILE *file, const char *end), FILE *out_file) {
+	while (head) {
+		print_list_element(head->c, out_file, "\n");
+		head = head->next;
+	}
 }

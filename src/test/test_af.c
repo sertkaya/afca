@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 	print_bitset(bs, stdout);
 	printf("\n");
 
-	up_arrow(af, bs, r);
+	// up_arrow(af, bs, r);
 	printf("r: ");
 	print_bitset(r, stdout);
 	printf("\n");

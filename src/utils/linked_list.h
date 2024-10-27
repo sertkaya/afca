@@ -34,4 +34,6 @@ ListNode *insert_list_node(void *c, ListNode *head);
 
 size_t count_nodes(ListNode* node);
 
+void print_list(ListNode* head, void (*print_list_element)(BitSet *e, FILE *file, const char *end), FILE* out_file);
+
 #endif /* UTILS_LINKED_LIST_H_ */
