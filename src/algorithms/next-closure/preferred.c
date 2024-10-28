@@ -123,7 +123,9 @@ ListNode* ee_pr_next_closure(AF* af)
         }
 		prev_intent = new_intent;
     }
-	first_candidate = add_candidate(first_candidate, c);
+	if (c) {
+		first_candidate = add_candidate(first_candidate, c);
+	}
 
 	free_argumentation_framework(not_attacks);
 	free_bitset(down);
