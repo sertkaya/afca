@@ -72,10 +72,12 @@ ListNode* add_candidate(ListNode* head, BitSet* c)
             cur = cur->next;
         }
     }
+	/*
     ListNode* new_head = create_list_node(c);
     new_head->next = head;
     return new_head;
-    // return(insert_list_node(c, head));
+    */
+    return(insert_list_node(c, head));
 }
 
 
