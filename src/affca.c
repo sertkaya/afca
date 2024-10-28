@@ -31,25 +31,6 @@
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
-
-void dump_and_free_extensions(List* extensions, FILE* output)
-{
-	for (size_t i = 0; i < extensions->size; ++i) {
-		print_set((BitSet*) (extensions->elements[i]), output, "\n");
-		free_bitset(extensions->elements[i]);
-	}
-	list_free(extensions);
-}
-
-
-void print_not_supported(char* problem, char* algorithm, FILE* output)
-{
-	fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-	fclose(output);
-	exit(EXIT_FAILURE);
-}
-
-
 int main(int argc, char *argv[]) {
 	int c;
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
@@ -187,7 +168,7 @@ int main(int argc, char *argv[]) {
 
 	// TODO: Think about a matrix with pointers to relevant functions.
 	switch(prob) {
-		case EE_ST: {
+		case EE_ST:
 			ListNode *result_list = NULL;
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -218,24 +199,21 @@ int main(int argc, char *argv[]) {
 					run_cc_nourine(af, output, false);
 					break;
 			}
-			ListNode* node = result_list;
-			while (node) {
-				if (sort_flag) {
+			if (sort_flag) {
+				ListNode* node = result_list;
+				while (node) {
 					// map back the indices if af was sorted before
 					BitSet *x = map_indices_back(node->c);
 					print_set(x, output, "\n");
-					free_bitset(x);
+					node = node->next;
 				}
-				else {
-					print_set((BitSet*) node->c, output, "\n");
-				}
-				free_bitset(node->c);
-				node = node->next;
 			}
-			free_list_node(result_list);
+			else {
+				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
+			}
+			free_list(result_list, (void (*)(void *)) free_bitset);
 			break;
-		}
-		case SE_ST: {
+		case SE_ST:
 			BitSet *result_se = create_bitset(af->size);
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -269,7 +247,6 @@ int main(int argc, char *argv[]) {
 			}
 			free_bitset(result_se);
 			break;
-		}
 		case DC_ST:
 			// On the command line arguments are named starting from 1. Internally, they start from 0:
 			--argument;
@@ -326,11 +303,28 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 		case EE_PR:
-			if (alg == NEXT_CLOSURE) {
-				print_list(ee_pr_next_closure(af), print_set, output);
-			} else {
-				print_not_supported(problem, algorithm, output);
+			switch (alg) {
+				case NEXT_CLOSURE:
+					result_list = ee_pr_next_closure(af);
+					break;
+				default:
+					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+					fclose(output);
+					exit(EXIT_FAILURE);
 			}
+			if (sort_flag) {
+				ListNode* node = result_list;
+				while (node) {
+					// map back the indices if af was sorted before
+					BitSet *x = map_indices_back(node->c);
+					print_set(x, output, "\n");
+					node = node->next;
+				}
+			}
+			else {
+				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
+			}
+			free_list(result_list, (void (*)(void *)) free_bitset);
 	}
 
 	STOP_TIMER(stop_time);

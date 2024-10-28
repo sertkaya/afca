@@ -60,9 +60,19 @@ size_t count_nodes(ListNode* node) {
 	return n;
 }
 
-void print_list(ListNode* head, void (*print_list_element)(BitSet *e, FILE *file, const char *end), FILE *out_file) {
+void print_list(ListNode* head, void (*print_list_element)(void *e, FILE *file, const char *end), FILE *out_file) {
 	while (head) {
 		print_list_element(head->c, out_file, "\n");
 		head = head->next;
+	}
+}
+void free_list(ListNode *head, void (*free_list_element)(void *e)) {
+	ListNode *previous = NULL;
+	ListNode *current = head;
+	while (current) {
+		free_list_element(current->c);
+		previous = current;
+		current = current->next;
+		free(previous);
 	}
 }
