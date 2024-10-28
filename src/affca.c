@@ -326,11 +326,8 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 		case EE_PR:
-			ListNode *result_list = NULL;
 			if (alg == NEXT_CLOSURE) {
-				// dump_and_free_extensions(ee_pr_next_closure(af), output);
-				result_list = ee_pr_next_closure(af);
-				print_list(result_list, print_set, output);
+				print_list(ee_pr_next_closure(af), print_set, output);
 			} else {
 				print_not_supported(problem, algorithm, output);
 			}
