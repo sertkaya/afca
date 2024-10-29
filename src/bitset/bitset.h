@@ -126,7 +126,7 @@ inline void reset_bitset(BitSet* bs) {
 // Compute set difference bs1 \ bs2, store it in r.
 inline void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
 	int i;
-	reset_bitset(r);
+	// reset_bitset(r);
 	for (i = 0; i < bs1->base_count; ++i)
 		r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
 }
