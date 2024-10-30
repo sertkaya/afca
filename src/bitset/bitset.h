@@ -112,6 +112,7 @@ inline void complement_bitset(BitSet* bs, BitSet* r) {
 	int i;
 	for (i = 0; i < bs->base_count; ++i)
 		r->elements[i] = ~(bs->elements[i]);
+	// TODO: correct for the last block
 
 }
 
