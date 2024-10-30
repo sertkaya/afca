@@ -51,12 +51,14 @@ BitSet* next_conflict_free_intent(AF* not_attacks, AF* attacks, BitSet* previous
 				}
 			}
 			if (good) {
+				free_bitset(current);
 				return next;
 			}
 			RESET_BIT(current, i);
 		}
 	}
 
+	free_bitset(current);
 	free_bitset(next);
 	return 0;
 }

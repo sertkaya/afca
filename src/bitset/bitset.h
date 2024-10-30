@@ -135,6 +135,8 @@ inline void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
 // Copy bs1 into bs2
 inline void copy_bitset(BitSet* bs1, BitSet* bs2) {
 	int i;
+	bs2->base_count = bs1->base_count;
+	bs2->size = bs1->size;
 	for (i = 0; i < bs1->base_count; ++i)
 		bs2->elements[i] = bs1->elements[i];
 }
