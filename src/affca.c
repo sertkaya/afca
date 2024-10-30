@@ -23,6 +23,7 @@
 #include <getopt.h>
 
 #include "af/sort.h"
+#include "algorithms/ideal/ideal.h"
 #include "algorithms/next-closure/preferred.h"
 #include "algorithms/next-closure/stable.h"
 #include "algorithms/norris/stable.h"
@@ -31,13 +32,26 @@
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
+
+enum alg_type {NEXT_CLOSURE , NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, NORRIS_BU, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
+enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_ID};
+
+
+void print_not_supported(char* problem, char* algorithm, FILE* output)
+{
+	fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+	fclose(output);
+	exit(EXIT_FAILURE);
+}
+
+
 int main(int argc, char *argv[]) {
 	int c;
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
 	static char usage[] = "Usage: %s -l [next-closure | norris | norris-bu | nourine | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine] "
-					      "-p [SE-ST, EE-ST, DC-ST, EE-PR] -a argument -f input -o output\n";
+					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-ID] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
 		switch (c) {
@@ -80,7 +94,6 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	enum alg_type {NEXT_CLOSURE , NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, NORRIS_BU, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
 	enum alg_type alg;
 	if (strcmp(algorithm, "next-closure") ==0)
 		alg = NEXT_CLOSURE;
@@ -106,7 +119,6 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR};
 	enum prob_type prob;
 	if (strcmp(problem, "EE-ST") == 0)
 		prob = EE_ST;
@@ -122,8 +134,9 @@ int main(int argc, char *argv[]) {
 		}
 	} else if (strcmp(problem, "EE-PR") == 0) {
 		prob = EE_PR;
-	}
-	else {
+	} else if (strcmp(problem, "SE-ID") == 0) {
+		prob = SE_ID;
+	} else {
 		fprintf(stderr, "Unknown problem %s\n", problem);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
@@ -167,9 +180,9 @@ int main(int argc, char *argv[]) {
 	START_TIMER(start_time);
 
 	// TODO: Think about a matrix with pointers to relevant functions.
+	ListNode *result_list = NULL;
 	switch(prob) {
 		case EE_ST:
-			ListNode *result_list = NULL;
 			switch (alg) {
 				case NEXT_CLOSURE:
 					result_list = ee_st_next_closure(af);
@@ -213,7 +226,7 @@ int main(int argc, char *argv[]) {
 			}
 			free_list(result_list, (void (*)(void *)) free_bitset);
 			break;
-		case SE_ST:
+		case SE_ST: {
 			BitSet *result_se = create_bitset(af->size);
 			switch (alg) {
 				case NEXT_CLOSURE:
@@ -247,6 +260,7 @@ int main(int argc, char *argv[]) {
 			}
 			free_bitset(result_se);
 			break;
+		}
 		case DC_ST:
 			// On the command line arguments are named starting from 1. Internally, they start from 0:
 			--argument;
@@ -300,6 +314,15 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);
+			}
+			break;
+		case SE_ID:
+			if (alg == NEXT_CLOSURE) {
+				BitSet* ideal = se_id(af, ee_pr_next_closure);
+				print_set(ideal, output, "\n");
+				free_bitset(ideal);
+			} else {
+				print_not_supported(problem, algorithm, output);				
 			}
 			break;
 		case EE_PR:
