@@ -73,6 +73,16 @@ inline char check_set_attacks_arg(AF* af, BitSet* s, int arg) {
 	return(0);
 }
 
+// Check if set s defends argument arg
+// Return 1 if yes, 0 otherwise
+inline char check_set_defends_arg(AF* af, BitSet* s, int arg) {
+	// Check if s attacks all attackers of arg
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		if (CHECK_ARG_ATTACKS_ARG(af, i, arg) && !check_set_attacks_arg(af, s, i))
+			return(0);
+	return(1);
+}
+
 /*
 int is_conflict_free(Context* attacks, BitSet* x) {
 	BitSet* x_attacks = create_bitset(attacks->size);
