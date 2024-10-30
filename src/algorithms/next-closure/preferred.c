@@ -1,3 +1,19 @@
+/*
+ * AFCA - argumentation framework using closed sets
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "preferred.h"
 #include "../../utils/linked_list.h"
 
@@ -72,11 +88,7 @@ ListNode* add_candidate(ListNode* head, BitSet* c)
             cur = cur->next;
         }
     }
-	/*
-    ListNode* new_head = create_list_node(c);
-    new_head->next = head;
-    return new_head;
-    */
+
     return(insert_list_node(c, head));
 }
 
@@ -132,19 +144,6 @@ ListNode* ee_pr_next_closure(AF* af)
 	free_argumentation_framework(not_attacks);
 	free_bitset(down);
 	free_bitset(up);
-/*
-	List* extensions = list_create();
-	extensions->size = count_nodes(first_candidate);
-	extensions->elements = calloc(extensions->size, sizeof(BitSet*));
 
-	for (SIZE_TYPE i = 0; i < extensions->size; ++i) {
-		extensions->elements[i] = first_candidate->c;
-		ListNode* prev = first_candidate;
-		first_candidate = prev->next;
-		free_list_node(prev);
-	}
-
-	return extensions;
- */
     return(first_candidate);
 }
