@@ -109,6 +109,30 @@ inline char is_set_conflict_free(AF* af, BitSet* s) {
 	return(1);
 }
 
+// Compute attackers of set s, store in r.
+// attacked_by: the transposed framework
+// s: the given bitset
+// r: result bitset containing attackers of s
+static inline void get_attackers(AF* attacked_by, BitSet* s, BitSet* r) {
+	reset_bitset(r);
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
+		if (TEST_BIT(s, i))
+			bitset_union(r, attacked_by->graph[i], r);
+	}
+}
+
+// Compute victims (attacked arguments) of a set s, store in r
+// attacks: the attacks framework
+// s: the given bitset
+// r: result bitset containing arguments attacked by s
+static inline void get_victims(AF* attacks, BitSet* s, BitSet* r) {
+	reset_bitset(r);
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		if (TEST_BIT(s, i))
+			bitset_union(r, attacks->graph[i], r);
+	}
+}
+
 // Compute common victims of the arguments in s (arguments attacked by all elements of s)
 // (up-arrow in FCA terms) Put the result in r
 // inline void up_arrow(AF* af, BitSet* s, BitSet* r) {

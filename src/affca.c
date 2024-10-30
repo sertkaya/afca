@@ -26,6 +26,7 @@
 #include "algorithms/ideal/ideal.h"
 #include "algorithms/next-closure/preferred.h"
 #include "algorithms/next-closure/stable.h"
+#include "algorithms/next-closure/complete.h"
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
 #include "algorithms/connected-components/cc.h"
@@ -34,7 +35,7 @@
 
 
 enum alg_type {NEXT_CLOSURE , NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, NORRIS_BU, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
-enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_ID};
+enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_ID, EE_CO};
 
 
 void print_not_supported(char* problem, char* algorithm, FILE* output)
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]) {
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
 	static char usage[] = "Usage: %s -l [next-closure | norris | norris-bu | nourine | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine] "
-					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-ID] -a argument -f input -o output\n";
+					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
 		switch (c) {
@@ -136,6 +137,8 @@ int main(int argc, char *argv[]) {
 		prob = EE_PR;
 	} else if (strcmp(problem, "SE-ID") == 0) {
 		prob = SE_ID;
+	} else if (strcmp(problem, "EE-CO") == 0) {
+		prob = EE_CO;
 	} else {
 		fprintf(stderr, "Unknown problem %s\n", problem);
 		fprintf(stderr, usage, argv[0]);
@@ -348,6 +351,31 @@ int main(int argc, char *argv[]) {
 				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
 			}
 			free_list(result_list, (void (*)(void *)) free_bitset);
+			break;
+		case EE_CO:
+			switch (alg) {
+				case NEXT_CLOSURE:
+					result_list = ee_co_next_closure(af);
+					break;
+				default:
+					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+					fclose(output);
+					exit(EXIT_FAILURE);
+			}
+			if (sort_flag) {
+				ListNode* node = result_list;
+				while (node) {
+					// map back the indices if af was sorted before
+					BitSet *x = map_indices_back(node->c);
+					print_set(x, output, "\n");
+					node = node->next;
+				}
+			}
+			else {
+				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
+			}
+			free_list(result_list, (void (*)(void *)) free_bitset);
+			break;
 	}
 
 	STOP_TIMER(stop_time);
