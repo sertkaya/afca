@@ -137,37 +137,13 @@ ListNode* ee_co_next_closure(AF *attacks) {
 
 	int concept_count = 0, complete_extension_count = 0;
 	ListNode* extensions = NULL;
-	/*
-	while (1) {
-		if (!next_conflict_free_semi_complete_intent(attacks, current, next))
-			break;
-		++concept_count;
-
-		printf("next: ");
-		get_attackers(attacked_by, next, attackers);
-		get_victims(attacks, next, victims);
-		// Check if next is admissible
-		if (bitset_is_subset(attackers, victims)) {
-			print_set(next, stdout, "\n");
-			printf("attackers: ");
-			print_set(attackers, stdout, "\n");
-			printf("victims: ");
-			print_set(victims, stdout, "\n");
-			BitSet *co_ext = create_bitset(attacks->size);
-			++complete_extension_count;
-			copy_bitset(next, co_ext);
-			extensions = insert_list_node(co_ext, extensions);
-			// print_set(c, stdout, "\n");
-		}
-		copy_bitset(next, current);
-	}
-	*/
 
 	// closure of the empty set
 	closure_semi_complete(attacks, current, current);
 	do {
 		++concept_count;
-
+		print_bitset(current, stdout);
+		printf("\n");
 		// printf("current: ");
 		get_attackers(attacked_by, current, attackers);
 		get_victims(attacks, current, victims);
