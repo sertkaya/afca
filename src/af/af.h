@@ -121,6 +121,16 @@ static inline void get_attackers(AF* attacked_by, BitSet* s, BitSet* r) {
 	}
 }
 
+
+static inline void get_true_attackers(AF* af, BitSet* s, BitSet* r) {
+	reset_bitset(r);
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (!is_bitset_intersection_empty(af->graph[i], s)) {
+			SET_BIT(r, i);
+		}
+	}
+}
+
 // Compute victims (attacked arguments) of a set s, store in r
 // attacks: the attacks framework
 // s: the given bitset
