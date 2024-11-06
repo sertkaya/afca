@@ -24,6 +24,7 @@
 
 #include "af/sort.h"
 #include "algorithms/ideal/ideal.h"
+#include "algorithms/maximal-independent-sets/mis.h"
 #include "algorithms/next-closure/preferred.h"
 #include "algorithms/next-closure/stable.h"
 #include "algorithms/next-closure/complete.h"
@@ -34,7 +35,7 @@
 #include "utils/timer.h"
 
 
-enum alg_type {NEXT_CLOSURE , NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, NORRIS_BU, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
+enum alg_type {MIS, NEXT_CLOSURE, NORRIS, NOURINE, SCC_NORRIS, WCC_NORRIS, NORRIS_BU, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
 enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_ID, EE_CO};
 
 
@@ -96,7 +97,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	enum alg_type alg;
-	if (strcmp(algorithm, "next-closure") ==0)
+	if (strcmp(algorithm, "mis") == 0) {
+		alg = MIS;
+	} else if (strcmp(algorithm, "next-closure") ==0)
 		alg = NEXT_CLOSURE;
 	else if (strcmp(algorithm, "norris") ==0)
 		alg = NORRIS;
@@ -187,6 +190,9 @@ int main(int argc, char *argv[]) {
 	switch(prob) {
 		case EE_ST:
 			switch (alg) {
+				case MIS:
+					result_list = ee_st_maximal_independent_sets(af);
+					break;
 				case NEXT_CLOSURE:
 					result_list = ee_st_next_closure(af);
 					break;
@@ -242,6 +248,7 @@ int main(int argc, char *argv[]) {
 				case NOURINE:
 					se_st_nourine(af, result_se);
 					break;
+				case MIS:
 				case SCC_NORRIS:
 				case WCC_NORRIS:
 				case NORRIS_BU:
@@ -272,6 +279,7 @@ int main(int argc, char *argv[]) {
 				case NEXT_CLOSURE:
 					dc_st_next_closure(af, argument, result_dc);
 					break;
+				case MIS:
 				case NORRIS:
 				case NORRIS_BU:
 				case SCC_NORRIS_BU:
@@ -306,6 +314,7 @@ int main(int argc, char *argv[]) {
 				case NORRIS:
 					run_scc_norris_count(af, output);
 					break;
+				case MIS:
 				case NEXT_CLOSURE:
 				case NORRIS_BU:
 				case SCC_NORRIS_BU:
@@ -354,9 +363,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case EE_CO:
 			switch (alg) {
-				case NEXT_CLOSURE:
-					result_list = ee_co_next_closure(af);
-					break;
+				//case NEXT_CLOSURE:
+				//	result_list = ee_co_next_closure(af);
+				//	break;
 				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
