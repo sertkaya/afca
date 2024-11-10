@@ -363,9 +363,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case EE_CO:
 			switch (alg) {
-				//case NEXT_CLOSURE:
-				//	result_list = ee_co_next_closure(af);
-				//	break;
+				case NEXT_CLOSURE:
+					result_list = ee_co_next_closure(af);
+					break;
 				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
