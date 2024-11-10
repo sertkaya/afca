@@ -52,9 +52,11 @@ void closure_semi_complete(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r) {
 
 // bool next_conflict_free_semi_complete_intent_opt(AF* attacks,  ListNode** victims, int *attacker_counts, BitSet* current, BitSet* next) {
 // bool next_conflict_free_semi_complete_intent_opt(AF* attacks,  ListNode** victims, AF* attacked_by, BitSet* current, BitSet* next) {
-bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSet* current, BitSet* next) {
+bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, bool is_previous_self_defending, BitSet* peaceful_arguments, BitSet* current, BitSet* next) {
 	BitSet* tmp = create_bitset(attacks->size);
 	copy_bitset(current, tmp);
+	BitSet* attackers = create_bitset(attacks->size);
+	BitSet* victims = create_bitset(attacks->size);
 
 	// make a copy of attacker_counts
 	// int *attacker_counts_cp = calloc(attacks->size, sizeof(int));
@@ -68,10 +70,26 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 		} else if (!CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
 				   !CHECK_ARG_ATTACKS_SET(attacks, i, tmp) &&
 				   !check_set_attacks_arg(attacks, tmp, i)) {
+
+
 			SET_BIT(tmp, i);
 			// closure_semi_complete_opt(tmp, victims, attacker_counts_cp,  next);
 			// closure_semi_complete_opt(tmp, victims, attacked_by,  next);
 			closure_semi_complete(attacks, attacked_by, tmp, next);
+
+			/*
+			get_attackers(attacked_by, next, attackers);
+			get_victims(attacks, next, victims);
+			// if (TEST_BIT(peaceful_arguments, i) && bitset_is_subset(attackers, victims)) {
+			if (bitset_is_subset(attackers, victims)) {
+				// adding i to tmp will not make tmp self-defending.
+				// because tmp is not self-defending and i does not attack any arguments.
+				// in this case continue with the next i
+				printf("continue\n");
+				// RESET_BIT(tmp, i);
+				continue;;
+			}
+			*/
 
 			bool good = true;
 			// is next canonical?
@@ -99,13 +117,15 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 	}
 
 	free_bitset(tmp);
+	free_bitset(attackers);
+	free_bitset(victims);
 	// free(attacker_counts_cp);
 	return(0);
 }
 
 ListNode* ee_co_next_closure(AF *attacks) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
-	AF* attacked_by_cp = create_argumentation_framework(attacked_by->size);
+	// AF* attacked_by_cp = create_argumentation_framework(attacked_by->size);
 
 	BitSet* attackers = create_bitset(attacks->size);
 	BitSet* victims = create_bitset(attacks->size);
@@ -113,12 +133,36 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	BitSet* current = create_bitset(attacks->size);
 	BitSet* next = create_bitset(attacks->size);
 
+	SIZE_TYPE i;
+
+	// peaceful arguments are those, that do not attack any arguments
+	BitSet* peaceful_arguments = create_bitset(attacks->size);
+	int peaceful_args_count = 0;
+	int self_defending_args_count = 0;
+	int safe_args_count = 0;
+	for (i = 0; i < attacks->size; ++i) {
+		if (bitset_is_emptyset(attacks->graph[i])) {
+			++peaceful_args_count;
+			SET_BIT(peaceful_arguments, i);
+		}
+		if (bitset_is_subset(attacked_by->graph[i], attacks->graph[i])) {
+			++self_defending_args_count;
+		}
+		if (bitset_is_emptyset(attacked_by->graph[i])) {
+			++safe_args_count;
+		}
+	}
+
+	printf("Peaceful arguments: %d\n", peaceful_args_count);
+	printf("Self-defending arguments: %d\n", self_defending_args_count);
+	printf("Safe arguments: %d\n", safe_args_count);
+
 	// int* attacker_counts = calloc(attacks->size, sizeof(int));
 	// assert(attacker_counts != NULL);
-	ListNode** victims_list = calloc(attacks->size, sizeof(ListNode*));
-	assert(victims_list != NULL);
+	// ListNode** victims_list = calloc(attacks->size, sizeof(ListNode*));
+	// assert(victims_list != NULL);
 
-	SIZE_TYPE i;
+	/*
 	long j;
 	for (i = 0; i < attacks->size; ++i) {
 		for (j = 0; j < attacks->size; ++j) {
@@ -128,6 +172,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 			}
 		}
 	}
+	*/
 
 	int concept_count = 0, complete_extension_count = 0;
 	ListNode* extensions = NULL;
@@ -136,12 +181,14 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	closure_semi_complete(attacks, attacked_by, current, current);
 	// closure_semi_complete_opt(current, victims_list, attacker_counts, current);
 	// closure_semi_complete(attacks, current, current);
+	bool is_current_self_defending;
 	do {
 		++concept_count;
 		// print_set(current, stdout, "\n");
-		print_bitset(current, stdout);
-		printf("\n");
+		// print_bitset(current, stdout);
+		// printf("\n");
 		// printf("current: ");
+		is_current_self_defending = false;
 		get_attackers(attacked_by, current, attackers);
 		get_victims(attacks, current, victims);
 		// Check if next is admissible
@@ -155,11 +202,15 @@ ListNode* ee_co_next_closure(AF *attacks) {
 			++complete_extension_count;
 			copy_bitset(current, co_ext);
 			extensions = insert_list_node(co_ext, extensions);
+			is_current_self_defending = true;
 		}
+		/*
 		for (int i = 0; i < attacked_by->size; i++) {
 			copy_bitset(attacked_by->graph[i], attacked_by_cp->graph[i]);
 		}
-	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by_cp, current, current));
+		*/
+	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, is_current_self_defending, peaceful_arguments, current, current));
+	// } while (next_conflict_free_semi_complete_intent(attacks, attacked_by_cp, current, current));
 	// } while (next_conflict_free_semi_complete_intent_opt(attacks, victims_list, attacker_counts, current, current));
 	// } while (next_conflict_free_semi_complete_intent(attacks, current, current));
 
@@ -174,8 +225,8 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
 		free_list(victims_list[i], (void (*)(void *)) free_list_node);
 	}
-	*/
 	free(victims_list);
+	*/
 	free_argumentation_framework(attacked_by);
 	return(extensions);
 }
