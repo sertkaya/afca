@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "../../bitset/bitset.h"
+#include "../maximal-independent-sets/mis.h"
 #include "../norris/stable.h"
 #include "../nourine/stable.h"
 #include "scc.h"
@@ -51,6 +52,9 @@ void run_cc(AF* af, ListNode* (*stable_extensions)(AF* af), FILE* output, bool s
 	free_argumentation_framework(af);
 }
 
+void run_cc_mis(AF* af, FILE* output, bool scc) {
+	run_cc(af, ee_st_maximal_independent_sets, output, scc);
+}
 
 void run_cc_norris(AF* af, FILE* output, bool scc) {
 	run_cc(af, ee_st_norris, output, scc);
