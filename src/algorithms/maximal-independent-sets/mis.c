@@ -19,14 +19,12 @@ ListNode* extend(SIZE_TYPE i,
         ++i;
     }
 
-    if (bitset_is_fullset(dominated)) {
-        free_bitset(conflicting);
-        free_bitset(dominated);
-        return insert_list_node(s, extensions);
-    }
-
     if (i == af->size) {
-        free_bitset(s);
+        if (bitset_is_fullset(dominated)) {
+            extensions = insert_list_node(s, extensions);
+        } else {
+            free_bitset(s);
+        }
         free_bitset(conflicting);
         free_bitset(dominated);
         return extensions;
