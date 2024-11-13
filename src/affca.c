@@ -251,6 +251,9 @@ int main(int argc, char *argv[]) {
 				case NEXT_CLOSURE:
 					se_st_next_closure(af, result_se);
 					break;
+				case MIS:
+					result_se = se_st_mis(af);
+					break;
 				case NORRIS:
 					// se = se_st_norris(af, output);
 					se_st_norris(af, output);
@@ -258,7 +261,6 @@ int main(int argc, char *argv[]) {
 				case NOURINE:
 					se_st_nourine(af, result_se);
 					break;
-				case MIS:
 				case SCC_MIS:
 				case WCC_MIS:
 				case SCC_NORRIS:
