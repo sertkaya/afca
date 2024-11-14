@@ -135,56 +135,25 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	printf("Self-defending arguments: %d\n", self_defending_args_count);
 	printf("Safe arguments: %d\n", safe_args_count);
 
-	// int* attacker_counts = calloc(attacks->size, sizeof(int));
-	// assert(attacker_counts != NULL);
-	// ListNode** victims_list = calloc(attacks->size, sizeof(ListNode*));
-	// assert(victims_list != NULL);
-
-	/*
-	long j;
-	for (i = 0; i < attacks->size; ++i) {
-		for (j = 0; j < attacks->size; ++j) {
-			if (CHECK_ARG_ATTACKS_ARG(attacks, i, j)) {
-				// ++attacker_counts[j];
-				victims_list[i] = insert_list_node((void*) j, victims_list[i]);
-			}
-		}
-	}
-	*/
-
 	int concept_count = 0, complete_extension_count = 0;
 	ListNode* extensions = NULL;
 
 	// closure of the empty set
 	closure_semi_complete(attacks, attacked_by, current, current);
-	// closure_semi_complete_opt(current, victims_list, attacker_counts, current);
-	// closure_semi_complete(attacks, current, current);
 	do {
 		++concept_count;
 		// print_set(current, stdout, "\n");
 		// print_bitset(current, stdout);
 		// printf("\n");
-		// printf("current: ");
 		get_attackers(attacked_by, current, attackers);
 		get_victims(attacks, current, victims);
 		// Check if current is self-defending
-		// printf("Current:");
-		// print_set(current, stdout, "\n");
 		if (bitset_is_subset(attackers, victims)) {
-			// printf("attackers: ");
-			// print_set(attackers, stdout, "\n");
-			// printf("victims: ");
-			// print_set(victims, stdout, "\n");
 			BitSet *co_ext = create_bitset(attacks->size);
 			++complete_extension_count;
 			copy_bitset(current, co_ext);
 			extensions = insert_list_node(co_ext, extensions);
 		}
-		/*
-		for (int i = 0; i < attacked_by->size; i++) {
-			copy_bitset(attacked_by->graph[i], attacked_by_cp->graph[i]);
-		}
-		*/
 	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, peaceful_arguments, current, current));
 
 	printf("Number of concepts generated: %d\n", concept_count);
@@ -194,121 +163,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	free_bitset(next);
 	free_bitset(attackers);
 	free_bitset(victims);
-	/*
-	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
-		free_list(victims_list[i], (void (*)(void *)) free_list_node);
-	}
-	free(victims_list);
-	*/
+
 	free_argumentation_framework(attacked_by);
 	return(extensions);
 }
-
-/*
-// TODO: Optimize
-void closure_semi_complete_naive(AF* attacks, BitSet* s, BitSet* r) {
-	SIZE_TYPE i;
-	copy_bitset(s, r);
-	bool closure_modified;
-	do {
-		closure_modified = false;
-		for (i = 0; i < attacks->size; i++) {
-			if (!TEST_BIT(r, i) && check_set_defends_arg(attacks, r, i)) {
-				SET_BIT(r, i);
-				closure_modified = true;
-			}
-		}
-	} while (closure_modified);
-}
-*/
-
-// s: BitSet to be closed
-// victims: Array of linked lists. Index is argument, value is linked list of its victims
-// attacker_counts: Array of integers. Index is argument, value is number of its attackers
-// r: Output BitSet. Closure of s.
-// void closure_semi_complete_opt(BitSet* s, ListNode** victims, int *attacker_counts, BitSet* r) {
-/*
-void closure_semi_complete_opt(BitSet* s, ListNode** victims, AF *attacked_by, BitSet* r) {
-	copy_bitset(s, r);
-
-	Stack args_to_process;
-	init_stack(&args_to_process);
-
-	long i;
-	for (i = 0; i < s->size; ++i) {
-		if (TEST_BIT(s, i))
-			push(&args_to_process, (void*) i);
-	}
-
-	long arg = (long) pop(&args_to_process);
-
-	// printf("===\n");
-	while(arg != 0) {
-		// printf("arg:%ld\n", arg +1);
-		ListNode* vp = victims[arg];
-		while (vp) {
-			// printf("vp->c:%ld\n", (long) vp->c + 1);
-			ListNode* vvp = victims[(long) vp->c];
-			while (vvp) {
-				// printf("vvp->c:%ld\n", (long) vvp->c + 1);
-				// if (((--attacker_counts[(long) vvp->c]) == 0) && (!TEST_BIT(r, (long) vvp->c))) {
-				RESET_BIT(attacked_by->graph[(long) vvp->c], (long) vp->c);
-				// if (((--attacker_counts[(long) vvp->c]) == 0) && (!TEST_BIT(r, (long) vvp->c))) {
-				if ((!TEST_BIT(r, (long) vvp->c)) && bitset_is_emptyset(attacked_by->graph[(long) vvp->c])) {
-					SET_BIT(r, (long) vvp->c);
-					push(&args_to_process, (void*) vvp->c);
-				}
-				vvp = vvp->next;
-			}
-			vp = vp->next;
-		}
-		arg = (long) pop(&args_to_process);
-	}
-	free_stack(&args_to_process);
-}
-*/
-
-/*
-bool next_conflict_free_semi_complete_intent(AF* attacks, BitSet* current, BitSet* next) {
-	BitSet* tmp = create_bitset(attacks->size);
-	copy_bitset(current, tmp);
-
-	for (int i = attacks->size - 1; i >= 0; --i) {
-		if (TEST_BIT(tmp, i)) {
-			RESET_BIT(tmp, i);
-		} else if (!CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
-				   !CHECK_ARG_ATTACKS_SET(attacks, i, tmp) &&
-				   !check_set_attacks_arg(attacks, tmp, i)) {
-			SET_BIT(tmp, i);
-			closure_semi_complete(attacks, tmp, next);
-
-			bool good = true;
-			// is next canonical?
-			for (SIZE_TYPE j = 0; j < i; ++j) {
-				if (TEST_BIT(next, j) && !TEST_BIT(tmp, j)) {
-					good = false;
-					break;
-				}
-			}
-			if (good) {
-				// is next conflict-free?
-				for (SIZE_TYPE j = i + 1; j < attacks->size; ++j) {
-					if (TEST_BIT(next, j) && CHECK_ARG_ATTACKS_SET(attacks, j, next) &&  check_set_attacks_arg(attacks, tmp, j)) {
-						good = false;
-						break;
-					}
-				}
-			}
-			if (good) {
-				free_bitset(tmp);
-				return(1);
-			}
-			RESET_BIT(tmp, i);
-		}
-	}
-
-	free_bitset(tmp);
-	return(0);
-}
-*/
-
