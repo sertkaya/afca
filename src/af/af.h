@@ -194,4 +194,7 @@ PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
 BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);
 
+// swap the order of arguments i and j
+void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j); 
+
 #endif /* AF_AF_H_ */
