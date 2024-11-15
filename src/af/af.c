@@ -150,3 +150,25 @@ BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size) {
 	}
 	return res;
 }
+
+
+void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j)
+{
+	BitSet* iset = af->graph[i];
+	af->graph[i] = af->graph[j];
+	af->graph[j] = iset;
+
+	for (SIZE_TYPE k = 0; k < af->size; ++k) {
+		bool ibit = TEST_BIT(af->graph[k], i);
+		if (TEST_BIT(af->graph[k], j)) {
+			SET_BIT(af->graph[k], i);
+		} else {
+			RESET_BIT(af->graph[k], i);
+		}
+		if (ibit) {
+			SET_BIT(af->graph[k], j);
+		} else {
+			RESET_BIT(af->graph[k], j);
+		}
+	}
+}
