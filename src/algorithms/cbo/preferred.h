@@ -20,5 +20,6 @@
 #include "../../af/af.h"
 
 BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a);
+BitSet* se_pr_cbo(AF* af);
 
 #endif /* AF_PREFERRED_EXTENSIONS_CBO_H_ */

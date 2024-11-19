@@ -84,7 +84,7 @@ BitSet* explore_subtree(BitSet* current, SIZE_TYPE m, AF* not_attacks, AF* af)
 
 BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a)
 {
-	if (CHECK_ARG_ATTACKS_ARG(af, a, a)) {
+	if (a < af->size && CHECK_ARG_ATTACKS_ARG(af, a, a)) {
 		return 0;
 	}
 
@@ -94,11 +94,11 @@ BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a)
 	//copy_bitset(not_attacks->graph[a], c); ---TODO: This doesn't work as intended!
 	set_bitset(c);
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		if (!CHECK_ARG_ATTACKS_ARG(af, i, a)) {
+		if (a == af->size || !CHECK_ARG_ATTACKS_ARG(af, i, a)) {
 	        bitset_intersection(c, not_attacks->graph[i], c);
 		}
 	}
-    // c is the closure of {a}
+    // c is the closure of {a} if a >= 0 or of {} otherwise
 
 	BitSet* extension = explore_subtree(c, 0, not_attacks, af);
 
@@ -108,4 +108,9 @@ BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a)
 	free_argumentation_framework(not_attacks);
 
     return extension;
+}
+
+BitSet* se_pr_cbo(AF* af)
+{
+	return dc_pr_cbo(af, af->size);
 }
