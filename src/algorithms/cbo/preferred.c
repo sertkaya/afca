@@ -110,6 +110,31 @@ BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a)
     return extension;
 }
 
+BitSet* ds_pr_cbo(AF* af, SIZE_TYPE a)
+{
+	BitSet* extension = se_pr_cbo(af);
+	if (!TEST_BIT(extension, a)) {
+		return extension;
+	}
+	free_bitset(extension);
+	extension = 0;
+
+	// TODO: This is based on the assumption that every preferred extension
+	// without a must attack a. Check if this is true.
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (CHECK_ARG_ATTACKS_ARG(af, i, a)) {
+			// TODO: Calls for diffrent i may repeat some work. Optimize.
+			extension = dc_pr_cbo(af, i);
+			if (extension) {
+				break;
+			}
+		}
+	}
+
+	return extension;
+}
+
+
 BitSet* se_pr_cbo(AF* af)
 {
 	return dc_pr_cbo(af, af->size);
