@@ -26,6 +26,7 @@
 // I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
 // Semi-complete extensions form a closure system.
 
+BitSet* defends_lectically_smaller_arg;
 
 void closure_semi_complete(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r) {
 	SIZE_TYPE i;
@@ -64,6 +65,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 				   // in this case continue with the next i
 			       !CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
 				   !CHECK_ARG_ATTACKS_SET(attacks, i, tmp) &&
+				   !TEST_BIT(defends_lectically_smaller_arg, i) &&
 				   !check_set_attacks_arg(attacks, tmp, i)) {
 
 
@@ -111,29 +113,59 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	BitSet* current = create_bitset(attacks->size);
 	BitSet* next = create_bitset(attacks->size);
 
+	defends_lectically_smaller_arg = create_bitset(attacks->size);
+
 	SIZE_TYPE i;
 
 	// peaceful arguments are those, that do not attack any arguments
 	BitSet* peaceful_arguments = create_bitset(attacks->size);
 	int peaceful_args_count = 0;
+	int attacks_one = 0;
+	int attacks_more_than_half = 0;
 	int self_defending_args_count = 0;
 	int safe_args_count = 0;
+	int single_attacker_count = 0;
+	int multiple_attacker_count = 0;
+	int defends_lect_smaller_count = 0;
 	for (i = 0; i < attacks->size; ++i) {
 		if (bitset_is_emptyset(attacks->graph[i])) {
 			++peaceful_args_count;
 			SET_BIT(peaceful_arguments, i);
 		}
+		if (count_bits(attacks->graph[i]) == 1)
+			++attacks_one;
+		if (count_bits(attacks->graph[i]) > (attacks->size / 10))
+			++attacks_more_than_half;
+
 		if (bitset_is_subset(attacked_by->graph[i], attacks->graph[i])) {
 			++self_defending_args_count;
 		}
-		if (bitset_is_emptyset(attacked_by->graph[i])) {
+		//`if (bitset_is_emptyset(attacked_by->graph[i])) {
+		if (count_bits(attacked_by->graph[i]) == 0) {
 			++safe_args_count;
 		}
+		if (count_bits(attacked_by->graph[i]) == 1)
+			++single_attacker_count;
+		if (count_bits(attacked_by->graph[i]) > 1)
+			++multiple_attacker_count;
+		SIZE_TYPE j;
+		for (j = 0; j < attacks->size; ++j) {
+			if (j < i && bitset_is_subset(attacked_by->graph[j], attacks->graph[i])) {
+				SET_BIT(defends_lectically_smaller_arg, i);
+			}
+		}
+		++defends_lect_smaller_count;
 	}
+	fflush(stdout);
 
-	printf("Peaceful arguments: %d\n", peaceful_args_count);
+	printf("Arguments attacking 0 arguments: %d\n", peaceful_args_count);
+	printf("Arguments attacking 1 argument: %d\n", attacks_one);
+	printf("Arguments attacking more than %d arguments: %d\n", attacks->size / 10, attacks_more_than_half);
+	printf("Arguments with zero attackers: %d\n", safe_args_count);
+	printf("Arguments with a single attacker: %d\n", single_attacker_count);
+	printf("Arguments with multiple attackers: %d\n", multiple_attacker_count);
 	printf("Self-defending arguments: %d\n", self_defending_args_count);
-	printf("Safe arguments: %d\n", safe_args_count);
+	printf("Arguments defending a lectically smaller argument: %d\n", defends_lect_smaller_count);
 
 	int concept_count = 0, complete_extension_count = 0;
 	ListNode* extensions = NULL;
@@ -163,6 +195,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	free_bitset(next);
 	free_bitset(attackers);
 	free_bitset(victims);
+	free_bitset(peaceful_arguments);
 
 	free_argumentation_framework(attacked_by);
 	return(extensions);
