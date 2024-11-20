@@ -23,6 +23,7 @@
 #include <getopt.h>
 
 #include "af/sort.h"
+#include "algorithms/cbo/preferred.h"
 #include "algorithms/ideal/ideal.h"
 #include "algorithms/maximal-independent-sets/mis.h"
 #include "algorithms/next-closure/preferred.h"
@@ -35,8 +36,8 @@
 #include "utils/timer.h"
 
 
-enum alg_type {MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
-enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_ID, EE_CO};
+enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
+enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO};
 
 
 void print_not_supported(char* problem, char* algorithm, FILE* output)
@@ -52,8 +53,8 @@ int main(int argc, char *argv[]) {
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
-	static char usage[] = "Usage: %s -l [max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine] "
-					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
+	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine] "
+					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
 		switch (c) {
@@ -97,7 +98,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	enum alg_type alg;
-	if (strcmp(algorithm, "mis") == 0) {
+	if (strcmp(algorithm, "cbo") == 0) {
+		alg = CBO;
+	} else if (strcmp(algorithm, "mis") == 0) {
 		alg = MIS;
 	} else if (strcmp(algorithm, "next-closure") == 0) {
 		alg = NEXT_CLOSURE;
@@ -142,6 +145,20 @@ int main(int argc, char *argv[]) {
 		}
 	} else if (strcmp(problem, "EE-PR") == 0) {
 		prob = EE_PR;
+	} else if (strcmp(problem, "SE-PR") == 0) {
+		prob = SE_PR;
+	} else if (strcmp(problem, "DC-PR") == 0) {
+		prob = DC_PR;
+		if (!argument_flag) {
+			fprintf(stderr, usage, argv[0]);
+			exit(EXIT_FAILURE);
+		}
+	} else if (strcmp(problem, "DS-PR") == 0) {
+		prob = DS_PR;
+		if (!argument_flag) {
+			fprintf(stderr, usage, argv[0]);
+			exit(EXIT_FAILURE);
+		}
 	} else if (strcmp(problem, "SE-ID") == 0) {
 		prob = SE_ID;
 	} else if (strcmp(problem, "EE-CO") == 0) {
@@ -230,7 +247,10 @@ int main(int argc, char *argv[]) {
 				case WCC_NOURINE:
 					run_cc_nourine(af, output, false);
 					break;
-			}
+				case CBO:
+					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+					fclose(output);
+					exit(EXIT_FAILURE);			}
 			if (sort_flag) {
 				ListNode* node = result_list;
 				while (node) {
@@ -261,6 +281,7 @@ int main(int argc, char *argv[]) {
 				case NOURINE:
 					se_st_nourine(af, result_se);
 					break;
+				case CBO:
 				case SCC_MIS:
 				case WCC_MIS:
 				case SCC_NORRIS:
@@ -293,6 +314,7 @@ int main(int argc, char *argv[]) {
 				case NEXT_CLOSURE:
 					dc_st_next_closure(af, argument, result_dc);
 					break;
+				case CBO:
 				case MIS:
 				case SCC_MIS:
 				case WCC_MIS:
@@ -330,6 +352,7 @@ int main(int argc, char *argv[]) {
 				case NORRIS:
 					run_scc_norris_count(af, output);
 					break;
+				case CBO:
 				case MIS:
 				case SCC_MIS:
 				case WCC_MIS:
@@ -378,6 +401,37 @@ int main(int argc, char *argv[]) {
 				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
 			}
 			free_list(result_list, (void (*)(void *)) free_bitset);
+			break;
+		case SE_PR:
+			if (alg == CBO) {
+				BitSet* preferred = se_pr_cbo(af);
+				print_set(preferred, output, "\n");
+				free_bitset(preferred);
+			} else {
+				print_not_supported(problem, algorithm, output);				
+			}
+			break;
+		case DC_PR:
+			if (alg == CBO) {
+				BitSet* preferred = dc_pr_cbo(af, --argument);
+				if (preferred) {
+					print_set(preferred, output, "\n");
+					free_bitset(preferred);
+				}
+			} else {
+				print_not_supported(problem, algorithm, output);				
+			}
+			break;
+		case DS_PR:
+			if (alg == CBO) {
+				BitSet* preferred = ds_pr_cbo(af, --argument);
+				if (preferred) {
+					print_set(preferred, output, "\n");
+					free_bitset(preferred);
+				}
+			} else {
+				print_not_supported(problem, algorithm, output);				
+			}
 			break;
 		case EE_CO:
 			switch (alg) {
