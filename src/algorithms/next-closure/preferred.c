@@ -18,7 +18,7 @@
 #include "../../utils/linked_list.h"
 
 
-BitSet* next_conflict_free_intent(AF* not_attacks, AF* attacks, BitSet* previous) {
+BitSet* next_conflict_free_intent(AF* not_attacks, AF* attacks, BitSet* previous, BitSet* ignored) {
 	BitSet* current = create_bitset(attacks->size);
 	copy_bitset(previous, current);
 	BitSet* next = create_bitset(attacks->size);
@@ -26,7 +26,8 @@ BitSet* next_conflict_free_intent(AF* not_attacks, AF* attacks, BitSet* previous
 	for (int i = attacks->size - 1; i >= 0; --i) {
 		if (TEST_BIT(current, i)) {
 			RESET_BIT(current, i);
-		} else if (!CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
+		} else if (!TEST_BIT(ignored, i) &&
+				   !CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
 				   !CHECK_ARG_ATTACKS_SET(attacks, i, current) &&
 				   !check_set_attacks_arg(attacks, current, i)) {
 			SET_BIT(current, i);
@@ -103,6 +104,38 @@ bool is_conflict_free_set_admissible(BitSet* s, AF* not_attacks, BitSet* up, Bit
 }
 
 
+void add_ignore(AF* af, AF* not_attacks, BitSet* mandatory, BitSet* ignored)
+{
+	// mandatory and ignored are assumed to be empty here
+	SIZE_TYPE mandatory_size = 0;
+	SIZE_TYPE ignored_size = 0;
+	SIZE_TYPE new_size = 0;
+
+	do {
+		ignored_size = new_size;
+
+		set_bitset(mandatory);
+		for (SIZE_TYPE i = 0; i < af->size && !bitset_is_emptyset(mandatory); ++i) {
+			if (!TEST_BIT(ignored, i)) {
+				bitset_intersection(mandatory, not_attacks->graph[i], mandatory);
+			}
+		}
+		new_size = count_bits(mandatory);
+		if (new_size == mandatory_size) {
+			break;
+		}
+		mandatory_size = new_size;
+
+		for (SIZE_TYPE i = 0; i < af->size; ++i) {
+			if (TEST_BIT(mandatory, i)) {
+				bitset_union(ignored, af->graph[i], ignored);
+			}
+		}
+		new_size = count_bits(ignored);
+	} while (new_size != ignored_size);
+}
+
+
 ListNode* ee_pr_next_closure(AF* af)
 {
     BitSet* up = create_bitset(af->size);
@@ -111,18 +144,14 @@ ListNode* ee_pr_next_closure(AF* af)
 	AF* not_attacks = complement_argumentation_framework(af);
 
 	BitSet* c = create_bitset(af->size);
-    copy_bitset(af->graph[0], c);
-	for (SIZE_TYPE i = 1; i < af->size && !bitset_is_emptyset(c); ++i) {
-        bitset_intersection(c, af->graph[i], c);
-	}
-    // c is the closure of the empty attribute set,
-    // i.e., c is the set of arguments not attacked by any argument
+	BitSet* ignored = create_bitset(af->size);
+	add_ignore(af, not_attacks, c, ignored);
 
     ListNode* first_candidate = 0;
     BitSet* new_intent = 0;
 	BitSet* prev_intent = c;
 
-    while ((new_intent = next_conflict_free_intent(not_attacks, af, prev_intent))) {
+    while ((new_intent = next_conflict_free_intent(not_attacks, af, prev_intent, ignored))) {
 		if (prev_intent != c) {
 			free_bitset(prev_intent);
 		}
@@ -146,6 +175,7 @@ ListNode* ee_pr_next_closure(AF* af)
 	free_argumentation_framework(not_attacks);
 	free_bitset(down);
 	free_bitset(up);
+	free_bitset(ignored);
 
     return(first_candidate);
 }
