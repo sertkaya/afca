@@ -92,6 +92,7 @@ BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a)
 
 	BitSet* c = create_bitset(af->size);
 	//copy_bitset(not_attacks->graph[a], c); ---TODO: This doesn't work as intended!
+	//										 ---TODO: It should now (after changes in complement_bitset).
 	set_bitset(c);
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		if (a == af->size || !CHECK_ARG_ATTACKS_ARG(af, i, a)) {
@@ -123,7 +124,7 @@ BitSet* ds_pr_cbo(AF* af, SIZE_TYPE a)
 	// without a must attack a. Check if this is true.
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		if (CHECK_ARG_ATTACKS_ARG(af, i, a)) {
-			// TODO: Calls for diffrent i may repeat some work. Optimize.
+			// TODO: Calls for different i may repeat some work. Optimize.
 			extension = dc_pr_cbo(af, i);
 			if (extension) {
 				break;
