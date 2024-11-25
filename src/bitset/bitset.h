@@ -107,13 +107,20 @@ inline void bitset_union(BitSet* bs1, BitSet* bs2, BitSet* r) {
 		r->elements[i] = bs1->elements[i] | bs2->elements[i];
 }
 
+
+inline BITSET_BASE_TYPE get_last_full_block(BitSet* bs)
+{
+	SIZE_TYPE tail = bs->size % BITSET_BASE_SIZE;
+	return tail ? (1ULL << tail) - 1 : ~(0ULL);
+}
+
 // Negate bitset (flip the bits) bs and store the result in r.
 inline void complement_bitset(BitSet* bs, BitSet* r) {
-	int i;
-	for (i = 0; i < bs->base_count; ++i)
+	for (SIZE_TYPE i = 0; i < bs->base_count; ++i) {
 		r->elements[i] = ~(bs->elements[i]);
-	// TODO: correct for the last block
-
+	}
+	// correct for the last block
+	r->elements[r->base_count - 1] &= get_last_full_block(r);
 }
 
 // Clear all bits
@@ -126,10 +133,10 @@ inline void reset_bitset(BitSet* bs) {
 
 // Compute set difference bs1 \ bs2, store it in r.
 inline void bitset_set_minus(BitSet* bs1, BitSet* bs2, BitSet* r) {
-	int i;
-	// reset_bitset(r);
-	for (i = 0; i < bs1->base_count; ++i)
+	for (SIZE_TYPE i = 0; i < bs1->base_count; ++i) {
 		r->elements[i] = bs1->elements[i] & ~(bs2->elements[i]);
+	}
+	r->elements[r->base_count - 1] &= get_last_full_block(r);
 }
 
 // Copy bs1 into bs2
@@ -176,8 +183,7 @@ inline void set_bitset(BitSet* bs) {
 	for (SIZE_TYPE i = 0; i < bs->base_count - 1; ++i) {
 		bs->elements[i] = ~(0ULL);
 	}
-	SIZE_TYPE tail = bs->size % BITSET_BASE_SIZE;
-	bs->elements[bs->base_count - 1] = tail ? (1ULL << tail) - 1 : ~(0ULL);
+	bs->elements[bs->base_count - 1] = get_last_full_block(bs);
 }
 
 // key for hashing
