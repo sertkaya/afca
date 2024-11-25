@@ -22,6 +22,5 @@
 BitSet* dc_pr_cbo(AF* af, SIZE_TYPE a);
 BitSet* ds_pr_cbo(AF* af, SIZE_TYPE a);
 BitSet* se_pr_cbo(AF* af);
-BitSet* ds_pr_cbo(AF* af, SIZE_TYPE a);
 
 #endif /* AF_PREFERRED_EXTENSIONS_CBO_H_ */
