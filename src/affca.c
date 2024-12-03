@@ -37,7 +37,7 @@
 
 
 enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
-enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO};
+enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO, DC_CO};
 
 
 void print_not_supported(char* problem, char* algorithm, FILE* output)
@@ -163,6 +163,12 @@ int main(int argc, char *argv[]) {
 		prob = SE_ID;
 	} else if (strcmp(problem, "EE-CO") == 0) {
 		prob = EE_CO;
+	} else if (strcmp(problem, "DC-CO") == 0) {
+		prob = DC_CO;
+		if (!argument_flag) {
+			fprintf(stderr, usage, argv[0]);
+			exit(EXIT_FAILURE);
+		}
 	} else {
 		fprintf(stderr, "Unknown problem %s\n", problem);
 		fprintf(stderr, usage, argv[0]);
@@ -188,10 +194,10 @@ int main(int argc, char *argv[]) {
 	// Sort the af
 	AF *af = input_af;
 	if (sort_flag) {
-		START_TIMER(start_time);
+		// START_TIMER(start_time);
 		af = sort_af(input_af, sort_type, sort_direction);
-		STOP_TIMER(stop_time);
-		printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+		// STOP_TIMER(stop_time);
+		// printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
 	// TODO: free the input_af? Needed for mapping back the sorted af?
 
@@ -457,6 +463,28 @@ int main(int argc, char *argv[]) {
 			}
 			free_list(result_list, (void (*)(void *)) free_bitset);
 			break;
+		case DC_CO:
+			// On the command line arguments are named starting from 1. Internally, they start from 0:
+			--argument;
+			switch (alg) {
+				case NEXT_CLOSURE:
+					// sort the af in the descending order of victim count
+					// (ignores if the af was already sorted)
+					af = sort_af(input_af, VICTIM_COUNT, SORT_DESCENDING);
+					// map argument
+					int mapped_argument = map_argument(argument);
+					result_dc = dc_co_next_closure(af, mapped_argument);
+
+					// map back the indices
+					BitSet *x = map_indices_back(result_dc);
+					print_set(x, output, "\n");
+					free_bitset(x);
+					break;
+				default:
+					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
+					fclose(output);
+					exit(EXIT_FAILURE);
+			}
 	}
 
 	STOP_TIMER(stop_time);

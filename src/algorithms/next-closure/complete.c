@@ -26,6 +26,7 @@
 // I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
 // Semi-complete extensions form a closure system.
 
+BitSet* peaceful_arguments;
 BitSet* defends_lectically_smaller_arg;
 
 void closure_semi_complete(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r) {
@@ -52,7 +53,7 @@ void closure_semi_complete(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r) {
 }
 
 // Peaceful arguments have to be the rightmost bits of the arguments set
-bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSet* peaceful_arguments, BitSet* current, BitSet* next) {
+bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSet* current, BitSet* next) {
 	BitSet* tmp = create_bitset(attacks->size);
 	copy_bitset(current, tmp);
 
@@ -118,7 +119,8 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	SIZE_TYPE i;
 
 	// peaceful arguments are those, that do not attack any arguments
-	BitSet* peaceful_arguments = create_bitset(attacks->size);
+	peaceful_arguments = create_bitset(attacks->size);
+
 	int peaceful_args_count = 0;
 	int attacks_one = 0;
 	int attacks_more_than_half = 0;
@@ -186,7 +188,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 			copy_bitset(current, co_ext);
 			extensions = insert_list_node(co_ext, extensions);
 		}
-	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, peaceful_arguments, current, current));
+	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current));
 
 	printf("Number of concepts generated: %d\n", concept_count);
 	printf("Number of complete extensions: %d\n", complete_extension_count);
@@ -199,4 +201,96 @@ ListNode* ee_co_next_closure(AF *attacks) {
 
 	free_argumentation_framework(attacked_by);
 	return(extensions);
+}
+
+// Assuming arguments are sorted in descending order of victim count: -s 1 -d 1
+// af is the sorted framework. argument is the mapped argument
+BitSet* dc_co_next_closure(AF* af, int argument) {
+	BitSet* current = create_bitset(af->size);
+	if (CHECK_ARG_ATTACKS_ARG(af, argument, argument))
+		return(current);
+	// swap the argument with the left-most argument (the argument at index 0).
+	// TODO: think about the case where argument is peaceful (has no victims).
+	// TODO: does the algorithm still work for this case? the assumption, the peaceful
+	// TODO: arguments are the right-most ones will not be true any more.
+	BitSet* tmp = create_bitset(af->size);
+	copy_bitset(af->graph[0], tmp);
+	copy_bitset(af->graph[argument], af->graph[0]);
+	copy_bitset(tmp, af->graph[argument]);
+	int i,j;
+	for (i = 0; i < af->size; ++i) {
+		bool bit_0 = TEST_BIT(af->graph[i], 0);
+		bool bit_arg = TEST_BIT(af->graph[i], argument);
+		if (bit_0)
+			SET_BIT(af->graph[i], argument);
+		else
+			RESET_BIT(af->graph[i], argument);
+		if (bit_arg)
+			SET_BIT(af->graph[i], 0);
+		else
+			RESET_BIT(af->graph[i], 0);
+	}
+
+	AF* attacked_by = transpose_argumentation_framework(af);
+
+	// peaceful arguments are those, that do not attack any arguments
+	peaceful_arguments = create_bitset(af->size);
+	defends_lectically_smaller_arg = create_bitset(af->size);
+	for (i = 0; i < af->size; ++i) {
+		if (bitset_is_emptyset(af->graph[i])) {
+			SET_BIT(peaceful_arguments, i);
+		}
+		SIZE_TYPE j;
+		for (j = 0; j < af->size; ++j) {
+			if (j < i && bitset_is_subset(attacked_by->graph[j], af->graph[i])) {
+				SET_BIT(defends_lectically_smaller_arg, i);
+			}
+		}
+	}
+
+	BitSet* attackers = create_bitset(af->size);
+	BitSet* victims = create_bitset(af->size);
+
+	BitSet* next = create_bitset(af->size);
+	// set bit at index 0 (this is the desired argument)
+	SET_BIT(current, 0);
+
+	closure_semi_complete(af, attacked_by, current, current);
+
+	int concept_count = 0;
+	do {
+		++concept_count;
+		// print_set(current, stdout, "\n");
+		// print_bitset(current, stdout);
+		// printf("\n");
+		get_attackers(attacked_by, current, attackers);
+		get_victims(af, current, victims);
+		// Check if current is self-defending
+		if (bitset_is_subset(attackers, victims)) {
+
+			bool bit_0 = TEST_BIT(current, 0);
+			bool bit_arg = TEST_BIT(current, argument);
+			if (bit_0)
+				SET_BIT(current, argument);
+			else
+				RESET_BIT(current, argument);
+			if (bit_arg)
+				SET_BIT(current, 0);
+			else
+				RESET_BIT(current, 0);
+
+			return(current);
+		}
+	} while (next_conflict_free_semi_complete_intent(af, attacked_by, current, current));
+
+	printf("Number of concepts generated: %d\n", concept_count);
+
+	free_bitset(next);
+	free_bitset(attackers);
+	free_bitset(victims);
+	free_bitset(peaceful_arguments);
+	free_argumentation_framework(attacked_by);
+
+	reset_bitset(current);
+	return(current);
 }
