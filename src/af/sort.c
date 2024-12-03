@@ -2,12 +2,15 @@
 #include <stdlib.h>
 #include "af.h"
 #include "sort.h"
+#include "../utils/timer.h"
 
 
 struct index_value {
 	int index; // index of the argument
 	double value; // value to use in sorting
 };
+
+int af_size = 0;
 
 struct index_value *index_value_pairs = NULL;
 
@@ -49,7 +52,11 @@ double victims_minus_attackers(int victim_count, int attacker_count) {
 }
 
 AF* sort_af(AF *af, int sort_type, int sort_direction) {
+	struct timeval start_time, stop_time;
+	START_TIMER(start_time);
+
 	AF *s_af = create_argumentation_framework(af->size);
+	af_size = af->size;
 
 	index_value_pairs = calloc(af->size, sizeof(struct index_value));
 	assert(index_value_pairs != NULL);
@@ -106,9 +113,12 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
 				SET_BIT(s_af->graph[i], j);
 		}
 	}
+	STOP_TIMER(stop_time);
+	printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
-	// for (i = 0; i < c->size; ++i)
-	//  	printf("%d %d %lf\n", i, index_value_pairs[i].index, index_value_pairs[i].value);
+	// print the mapping
+	// for (i = 0; i < af->size; ++i)
+	// 	printf("%d %d %lf\n", i, index_value_pairs[i].index, index_value_pairs[i].value);
 
 	return(s_af);
 }
@@ -123,4 +133,16 @@ BitSet *map_indices_back(BitSet *s) {
       SET_BIT(c, index_value_pairs[i].index);
 
   return(c);
+}
+
+int map_argument_back(int argument) {
+	return(index_value_pairs[argument].index);
+}
+
+int map_argument(int argument) {
+	int i;
+	for (i = 0; i < af_size; ++i) {
+		if (index_value_pairs[i].index == argument)
+			return(i);
+	}
 }

@@ -177,9 +177,10 @@ void dc_st_next_closure(AF* attacks, int argument, BitSet* result) {
 	mapping[index_argument] = temp;
 
 	// display the mapping
-	// for (i = 0; i < attacks->size; ++i)
-	//  	printf("%d ", mapping[i]);
-	//  printf("\n");
+	printf("Mapping: ");
+	 for (i = 0; i < attacks->size; ++i)
+	  	printf("%d ", mapping[i]);
+	  printf("\n");
 
 	AF *attacks_mapped = create_argumentation_framework(attacks->size);
 	// fill in the new af according to the mapping

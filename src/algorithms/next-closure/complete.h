@@ -23,4 +23,7 @@
 // Computes all complete extensions and puts them into result
 ListNode* ee_co_next_closure(AF* af);
 
+// Assuming arguments are sorted in descending order of victim count: -s 1 -d 1
+BitSet* dc_co_next_closure(AF* attacks, int argument);
+
 #endif /* AF_COMPLETE_EXTENSIONS_NC_H_ */
