@@ -117,8 +117,8 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
 	printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// print the mapping
-	// for (i = 0; i < af->size; ++i)
-	// 	printf("%d %d %lf\n", i, index_value_pairs[i].index, index_value_pairs[i].value);
+	for (i = 0; i < af->size; ++i)
+	 	printf("%d %d %lf\n", i + 1, index_value_pairs[i].index + 1, index_value_pairs[i].value);
 
 	return(s_af);
 }
@@ -139,6 +139,8 @@ int map_argument_back(int argument) {
 	return(index_value_pairs[argument].index);
 }
 
+// argument: index of the provided argument (i.e., argument - 1)
+// returns index of the mapped argument
 int map_argument(int argument) {
 	int i;
 	for (i = 0; i < af_size; ++i) {

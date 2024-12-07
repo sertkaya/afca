@@ -213,6 +213,12 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	// TODO: think about the case where argument is peaceful (has no victims).
 	// TODO: does the algorithm still work for this case? the assumption, the peaceful
 	// TODO: arguments are the right-most ones will not be true any more.
+	// display the af
+	for (int i = 0; i < af->size; ++i) {
+		print_set(af->graph[i], stdout, "\n");
+	}
+	printf("1 <-> %d\n", argument + 1);
+
 	BitSet* tmp = create_bitset(af->size);
 	copy_bitset(af->graph[0], tmp);
 	copy_bitset(af->graph[argument], af->graph[0]);
@@ -229,6 +235,11 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 			SET_BIT(af->graph[i], 0);
 		else
 			RESET_BIT(af->graph[i], 0);
+	}
+
+	// display the af
+	for (i = 0; i < af->size; ++i) {
+		print_set(af->graph[i], stdout, "\n");
 	}
 
 	AF* attacked_by = transpose_argumentation_framework(af);
@@ -279,6 +290,12 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 			else
 				RESET_BIT(current, 0);
 
+			printf("Number of concepts generated: %d\n", concept_count);
+			free_bitset(next);
+			free_bitset(attackers);
+			free_bitset(victims);
+			free_bitset(peaceful_arguments);
+			free_argumentation_framework(attacked_by);
 			return(current);
 		}
 	} while (next_conflict_free_semi_complete_intent(af, attacked_by, current, current));
