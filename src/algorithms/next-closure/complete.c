@@ -27,7 +27,6 @@
 // Semi-complete extensions form a closure system.
 
 BitSet* peaceful_arguments;
-BitSet* defends_lectically_smaller_arg;
 
 void closure_semi_complete(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r) {
 	SIZE_TYPE i;
@@ -53,10 +52,17 @@ void closure_semi_complete(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r) {
 }
 
 // Peaceful arguments have to be the rightmost bits of the arguments set
-bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSet* current, BitSet* next) {
+bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSet* current, BitSet* next, BitSet** lectically_smaller_defended) {
 	BitSet* tmp = create_bitset(attacks->size);
 	copy_bitset(current, tmp);
 
+	BitSet* tmp_complement = create_bitset(attacks->size);
+	complement_bitset(tmp, tmp_complement);
+
+	// printf("tmp: ");
+	// print_bitset(tmp, stdout);
+	// printf(" ");
+	// print_set(tmp, stdout, "\n");
 	for (int i = attacks->size - 1; i >= 0; --i) {
 		if (TEST_BIT(tmp, i)) {
 			RESET_BIT(tmp, i);
@@ -66,7 +72,8 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 				   // in this case continue with the next i
 			       !CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
 				   !CHECK_ARG_ATTACKS_SET(attacks, i, tmp) &&
-				   !TEST_BIT(defends_lectically_smaller_arg, i) &&
+				   // !TEST_BIT(defends_lectically_smaller_arg, i) &&
+				   is_bitset_intersection_empty(tmp_complement, lectically_smaller_defended[i]) &&
 				   !check_set_attacks_arg(attacks, tmp, i)) {
 
 
@@ -93,6 +100,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 			}
 			if (good) {
 				free_bitset(tmp);
+				free_bitset(tmp_complement);
 				// printf("it is conflict-free\n");
 				return(1);
 			}
@@ -101,8 +109,29 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 	}
 
 	free_bitset(tmp);
+	free_bitset(tmp_complement);
 	return(0);
 }
+
+// Returns an array of bitsets. The bitset at index i contains the lectically smaller
+// arguments that are defended by i.
+BitSet** get_lectically_smaller_defended_arguments(AF* attacks, AF* attacked_by) {
+	BitSet** defends_lectically_smaller_args = calloc(sizeof(BitSet*), attacks->size);
+	assert(defends_lectically_smaller_args != NULL);
+	int i;
+	for (i = 0; i < attacks->size; ++i) {
+		defends_lectically_smaller_args[i] = create_bitset(attacks->size);
+		int j;
+		for (j = 0; j < attacks->size; ++j) {
+			if (j < i && bitset_is_subset(attacked_by->graph[j], attacks->graph[i])) {
+				printf("%d defends %d\n", i + 1 , j + 1);
+				SET_BIT(defends_lectically_smaller_args[i], j);
+			}
+		}
+	}
+	return(defends_lectically_smaller_args);
+}
+
 
 ListNode* ee_co_next_closure(AF *attacks) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -113,8 +142,6 @@ ListNode* ee_co_next_closure(AF *attacks) {
 
 	BitSet* current = create_bitset(attacks->size);
 	BitSet* next = create_bitset(attacks->size);
-
-	defends_lectically_smaller_arg = create_bitset(attacks->size);
 
 	SIZE_TYPE i;
 
@@ -150,15 +177,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 			++single_attacker_count;
 		if (count_bits(attacked_by->graph[i]) > 1)
 			++multiple_attacker_count;
-		SIZE_TYPE j;
-		for (j = 0; j < attacks->size; ++j) {
-			if (j < i && bitset_is_subset(attacked_by->graph[j], attacks->graph[i])) {
-				SET_BIT(defends_lectically_smaller_arg, i);
-			}
-		}
-		++defends_lect_smaller_count;
 	}
-	fflush(stdout);
 
 	printf("Arguments attacking 0 arguments: %d\n", peaceful_args_count);
 	printf("Arguments attacking 1 argument: %d\n", attacks_one);
@@ -171,6 +190,8 @@ ListNode* ee_co_next_closure(AF *attacks) {
 
 	int concept_count = 0, complete_extension_count = 0;
 	ListNode* extensions = NULL;
+
+	BitSet** lectically_smaller_defended = get_lectically_smaller_defended_arguments(attacks, attacked_by);
 
 	// closure of the empty set
 	closure_semi_complete(attacks, attacked_by, current, current);
@@ -188,7 +209,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 			copy_bitset(current, co_ext);
 			extensions = insert_list_node(co_ext, extensions);
 		}
-	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current));
+	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current, lectically_smaller_defended));
 
 	printf("Number of concepts generated: %d\n", concept_count);
 	printf("Number of complete extensions: %d\n", complete_extension_count);
@@ -246,21 +267,16 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 
 	// peaceful arguments are those, that do not attack any arguments
 	peaceful_arguments = create_bitset(af->size);
-	defends_lectically_smaller_arg = create_bitset(af->size);
 	for (i = 0; i < af->size; ++i) {
 		if (bitset_is_emptyset(af->graph[i])) {
 			SET_BIT(peaceful_arguments, i);
-		}
-		SIZE_TYPE j;
-		for (j = 0; j < af->size; ++j) {
-			if (j < i && bitset_is_subset(attacked_by->graph[j], af->graph[i])) {
-				SET_BIT(defends_lectically_smaller_arg, i);
-			}
 		}
 	}
 
 	BitSet* attackers = create_bitset(af->size);
 	BitSet* victims = create_bitset(af->size);
+
+	BitSet** lectically_smaller_defended = get_lectically_smaller_defended_arguments(af, attacked_by);
 
 	BitSet* next = create_bitset(af->size);
 	// set bit at index 0 (this is the desired argument)
@@ -272,8 +288,8 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	do {
 		++concept_count;
 		// print_set(current, stdout, "\n");
-		// print_bitset(current, stdout);
-		// printf("\n");
+		print_bitset(current, stdout);
+		printf("\n");
 		get_attackers(attacked_by, current, attackers);
 		get_victims(af, current, victims);
 		// Check if current is self-defending
@@ -298,7 +314,7 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 			free_argumentation_framework(attacked_by);
 			return(current);
 		}
-	} while (next_conflict_free_semi_complete_intent(af, attacked_by, current, current));
+	} while (next_conflict_free_semi_complete_intent(af, attacked_by, current, current, lectically_smaller_defended));
 
 	printf("Number of concepts generated: %d\n", concept_count);
 
