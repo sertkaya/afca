@@ -117,8 +117,8 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
 	printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// print the mapping
-	for (i = 0; i < af->size; ++i)
-	 	printf("%d %d %lf\n", i + 1, index_value_pairs[i].index + 1, index_value_pairs[i].value);
+	// for (i = 0; i < af->size; ++i)
+	// 	printf("%d %d %lf\n", i + 1, index_value_pairs[i].index + 1, index_value_pairs[i].value);
 
 	return(s_af);
 }

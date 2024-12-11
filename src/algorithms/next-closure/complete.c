@@ -116,19 +116,25 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, BitSe
 // Returns an array of bitsets. The bitset at index i contains the lectically smaller
 // arguments that are defended by i.
 BitSet** get_lectically_smaller_defended_arguments(AF* attacks, AF* attacked_by) {
+	int defends_lectically_smaller_count = 0;
 	BitSet** defends_lectically_smaller_args = calloc(sizeof(BitSet*), attacks->size);
 	assert(defends_lectically_smaller_args != NULL);
 	int i;
 	for (i = 0; i < attacks->size; ++i) {
 		defends_lectically_smaller_args[i] = create_bitset(attacks->size);
 		int j;
+		bool defends = false;
 		for (j = 0; j < attacks->size; ++j) {
 			if (j < i && bitset_is_subset(attacked_by->graph[j], attacks->graph[i])) {
-				printf("%d defends %d\n", i + 1 , j + 1);
+				// printf("%d defends %d\n", i + 1 , j + 1);
 				SET_BIT(defends_lectically_smaller_args[i], j);
+				defends = true;
 			}
 		}
+		if (defends)
+			++defends_lectically_smaller_count;
 	}
+	printf("Defends lectically smaller count: %d\n", defends_lectically_smaller_count);
 	return(defends_lectically_smaller_args);
 }
 
@@ -235,10 +241,10 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	// TODO: does the algorithm still work for this case? the assumption, the peaceful
 	// TODO: arguments are the right-most ones will not be true any more.
 	// display the af
-	for (int i = 0; i < af->size; ++i) {
-		print_set(af->graph[i], stdout, "\n");
-	}
-	printf("1 <-> %d\n", argument + 1);
+	// for (int i = 0; i < af->size; ++i) {
+	// 	print_set(af->graph[i], stdout, "\n");
+	// }
+	// printf("1 <-> %d\n", argument + 1);
 
 	BitSet* tmp = create_bitset(af->size);
 	copy_bitset(af->graph[0], tmp);
@@ -259,9 +265,9 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	}
 
 	// display the af
-	for (i = 0; i < af->size; ++i) {
-		print_set(af->graph[i], stdout, "\n");
-	}
+	// for (i = 0; i < af->size; ++i) {
+	// 	print_set(af->graph[i], stdout, "\n");
+	// }
 
 	AF* attacked_by = transpose_argumentation_framework(af);
 
@@ -288,8 +294,8 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	do {
 		++concept_count;
 		// print_set(current, stdout, "\n");
-		print_bitset(current, stdout);
-		printf("\n");
+		// print_bitset(current, stdout);
+		// printf("\n");
 		get_attackers(attacked_by, current, attackers);
 		get_victims(af, current, victims);
 		// Check if current is self-defending
