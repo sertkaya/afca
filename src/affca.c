@@ -470,9 +470,9 @@ int main(int argc, char *argv[]) {
 				case NEXT_CLOSURE:
 					// sort the af in the descending order of victim count
 					// (ignores if the af was already sorted)
-					for (int i = 0; i < af->size; ++i) {
-						print_set(af->graph[i], stdout, "\n");
-	}
+					// for (int i = 0; i < af->size; ++i) {
+					// 	print_set(af->graph[i], stdout, "\n");
+					// }
 					af = sort_af(input_af, VICTIM_COUNT, SORT_DESCENDING);
 					// map argument
 					int mapped_argument_index = map_argument(argument);
