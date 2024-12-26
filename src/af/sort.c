@@ -10,10 +10,6 @@ struct index_value {
 	double value; // value to use in sorting
 };
 
-int af_size = 0;
-
-struct index_value *index_value_pairs = NULL;
-
 int cmp_ascending(const void *v1, const void *v2) {
 	if ((((struct index_value*) v1)-> value) < (((struct index_value*) v2)-> value))
 		return(-1);
@@ -51,18 +47,17 @@ double victims_minus_attackers(int victim_count, int attacker_count) {
   return(((double) victim_count) - attacker_count);
 }
 
-AF* sort_af(AF *af, int sort_type, int sort_direction) {
+// Sorts the framework according to the given criterion and direction.
+// Result is in the sorted_af. Returns the index mapping resulting from sorting
+int *sort_af(AF *af, AF *s_af, enum sort_type criterion, enum sort_direction direction) {
 	struct timeval start_time, stop_time;
 	START_TIMER(start_time);
 
-	AF *s_af = create_argumentation_framework(af->size);
-	af_size = af->size;
-
-	index_value_pairs = calloc(af->size, sizeof(struct index_value));
+	struct index_value *index_value_pairs = calloc(af->size, sizeof(struct index_value));
 	assert(index_value_pairs != NULL);
 
     double (*metric_function)(int, int) = NULL;
-   	switch (sort_type) {
+   	switch (criterion) {
    		case VICTIM_COUNT:
     		metric_function = &victim_count;
     		break;
@@ -79,7 +74,7 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
     		metric_function = &victims_minus_attackers;
             break;
     	default:
-        	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", sort_type);
+        	fprintf(stderr, "Unknown sort type %d. Default is VICTIMS_DIVIDED_BY_ATTACKERS\n", criterion);
     		metric_function = &victims_divided_by_attackers;
 	}
 
@@ -101,13 +96,18 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
     }
 
 	// sort the index-value pairs according to value
-    if (sort_direction == SORT_DESCENDING)
+    if (direction == SORT_DESCENDING)
 		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_descending);
     else
 		qsort(index_value_pairs, af->size, sizeof(index_value_pairs[0]), cmp_ascending);
 
-	// fill in the new af sorted
+	// create the index mapping
+	int *mapping = calloc(af->size, sizeof(int));
+	assert(mapping != NULL);
+
+	// fill in the new af sorted and the index mapping
 	for (i = 0; i < af->size; ++i) {
+		mapping[i] = index_value_pairs[i].index;
 		for (j = 0; j < af->size; ++j) {
 			if (TEST_BIT(af->graph[index_value_pairs[i].index], index_value_pairs[j].index))
 				SET_BIT(s_af->graph[i], j);
@@ -120,31 +120,33 @@ AF* sort_af(AF *af, int sort_type, int sort_direction) {
 	// for (i = 0; i < af->size; ++i)
 	// 	printf("%d %d %lf\n", i + 1, index_value_pairs[i].index + 1, index_value_pairs[i].value);
 
-	return(s_af);
+	return(mapping);
 }
 
+/*
 // map indices from sorted back to original
-BitSet *map_indices_back(BitSet *s) {
+BitSet *map_indices_back(BitSet *s, int *mapping) {
   int i;
   BitSet* c = create_bitset(s->size);
 
   for (i = 0; i < s->size; ++i)
     if (TEST_BIT(s, i))
-      SET_BIT(c, index_value_pairs[i].index);
+      SET_BIT(c, mapping[i]);
 
   return(c);
 }
+*/
 
-int map_argument_back(int argument) {
-	return(index_value_pairs[argument].index);
+int map_argument_back(int argument, int *mapping) {
+	return(mapping[argument]);
 }
 
 // argument: index of the provided argument (i.e., argument - 1)
 // returns index of the mapped argument
-int map_argument(int argument) {
+int map_argument(int argument, int af_size, int *mapping) {
 	int i;
 	for (i = 0; i < af_size; ++i) {
-		if (index_value_pairs[i].index == argument)
+		if (mapping[i] == argument)
 			return(i);
 	}
 }

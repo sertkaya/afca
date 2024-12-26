@@ -193,9 +193,10 @@ int main(int argc, char *argv[]) {
 
 	// Sort the af
 	AF *af = input_af;
+	int *mapping;
 	if (sort_flag) {
 		// START_TIMER(start_time);
-		af = sort_af(input_af, sort_type, sort_direction);
+		mapping = sort_af(input_af, af, sort_type, sort_direction);
 		// STOP_TIMER(stop_time);
 		// printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
@@ -261,7 +262,7 @@ int main(int argc, char *argv[]) {
 				ListNode* node = result_list;
 				while (node) {
 					// map back the indices if af was sorted before
-					BitSet *x = map_indices_back(node->c);
+					BitSet *x = map_indices(node->c, mapping);
 					print_set(x, output, "\n");
 					node = node->next;
 				}
@@ -302,7 +303,7 @@ int main(int argc, char *argv[]) {
 			}
 			if (sort_flag) {
 				// map back the indices if af was sorted before
-				BitSet *x = map_indices_back(result_se);
+				BitSet *x = map_indices(result_se, mapping);
 				print_set(x, output, "\n");
 				free_bitset(x);
 			}
@@ -343,7 +344,7 @@ int main(int argc, char *argv[]) {
 			else {
 				if (sort_flag) {
 					// map back the indices if af was sorted before
-					BitSet *x = map_indices_back(result_dc);
+					BitSet *x = map_indices(result_dc, mapping);
 					print_set(x, output, "\n");
 					free_bitset(x);
 				}
@@ -398,7 +399,7 @@ int main(int argc, char *argv[]) {
 				ListNode* node = result_list;
 				while (node) {
 					// map back the indices if af was sorted before
-					BitSet *x = map_indices_back(node->c);
+					BitSet *x = map_indices(node->c, mapping);
 					print_set(x, output, "\n");
 					node = node->next;
 				}
@@ -453,7 +454,7 @@ int main(int argc, char *argv[]) {
 				ListNode* node = result_list;
 				while (node) {
 					// map back the indices if af was sorted before
-					BitSet *x = map_indices_back(node->c);
+					BitSet *x = map_indices(node->c, mapping);
 					print_set(x, output, "\n");
 					node = node->next;
 				}
@@ -470,19 +471,24 @@ int main(int argc, char *argv[]) {
 				case NEXT_CLOSURE:
 					// sort the af in the descending order of victim count
 					// (ignores if the af was already sorted)
-					// for (int i = 0; i < af->size; ++i) {
-					// 	print_set(af->graph[i], stdout, "\n");
-					// }
-					af = sort_af(input_af, VICTIM_COUNT, SORT_DESCENDING);
+					// af = sort_af(input_af, VICTIM_COUNT, SORT_DESCENDING);
 					// map argument
-					int mapped_argument_index = map_argument(argument);
-					printf("mapped argument: %d\n", mapped_argument_index);
-					result_dc = dc_co_next_closure(af, mapped_argument_index);
+					// int mapped_argument_index = map_argument(argument);
+					// printf("mapped argument: %d\n", mapped_argument_index);
+					// result_dc = dc_co_next_closure(af, mapped_argument_index);
 
 					// map back the indices
-					BitSet *x = map_indices_back(result_dc);
-					print_set(x, output, "\n");
-					free_bitset(x);
+					// BitSet *x = map_indices(result_dc);
+					// print_set(x, output, "\n");
+					// free_bitset(x);
+
+					result_dc = dc_co_next_closure_2(af, argument);
+					if (bitset_is_emptyset(result_dc))
+						fprintf(output, "NO\n");
+					else {
+						print_set(result_dc, output, "\n");
+					}
+					free_bitset(result_dc);
 					break;
 				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);

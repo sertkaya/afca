@@ -21,6 +21,7 @@
 
 #include "../../utils/linked_list.h"
 #include "../../utils/stack.h"
+#include "../../af/sort.h"
 
 // A complete extension is an admissible extension that contains every argument that it defends.
 // I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
@@ -158,15 +159,20 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	int attacks_one = 0;
 	int attacks_more_than_half = 0;
 	int self_defending_args_count = 0;
+	int self_attacking_args_count = 0;
 	int safe_args_count = 0;
 	int single_attacker_count = 0;
 	int multiple_attacker_count = 0;
 	int defends_lect_smaller_count = 0;
+
 	for (i = 0; i < attacks->size; ++i) {
 		if (bitset_is_emptyset(attacks->graph[i])) {
 			++peaceful_args_count;
 			SET_BIT(peaceful_arguments, i);
 		}
+		if (CHECK_ARG_ATTACKS_ARG(attacks,i,i))
+			++self_attacking_args_count;
+
 		if (count_bits(attacks->graph[i]) == 1)
 			++attacks_one;
 		if (count_bits(attacks->graph[i]) > (attacks->size / 10))
@@ -185,6 +191,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 			++multiple_attacker_count;
 	}
 
+
 	printf("Arguments attacking 0 arguments: %d\n", peaceful_args_count);
 	printf("Arguments attacking 1 argument: %d\n", attacks_one);
 	printf("Arguments attacking more than %d arguments: %d\n", attacks->size / 10, attacks_more_than_half);
@@ -192,6 +199,7 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	printf("Arguments with a single attacker: %d\n", single_attacker_count);
 	printf("Arguments with multiple attackers: %d\n", multiple_attacker_count);
 	printf("Self-defending arguments: %d\n", self_defending_args_count);
+	printf("Self-attacking arguments: %d\n", self_attacking_args_count);
 	printf("Arguments defending a lectically smaller argument: %d\n", defends_lect_smaller_count);
 
 	int concept_count = 0, complete_extension_count = 0;
@@ -230,12 +238,190 @@ ListNode* ee_co_next_closure(AF *attacks) {
 	return(extensions);
 }
 
+
+bool next_conflict_free_semi_complete_intent_2(AF* attacks, AF* attacked_by, BitSet* current, BitSet* next) {
+	BitSet* tmp = create_bitset(attacks->size);
+	copy_bitset(current, tmp);
+
+	BitSet* tmp_complement = create_bitset(attacks->size);
+	complement_bitset(tmp, tmp_complement);
+
+	for (int i = attacks->size - 1; i >= 0; --i) {
+		if (TEST_BIT(tmp, i)) {
+			RESET_BIT(tmp, i);
+		} else if ( !CHECK_ARG_ATTACKS_ARG(attacks, i, i) &&
+				   !CHECK_ARG_ATTACKS_SET(attacks, i, tmp) &&
+				   !check_set_attacks_arg(attacks, tmp, i)) {
+
+			SET_BIT(tmp, i);
+			closure_semi_complete(attacks, attacked_by, tmp, next);
+
+			bool good = true;
+			// is next canonical?
+			for (SIZE_TYPE j = 0; j < i; ++j) {
+				if (TEST_BIT(next, j) && !TEST_BIT(tmp, j)) {
+					good = false;
+					break;
+				}
+			}
+			if (good) {
+				// is next conflict-free?
+				for (SIZE_TYPE j = i + 1; j < attacks->size; ++j) {
+					if (TEST_BIT(next, j) && CHECK_ARG_ATTACKS_SET(attacks, j, next) &&  check_set_attacks_arg(attacks, tmp, j)) {
+						good = false;
+						break;
+					}
+				}
+			}
+			if (good) {
+				free_bitset(tmp);
+				free_bitset(tmp_complement);
+				// printf("it is conflict-free\n");
+				return(1);
+			}
+			RESET_BIT(tmp, i);
+		}
+	}
+
+	free_bitset(tmp);
+	free_bitset(tmp_complement);
+	return(0);
+}
+
+BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
+	BitSet* current = create_bitset(attacks->size);
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+
+	SET_BIT(current, argument);
+	closure_semi_complete(attacks, attacked_by, current, current);
+	if (!is_set_conflict_free(attacks, current)) {
+		// closure has a conflict. complete extension
+		// does not exist.
+		reset_bitset(current);
+		return(current);
+	}
+
+	BitSet* attackers = create_bitset(attacks->size);
+	BitSet* victims = create_bitset(attacks->size);
+	// get attackers of current
+	get_attackers(attacked_by, current, attackers);
+	// get victims of current
+	get_victims(attacks, current, victims);
+
+	// Check if current is self-defending
+	if (bitset_is_subset(attackers, victims)) {
+		// current is a complete extension containing the argument
+		return(current);
+	}
+	// Not self-defending. That is, the argument is not defended.
+	reset_bitset(current);
+
+	// Sort in descending order of victims
+	AF* attacks_sorted = create_argumentation_framework(attacks->size);
+	int *mapping = sort_af(attacks, attacks_sorted, VICTIM_COUNT, SORT_DESCENDING);
+
+	/*
+	printf("attacks:\n");
+	print_argumentation_framework(attacks);
+	printf("attacks_sorted:\n");
+	print_argumentation_framework(attacks_sorted);
+	printf("mapping:\n");
+	for (int i = 0; i < attacks_sorted->size; ++i)
+		printf("%d %d\n", i+1, mapping[i]+1);
+		*/
+
+	// Search the argument in the mapping
+	int argument_index;
+	for (int i = 0; i < attacks_sorted->size; ++i)
+		if (mapping[i] == argument)
+			// The argument is at index i after sorting
+			argument_index = i;
+
+	// Move defenders of the argument to the right-end.
+	AF* attacked_by_sorted = transpose_argumentation_framework(attacks_sorted);
+	int next_index_to_use = attacks_sorted->size - 1;
+	for (int i = attacks_sorted->size - 1; i >= 0; --i) {
+		int tmp;
+		// check if a defender of the (mapped) argument
+		if (bitset_is_subset(attacked_by_sorted->graph[argument_index], attacks_sorted->graph[i])) {
+			// index i of attacks_sorted is a defender of the argument, swap index_to_use and i
+			// do the swap in the frameworks
+			swap_arguments(attacks_sorted, next_index_to_use, i);
+			swap_arguments(attacked_by_sorted, next_index_to_use, i);
+			// do the swap in the mapping
+			tmp = mapping[next_index_to_use];
+			mapping[next_index_to_use] = mapping[i];
+			mapping[i] = tmp;
+
+			// We do not need to check if the argument itself is also moved. This cannot be the case
+			// since otherwise the set current would be self-defending.
+			--next_index_to_use;
+		}
+	}
+
+	/*
+	printf("mapping:\n");
+	for (int i = 0; i < attacks_sorted->size; ++i)
+		printf("%d %d\n", i+1, mapping[i]+1);
+		*/
+
+	// Now move the argument to the very left bit ...
+	swap_arguments(attacks_sorted, 0, argument_index);
+	swap_arguments(attacked_by_sorted, 0, argument_index);
+	int tmp = mapping[0];
+	mapping[0] = mapping[argument_index];
+	mapping[argument_index] = tmp;
+	// and set the very left bit
+	SET_BIT(current, 0);
+
+	/*
+	printf("attacks_sorted:\n");
+	print_argumentation_framework(attacks_sorted);
+	printf("mapping:\n");
+	for (int i = 0; i < attacks_sorted->size; ++i)
+		printf("%d %d\n", i+1, mapping[i]+1);
+		*/
+
+	int concept_count = 0;
+	do {
+		++concept_count;
+		get_attackers(attacked_by_sorted, current, attackers);
+		get_victims(attacks_sorted, current, victims);
+		// Check if current is self-defending
+		if (bitset_is_subset(attackers, victims)) {
+			printf("Number of concepts generated: %d\n", concept_count);
+			free_bitset(attackers);
+			free_bitset(victims);
+			return(map_indices(current, mapping));
+		}
+	} while (next_conflict_free_semi_complete_intent_2(attacks_sorted, attacked_by_sorted, current, current));
+
+	printf("Number of concepts generated: %d\n", concept_count);
+
+	free_bitset(attackers);
+	free_bitset(victims);
+	free_argumentation_framework(attacks_sorted);
+	free_argumentation_framework(attacked_by_sorted);
+
+	reset_bitset(current);
+	return(current);
+
+}
+
 // Assuming arguments are sorted in descending order of victim count: -s 1 -d 1
 // af is the sorted framework. argument is the mapped argument
 BitSet* dc_co_next_closure(AF* af, int argument) {
 	BitSet* current = create_bitset(af->size);
 	if (CHECK_ARG_ATTACKS_ARG(af, argument, argument))
 		return(current);
+
+	AF* attacked_by = transpose_argumentation_framework(af);
+	closure_semi_complete(af, attacked_by, current, current);
+	if (check_set_attacks_arg(af, current, argument)) { // || CHECK_ARG_ATTACKS_SET(af, argument, current)) {
+		reset_bitset(current);
+		return(current);
+	}
+
 	// swap the argument with the left-most argument (the argument at index 0).
 	// TODO: think about the case where argument is peaceful (has no victims).
 	// TODO: does the algorithm still work for this case? the assumption, the peaceful
@@ -269,7 +455,7 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	// 	print_set(af->graph[i], stdout, "\n");
 	// }
 
-	AF* attacked_by = transpose_argumentation_framework(af);
+	attacked_by = transpose_argumentation_framework(af);
 
 	// peaceful arguments are those, that do not attack any arguments
 	peaceful_arguments = create_bitset(af->size);

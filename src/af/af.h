@@ -197,4 +197,7 @@ BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);
 // swap the order of arguments i and j
 void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j); 
 
+// Map indices of bitset s according to the mapping, return the new bitset
+BitSet *map_indices(BitSet *s, int *mapping);
+
 #endif /* AF_AF_H_ */
