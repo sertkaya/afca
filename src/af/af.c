@@ -152,8 +152,7 @@ BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size) {
 }
 
 
-void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j)
-{
+void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j) {
 	BitSet* iset = af->graph[i];
 	af->graph[i] = af->graph[j];
 	af->graph[j] = iset;
@@ -171,4 +170,17 @@ void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j)
 			RESET_BIT(af->graph[k], j);
 		}
 	}
+}
+
+// Map indices of bitset s according to the mapping.
+// Return the new bitset
+BitSet *map_indices(BitSet *s, int *mapping) {
+  int i;
+  BitSet* c = create_bitset(s->size);
+
+  for (i = 0; i < s->size; ++i)
+    if (TEST_BIT(s, i))
+      SET_BIT(c, mapping[i]);
+
+  return(c);
 }
