@@ -16,6 +16,7 @@
 
 #include "../../af/af.h"
 #include "complete.h"
+#include "../connected-components/scc.h"
 
 #include <string.h>
 
@@ -297,8 +298,7 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 	if (!is_set_conflict_free(attacks, current)) {
 		// closure has a conflict. complete extension
 		// does not exist.
-		reset_bitset(current);
-		return(current);
+		return(NULL);
 	}
 
 	BitSet* attackers = create_bitset(attacks->size);
@@ -311,6 +311,7 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 	// Check if current is self-defending
 	if (bitset_is_subset(attackers, victims)) {
 		// current is a complete extension containing the argument
+		printf("here\n");
 		return(current);
 	}
 	// Not self-defending. That is, the argument is not defended.
@@ -384,6 +385,9 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 
 	int concept_count = 0;
 	do {
+		// print_bitset(current, stdout);
+		// printf("\n");
+		// print_set(current, stdout, "\n");
 		++concept_count;
 		get_attackers(attacked_by_sorted, current, attackers);
 		get_victims(attacks_sorted, current, victims);
@@ -392,6 +396,7 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 			printf("Number of concepts generated: %d\n", concept_count);
 			free_bitset(attackers);
 			free_bitset(victims);
+		printf("there\n");
 			return(map_indices(current, mapping));
 		}
 	} while (next_conflict_free_semi_complete_intent_2(attacks_sorted, attacked_by_sorted, current, current));
@@ -403,9 +408,48 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 	free_argumentation_framework(attacks_sorted);
 	free_argumentation_framework(attacked_by_sorted);
 
-	reset_bitset(current);
-	return(current);
+	// reset_bitset(current);
+	return(NULL);
 
+}
+
+
+BitSet* dc_co_subgraph_next_closure(AF* af, int argument) {
+	BitSet *subgraph = create_bitset(af->size);
+	BitSet *arguments = create_bitset(af->size);
+	set_bitset(arguments);
+
+	// extract nodes of the subgraph induced by argument
+	backward_dfs(af, argument, arguments, subgraph);
+
+	// the projected framework induced by argument
+	PAF *projection = project_argumentation_framework(af, subgraph);
+	printf("Projected framework size: %d\n", projection->af->size);
+
+	// find argument in the projected framework
+	SIZE_TYPE i, projected_argument;
+	for (i = 0; i < projection->af->size; ++i) {
+		if (projection->index_mapping[i] == argument) {
+			projected_argument = i;
+			break;
+		}
+	}
+	if (i == projection->af->size)
+		printf("THIS SHOULD NOT HAPPEN!\n\n");
+	// solve DC-CO for the projected framework
+	BitSet *extension = dc_co_next_closure_2(projection->af, projected_argument);
+
+	if (!extension)
+		return(NULL);
+
+	print_set(extension,stdout,"\n");
+	// close the computed extension in the whole framework
+	BitSet* back_projected_extension = project_back(extension, projection, af->size);
+	AF *attacked_by = transpose_argumentation_framework(af);
+	BitSet *closure = create_bitset(af->size);
+	// closure_semi_complete(af, attacked_by, back_projected_extension, extension);
+	closure_semi_complete(af, attacked_by, back_projected_extension, closure);
+	return(closure);
 }
 
 // Assuming arguments are sorted in descending order of victim count: -s 1 -d 1

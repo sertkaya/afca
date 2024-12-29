@@ -28,4 +28,6 @@ BitSet* dc_co_next_closure(AF* attacks, int argument);
 
 BitSet* dc_co_next_closure_2(AF* attacks, int argument);
 
+BitSet* dc_co_subgraph_next_closure(AF* attacks, int argument);
+
 #endif /* AF_COMPLETE_EXTENSIONS_NC_H_ */
