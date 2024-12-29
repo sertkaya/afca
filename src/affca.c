@@ -36,7 +36,7 @@
 #include "utils/timer.h"
 
 
-enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE};
+enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH};
 enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO, DC_CO};
 
 
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
-	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine] "
+	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph] "
 					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
@@ -124,6 +124,8 @@ int main(int argc, char *argv[]) {
 		alg = SCC_NOURINE;
 	} else if (strcmp(algorithm, "wcc-nourine") == 0) {
 		alg = WCC_NOURINE;
+	} else if (strcmp(algorithm, "subgraph") == 0) {
+		alg = SUBGRAPH;
 	} else {
 		fprintf(stderr, "Unknown algorithm %s\n", algorithm);
 		fprintf(stderr, usage, argv[0]);
@@ -254,7 +256,7 @@ int main(int argc, char *argv[]) {
 				case WCC_NOURINE:
 					run_cc_nourine(af, output, false);
 					break;
-				case CBO:
+				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);			}
@@ -288,15 +290,7 @@ int main(int argc, char *argv[]) {
 				case NOURINE:
 					se_st_nourine(af, result_se);
 					break;
-				case CBO:
-				case SCC_MIS:
-				case WCC_MIS:
-				case SCC_NORRIS:
-				case WCC_NORRIS:
-				case NORRIS_BU:
-				case SCC_NORRIS_BU:
-				case SCC_NOURINE:
-				case WCC_NOURINE:
+				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);
@@ -321,18 +315,7 @@ int main(int argc, char *argv[]) {
 				case NEXT_CLOSURE:
 					dc_st_next_closure(af, argument, result_dc);
 					break;
-				case CBO:
-				case MIS:
-				case SCC_MIS:
-				case WCC_MIS:
-				case NORRIS:
-				case NORRIS_BU:
-				case SCC_NORRIS_BU:
-				case NOURINE:
-				case SCC_NORRIS:
-				case WCC_NORRIS:
-				case SCC_NOURINE:
-				case WCC_NOURINE:
+				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);
@@ -359,18 +342,7 @@ int main(int argc, char *argv[]) {
 				case NORRIS:
 					run_scc_norris_count(af, output);
 					break;
-				case CBO:
-				case MIS:
-				case SCC_MIS:
-				case WCC_MIS:
-				case NEXT_CLOSURE:
-				case NORRIS_BU:
-				case SCC_NORRIS_BU:
-				case NOURINE:
-				case SCC_NORRIS:
-				case WCC_NORRIS:
-				case SCC_NOURINE:
-				case WCC_NOURINE:
+				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);
@@ -483,12 +455,21 @@ int main(int argc, char *argv[]) {
 					// free_bitset(x);
 
 					result_dc = dc_co_next_closure_2(af, argument);
-					if (bitset_is_emptyset(result_dc))
+					if (result_dc == NULL)
 						fprintf(output, "NO\n");
 					else {
 						print_set(result_dc, output, "\n");
+						free_bitset(result_dc);
 					}
-					free_bitset(result_dc);
+					break;
+				case SUBGRAPH:
+					result_dc = dc_co_subgraph_next_closure(af, argument);
+					if (result_dc == NULL)
+						fprintf(output, "NO\n");
+					else {
+						print_set(result_dc, output, "\n");
+						free_bitset(result_dc);
+					}
 					break;
 				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
