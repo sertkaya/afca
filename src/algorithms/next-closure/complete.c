@@ -311,7 +311,6 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 	// Check if current is self-defending
 	if (bitset_is_subset(attackers, victims)) {
 		// current is a complete extension containing the argument
-		printf("here\n");
 		return(current);
 	}
 	// Not self-defending. That is, the argument is not defended.
@@ -396,7 +395,6 @@ BitSet* dc_co_next_closure_2(AF* attacks, int argument) {
 			printf("Number of concepts generated: %d\n", concept_count);
 			free_bitset(attackers);
 			free_bitset(victims);
-		printf("there\n");
 			return(map_indices(current, mapping));
 		}
 	} while (next_conflict_free_semi_complete_intent_2(attacks_sorted, attacked_by_sorted, current, current));
@@ -442,7 +440,7 @@ BitSet* dc_co_subgraph_next_closure(AF* af, int argument) {
 	if (!extension)
 		return(NULL);
 
-	print_set(extension,stdout,"\n");
+	// print_set(extension,stdout,"\n");
 	// close the computed extension in the whole framework
 	BitSet* back_projected_extension = project_back(extension, projection, af->size);
 	AF *attacked_by = transpose_argumentation_framework(af);
@@ -497,7 +495,7 @@ BitSet* dc_co_next_closure(AF* af, int argument) {
 	// display the af
 	// for (i = 0; i < af->size; ++i) {
 	// 	print_set(af->graph[i], stdout, "\n");
-	// }
+	// atta}
 
 	attacked_by = transpose_argumentation_framework(af);
 

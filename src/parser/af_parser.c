@@ -42,6 +42,12 @@ AF* read_af(FILE* input_fd) {
 		else {
 			++att_count;
 			ADD_ATTACK(af, arg1, arg2);
+
+			SIZE_TYPE *tmp = realloc(af->lists[arg1 - 1], (af->list_sizes[arg1 - 1] + 1) * sizeof(SIZE_TYPE));
+			assert(tmp != NULL);
+			af->lists[arg1 - 1] = tmp;
+			af->lists[arg1 - 1][af->list_sizes[arg1 - 1]] = arg2 - 1;
+			++af->list_sizes[arg1 - 1];
 		}
 	} while (rc != EOF);
 
