@@ -20,10 +20,11 @@
 #include <inttypes.h>
 #include <math.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 #include "af.h"
 #include "../bitset/bitset.h"
-#include <stdbool.h>
+#include "../utils/timer.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
 	AF *af = calloc(1, sizeof(AF));
@@ -34,10 +35,18 @@ AF* create_argumentation_framework(SIZE_TYPE size) {
 	af->graph = (BitSet**) calloc(size, sizeof(BitSet*));
 	assert(af->graph != NULL);
 
+	af->list_sizes = calloc(af->size, sizeof(SIZE_TYPE));
+	assert(af->list_sizes != NULL);
+	af->lists = calloc(af->size, sizeof(SIZE_TYPE*));
+	assert(af->lists != NULL);
+
 	int i;
 	for (i = 0; i < size; ++i) {
 		af->graph[i] = create_bitset(size);
+		af->list_sizes[i] = 0;
+		af->lists[i] = NULL;
 	}
+
 
 	return(af);
 }
@@ -83,6 +92,8 @@ AF* complement_argumentation_framework(AF *af ){
 }
 
 AF* transpose_argumentation_framework(AF *af) {
+	struct timeval start_time, stop_time;
+	START_TIMER(start_time);
 	AF* t_af = create_argumentation_framework(af->size);
 
 	t_af->size = af->size;
@@ -91,6 +102,8 @@ AF* transpose_argumentation_framework(AF *af) {
 		for (SIZE_TYPE j = 0; j < af->size; ++j)
 			if (TEST_BIT(af->graph[i], j))
 				SET_BIT(t_af->graph[j], i);
+	STOP_TIMER(stop_time);
+	printf("Transposing AF time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	return(t_af);
 }
 

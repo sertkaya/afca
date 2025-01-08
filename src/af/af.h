@@ -27,6 +27,10 @@ struct argumentation_framework {
 	SIZE_TYPE size;
 	// The adjacency matrix: array of bitsets
 	BitSet **graph;
+    // Adjacency lists
+    SIZE_TYPE **lists;
+    // Number of elements in each adjacency list
+    SIZE_TYPE *list_sizes;
 };
 
 typedef struct argumentation_framework AF;
@@ -100,12 +104,21 @@ int is_conflict_free(Context* attacks, BitSet* x) {
 */
 
 // TODO: compare to the above. Which is more efficient?
+/*
 inline char is_set_conflict_free(AF* af, BitSet* s) {
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (TEST_BIT(s, i))
 			for (SIZE_TYPE j = i; j < af->size; ++j)
 				if (TEST_BIT(s, j) && (CHECK_ARG_ATTACKS_ARG(af, i, j) || CHECK_ARG_ATTACKS_ARG(af, j, i)))
 					return(0);
+	return(1);
+}
+*/
+// TODO: Compare to above
+inline char is_set_conflict_free(AF* af, BitSet* s) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		if (TEST_BIT(s, i) && CHECK_ARG_ATTACKS_SET(af, i, s))
+			return(0);
 	return(1);
 }
 

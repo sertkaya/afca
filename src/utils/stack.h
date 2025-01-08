@@ -20,33 +20,42 @@
 #include <stdlib.h>
 #include <assert.h>
 
+// typedef union stack_element StackElement;
 typedef struct stack Stack;
+
+/*
+union stack_element {
+	int n;
+	void* p;
+};
+*/
 
 struct stack {
 	int size;
-	void** elements;
+	unsigned int* elements;
+	// StackElement** elements;
 };
 
 void init_stack(Stack* s);
 
-inline void push(Stack* s, void* e) {
-	void** tmp = realloc(s->elements, (s->size + 1) * sizeof(void*));
+inline void push(Stack* s, unsigned int e) {
+	unsigned int* tmp = realloc(s->elements, (s->size + 1) * sizeof(unsigned int));
 	assert(tmp != NULL);
 	s->elements = tmp;
 	s->elements[s->size] = e;
 	++s->size;
 }
 
-inline void* pop(Stack* s) {
-	void* e;
-	void** tmp;
+inline unsigned int pop(Stack* s) {
+	unsigned int e;
+	unsigned int* tmp;
 
 	if (s->size == 0)
-		return NULL;
+		return(-1);
 
 	--s->size;
 	e = s->elements[s->size];
-	tmp = realloc(s->elements, (s->size) * sizeof(void*));
+	tmp = realloc(s->elements, (s->size) * sizeof(unsigned int));
 	assert(tmp != NULL || s->size == 0);
 	s->elements = tmp;
 

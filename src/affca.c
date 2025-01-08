@@ -36,7 +36,7 @@
 #include "utils/timer.h"
 
 
-enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH};
+enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH, SUBGRAPH_ADJ};
 enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO, DC_CO};
 
 
@@ -126,6 +126,8 @@ int main(int argc, char *argv[]) {
 		alg = WCC_NOURINE;
 	} else if (strcmp(algorithm, "subgraph") == 0) {
 		alg = SUBGRAPH;
+	} else if (strcmp(algorithm, "subgraph_adj") == 0) {
+		alg = SUBGRAPH_ADJ;
 	} else {
 		fprintf(stderr, "Unknown algorithm %s\n", algorithm);
 		fprintf(stderr, usage, argv[0]);
@@ -464,6 +466,15 @@ int main(int argc, char *argv[]) {
 					break;
 				case SUBGRAPH:
 					result_dc = dc_co_subgraph_next_closure(af, argument);
+					if (result_dc == NULL)
+						fprintf(output, "NO\n");
+					else {
+						print_set(result_dc, output, "\n");
+						free_bitset(result_dc);
+					}
+					break;
+				case SUBGRAPH_ADJ:
+					result_dc = dc_co_subgraph_next_closure_adj(af, argument);
 					if (result_dc == NULL)
 						fprintf(output, "NO\n");
 					else {
