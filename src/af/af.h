@@ -27,10 +27,6 @@ struct argumentation_framework {
 	SIZE_TYPE size;
 	// The adjacency matrix: array of bitsets
 	BitSet **graph;
-    // Adjacency lists
-    SIZE_TYPE **lists;
-    // Number of elements in each adjacency list
-    SIZE_TYPE *list_sizes;
 };
 
 typedef struct argumentation_framework AF;
