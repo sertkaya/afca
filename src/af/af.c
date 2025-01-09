@@ -35,16 +35,9 @@ AF* create_argumentation_framework(SIZE_TYPE size) {
 	af->graph = (BitSet**) calloc(size, sizeof(BitSet*));
 	assert(af->graph != NULL);
 
-	af->list_sizes = calloc(af->size, sizeof(SIZE_TYPE));
-	assert(af->list_sizes != NULL);
-	af->lists = calloc(af->size, sizeof(SIZE_TYPE*));
-	assert(af->lists != NULL);
-
 	int i;
 	for (i = 0; i < size; ++i) {
 		af->graph[i] = create_bitset(size);
-		af->list_sizes[i] = 0;
-		af->lists[i] = NULL;
 	}
 
 
