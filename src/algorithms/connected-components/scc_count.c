@@ -25,7 +25,7 @@ ListNode* get_component_extensions_for_counting(AF* af,
         PAF* projection = project_argumentation_framework(af, component);
         component_extension = stable_extensions(projection->af);
         if (projection->af->size < af->size) {
-            restore_base_indices(component_extension, projection, af->size);
+            restore_base_indices(component_extension, projection);
         }
         free_projected_argumentation_framework(projection);
         BitSet* key = create_bitset(component->size);
