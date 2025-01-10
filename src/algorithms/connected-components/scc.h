@@ -9,7 +9,9 @@ ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af));
 
 size_t scc_count_stable_etensions(AF* af, ListNode* (*stable_extensions)(AF* af));
 
-void restore_base_indices(ListNode* node, PAF* paf, SIZE_TYPE base_size);
+ListNode* ee_pr_scc(AF* af, ListNode* (*preferred_extensions)(AF* af));
+
+void restore_base_indices(ListNode* node, PAF* paf);
 void find_source_component(AF* af, BitSet* arguments, BitSet* component);
 BitSet* extract_residual_arguments(AF* af, BitSet* arguments, BitSet* source_component, BitSet* component_extension);
 

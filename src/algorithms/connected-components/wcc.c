@@ -84,7 +84,7 @@ void restore_indices(ListNode** extension_lists, PAF** projections, unsigned sho
         ListNode* node = extension_lists[i];
         while (node) {
             BitSet* projected_extension = node->c;
-            node->c = project_back(node->c, paf, base_size);
+            node->c = project_back(node->c, paf);
             free_bitset(projected_extension);
             node = node->next;
         }

@@ -2,7 +2,7 @@
 #include "../utils/linked_list.h"
 #include "../utils/map.h"
 
-
+#ifndef MAP_SIZE
 #define MAP_SIZE 	101
 
 
@@ -54,26 +54,13 @@ void find_source_component(AF* af, BitSet* arguments, BitSet* component) {
 }
 
 
-void restore_base_indices(ListNode* node, PAF* paf, SIZE_TYPE base_size) {
+void restore_base_indices(ListNode* node, PAF* paf) {
     while (node) {
         BitSet* projected_extension = node->c;
-        node->c = project_back(node->c, paf, base_size);
+        node->c = project_back(node->c, paf);
         free_bitset(projected_extension);
         node = node->next;
     }
-}
-
-
-void free_extension_node(ListNode* node){
-    free_bitset((BitSet*) node->c);
-    free_list_node(node);
-}
-
-
-ListNode* advance_and_free_extension(ListNode* node) {
-    ListNode* next = node->next;
-    free_extension_node(node);
-    return next;
 }
 
 
@@ -86,6 +73,8 @@ void log_set(BitSet* bs) {
     printf("\n");
 }
 
+
+//////////////////// Stable Extensions /////////////////////////
 
 BitSet* extract_residual_arguments(AF* af, BitSet* arguments, BitSet* source_component, BitSet* component_extension) {
     BitSet* remainder = create_bitset(af->size);
@@ -115,7 +104,7 @@ ListNode* get_component_extensions(AF* af,
         // printf("Arguments in source component: %d\n", projection->af->size);
         component_extension = stable_extensions(projection->af);
         if (projection->af->size < af->size) {
-            restore_base_indices(component_extension, projection, af->size);
+            restore_base_indices(component_extension, projection);
         }
         free_projected_argumentation_framework(projection);
         // printf("PUT %llu, %d, %llu\n", get_key(component), subextensions->bucket_count, get_key(component) % subextensions->bucket_count);
@@ -145,6 +134,7 @@ ListNode* compute_extensions(AF* af,
 
     BitSet* component = create_bitset(af->size);
     find_source_component(af, arguments, component);
+    // printf("\nARGUMENTS in source component: %d\n", count_bits(component)); 
 
     ListNode* component_extension = get_component_extensions(af, component, stable_extensions, subextensions);
     if (count_bits(component) == count_bits(arguments)) {
@@ -202,3 +192,5 @@ ListNode* scc_stable_extensions(AF* af, ListNode* (*stable_extensions)(AF* af)) 
     // free_map_content(&subextensions);
     return first_extension;
 }
+
+#endif // MAP_SIZE
