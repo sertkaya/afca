@@ -149,4 +149,5 @@ int map_argument(int argument, int af_size, int *mapping) {
 		if (mapping[i] == argument)
 			return(i);
 	}
+	return -1;
 }
