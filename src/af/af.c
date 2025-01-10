@@ -58,7 +58,8 @@ int free_argumentation_framework(AF* af) {
 
 
 int free_projected_argumentation_framework(PAF* paf) {
-	free(paf->index_mapping);
+	free(paf->base_mapping);
+	free(paf->parent_mapping);
 	int freed_bytes = paf->af->size * sizeof(SIZE_TYPE);
 	freed_bytes += free_argumentation_framework(paf->af);
 	free(paf);
@@ -119,7 +120,6 @@ AF* create_conflict_framework(AF* af) {
 	return conflicts;
 }
 
-
 PAF* project_argumentation_framework_with_loops(AF* af, BitSet* mask, BitSet* loop_mask) {
 	PAF* paf = calloc(1, sizeof(PAF));
 	assert(paf != NULL);
@@ -127,21 +127,23 @@ PAF* project_argumentation_framework_with_loops(AF* af, BitSet* mask, BitSet* lo
     SIZE_TYPE size = count_bits(mask);
 	assert(size > 0);
 
-    paf->index_mapping = calloc(size, sizeof(SIZE_TYPE));
+    paf->base_mapping = calloc(size, sizeof(SIZE_TYPE));
+    paf->parent_mapping = calloc(size, sizeof(SIZE_TYPE));
     SIZE_TYPE j = 0;
     for (SIZE_TYPE i = 0; i < af->size; ++i) {
         if (TEST_BIT(mask, i)) {
-            paf->index_mapping[j++] = i;
+			paf->parent_mapping[j] = i;
+            paf->base_mapping[j++] = i;
         }
     }
 
     paf->af = create_argumentation_framework(size);
     for (SIZE_TYPE i = 0; i < size; ++i) {
-		if (loop_mask && TEST_BIT(loop_mask, paf->index_mapping[i])) {
+		if (loop_mask && TEST_BIT(loop_mask, paf->parent_mapping[i])) {
 			SET_BIT(paf->af->graph[i], i);
 		}
         for (SIZE_TYPE j = 0; j < size; ++j) {
-            if (TEST_BIT(af->graph[paf->index_mapping[i]], paf->index_mapping[j])) {
+            if (CHECK_ARG_ATTACKS_ARG(af, paf->parent_mapping[i], paf->parent_mapping[j])) {
 				SET_BIT(paf->af->graph[i], j);
             }
         }
@@ -164,24 +166,27 @@ PAF* project_paf_with_loops(PAF* paf, BitSet* mask, BitSet* loop_mask) {
 
     SIZE_TYPE size = count_bits(mask);
 	assert(size > 0);
+	printf("size = %d\n", size);
 
-    proj->index_mapping = calloc(size, sizeof(SIZE_TYPE));
+    proj->base_mapping = calloc(size, sizeof(SIZE_TYPE));
+    proj->parent_mapping = calloc(size, sizeof(SIZE_TYPE));
     SIZE_TYPE j = 0;
     for (SIZE_TYPE i = 0; i < paf->af->size; ++i) {
         if (TEST_BIT(mask, i)) {
-            proj->index_mapping[j++] = paf->index_mapping[i];
+			proj->parent_mapping[j] = i;
+            proj->base_mapping[j++] = paf->base_mapping[i];
         }
     }
 
     proj->af = create_argumentation_framework(size);
 	bool loops = 0;
     for (SIZE_TYPE i = 0; i < size && loops < size; ++i) {
-		if (loop_mask && TEST_BIT(loop_mask, proj->index_mapping[i])) {
+		if (loop_mask && TEST_BIT(loop_mask, proj->parent_mapping[i])) {
 			SET_BIT(proj->af->graph[i], i);
 			++loops;
 		}
         for (SIZE_TYPE j = 0; j < size; ++j) {
-            if (CHECK_ARG_ATTACKS_ARG(paf->af, proj->index_mapping[i], proj->index_mapping[j])) {
+            if (CHECK_ARG_ATTACKS_ARG(paf->af, proj->parent_mapping[i], proj->parent_mapping[j])) {
 				SET_BIT(proj->af->graph[i], j);
             }
         }
@@ -201,9 +206,10 @@ PAF* af2paf(AF* af)
 {
 	PAF* paf = calloc(1, sizeof(PAF));
 	paf->af = af;
-	paf->index_mapping = calloc(af->size, sizeof(SIZE_TYPE));
+	paf->base_mapping = calloc(af->size, sizeof(SIZE_TYPE));
+	paf->parent_mapping = calloc(af->size, sizeof(SIZE_TYPE));
     for (SIZE_TYPE i = 0; i < af->size; ++i) {
-        paf->index_mapping[i] = i;
+        paf->base_mapping[i] = paf->parent_mapping[i] = i;
     }
 	paf->base_size = af->size;
 	return paf;
@@ -214,7 +220,7 @@ BitSet* project_back(BitSet* bs, PAF* paf) {
 	BitSet* res = create_bitset(paf->base_size);
 	for (SIZE_TYPE i = 0; i < paf->af->size; ++i) {
 		if (TEST_BIT(bs, i)) {
-			SET_BIT(res, paf->index_mapping[i]);
+			SET_BIT(res, paf->base_mapping[i]);
 		}
 	}
 	return res;

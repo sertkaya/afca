@@ -34,8 +34,10 @@ typedef struct argumentation_framework AF;
 
 struct projected_argumentation_framework {
 	AF* af;
-	// index_mapping[i] is the index of the ith argument of af in the base framework
-	SIZE_TYPE* index_mapping;
+	// base_mapping[i] is the index of the ith argument of af in the base (root) framework
+	SIZE_TYPE* base_mapping;
+	// parent_mapping[i] is the index of the ith argument of af in the parent framework
+	SIZE_TYPE* parent_mapping;
 	SIZE_TYPE base_size;
 };
 
@@ -200,6 +202,8 @@ AF* transpose_argumentation_framework(AF *af);
 
 AF* create_conflict_framework(AF* af);	// make it undirected
 
+PAF* project_argumentation_framework(AF *af, BitSet* mask);
+
 // stores af in PAF and sets index_mapping to identity
 PAF* af2paf(AF* af);
 // projects af to arguments in mask
@@ -209,6 +213,7 @@ PAF* project_argumentation_framework_with_loops(AF* af, BitSet* mask, BitSet* lo
 // projects paf to arguments in mask, adds loops for arguments in loop_mask, 
 // and sets index_mapping w.r.t. the root framework of paf 
 PAF* project_paf_with_loops(PAF* paf, BitSet* mask, BitSet* loop_mask);
+// translate bs into the root (not parent!) framework of paf
 BitSet* project_back(BitSet* bs, PAF* paf);
 
 // swap the order of arguments i and j
