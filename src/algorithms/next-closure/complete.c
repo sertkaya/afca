@@ -427,7 +427,7 @@ BitSet* dc_co_subgraph_next_closure(AF* af, int argument) {
 	// find argument in the projected framework
 	SIZE_TYPE i, projected_argument;
 	for (i = 0; i < projection->af->size; ++i) {
-		if (projection->index_mapping[i] == argument) {
+		if (projection->parent_mapping[i] == argument) {
 			projected_argument = i;
 			break;
 		}
@@ -442,7 +442,7 @@ BitSet* dc_co_subgraph_next_closure(AF* af, int argument) {
 
 	// print_set(extension,stdout,"\n");
 	// close the computed extension in the whole framework
-	BitSet* back_projected_extension = project_back(extension, projection, af->size);
+	BitSet* back_projected_extension = project_back(extension, projection);
 	AF *attacked_by = transpose_argumentation_framework(af);
 	BitSet *closure = create_bitset(af->size);
 	// closure_semi_complete(af, attacked_by, back_projected_extension, extension);

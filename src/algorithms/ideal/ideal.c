@@ -45,7 +45,9 @@ SIZE_TYPE update_attackers(AF* af,
 
 BitSet* se_id(AF* af, ListNode* (*preferred_extensions)(AF* af))
 {
+    printf("Computing preferred extensions...\n");
     ListNode* preferred = preferred_extensions(af);
+    printf("Done.\n");
     BitSet* ideal = (BitSet*) preferred->c;
     ListNode* next = preferred->next;
     free_list_node(preferred);

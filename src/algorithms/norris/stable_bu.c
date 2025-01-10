@@ -110,7 +110,7 @@ ListNode* enumerate_stable_extensions_norris_bottom_up(AF* af)
 	AF* not_attacks = complement_argumentation_framework(af);
 	ListNode* extensions = NULL;
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
-		printf("\ni = %d\n", i);
+		printf("\ni = %d, concepts = %d\n", i, concept_count_bu);
 		add_to_list_bu(not_attacks, i, &head, &extensions);
 	}
 	free_argumentation_framework(not_attacks);
