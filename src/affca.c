@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
 	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
 	int sort_type = 0, sort_direction = 0, argument;
-	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph] "
+	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-next-closure | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph] "
 					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
 
 	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
@@ -112,6 +112,8 @@ int main(int argc, char *argv[]) {
 		alg = SCC_MIS;
 	} else if (strcmp(algorithm, "wcc-mis") == 0) {
 		alg = WCC_MIS;
+	} else if (strcmp(algorithm, "scc-next-closure") == 0) {
+		alg = SCC_NEXT_CLOSURE;
 	} else if (strcmp(algorithm, "scc-norris") == 0) {
 		alg = SCC_NORRIS;
 	} else if (strcmp(algorithm, "wcc-norris") == 0) {
@@ -363,6 +365,9 @@ int main(int argc, char *argv[]) {
 			switch (alg) {
 				case NEXT_CLOSURE:
 					result_list = ee_pr_next_closure(af);
+					break;
+				case SCC_NEXT_CLOSURE:
+					run_scc_next_closure(af, output);
 					break;
 				default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
