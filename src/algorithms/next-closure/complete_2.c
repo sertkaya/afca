@@ -112,7 +112,7 @@ void closure_semi_complete_adj(AF* attacks, AF* attacked_by, BitSet* s, BitSet* 
 				for (SIZE_TYPE j = 0; j < attacks_adj->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = attacks_adj->lists[victim_a][j];
 					--tmp_list_sizes[victim_victim_a];
-					if ((tmp_list_sizes[victim_victim_a] == 0)) { // && (!TEST_BIT(r, victim_victim_a)))  {
+					if (tmp_list_sizes[victim_victim_a] == 0) { // && (!TEST_BIT(r, victim_victim_a)))  {
 						push(&update, victim_victim_a);
 						SET_BIT(r, victim_victim_a);
 					}
@@ -394,7 +394,7 @@ BitSet* dc_co_subgraph_next_closure_adj(AF* af, int argument) {
 	// find argument in the projected framework
 	SIZE_TYPE i, projected_argument;
 	for (i = 0; i < projection->af->size; ++i) {
-		if (projection->index_mapping[i] == argument) {
+		if (projection->base_mapping[i] == argument) {
 			projected_argument = i;
 			break;
 		}
@@ -417,7 +417,7 @@ BitSet* dc_co_subgraph_next_closure_adj(AF* af, int argument) {
 	// print_set(extension,stdout,"\n");
 	// close the computed extension in the whole framework
 	START_TIMER(start_time);
-	BitSet* back_projected_extension = project_back(extension, projection, af->size);
+	BitSet* back_projected_extension = project_back(extension, projection);
 	STOP_TIMER(stop_time);
 	printf("Projecting af back: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	BitSet *closure = create_bitset(af->size);
