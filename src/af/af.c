@@ -166,7 +166,6 @@ PAF* project_paf_with_loops(PAF* paf, BitSet* mask, BitSet* loop_mask) {
 
     SIZE_TYPE size = count_bits(mask);
 	assert(size > 0);
-	printf("size = %d\n", size);
 
     proj->base_mapping = calloc(size, sizeof(SIZE_TYPE));
     proj->parent_mapping = calloc(size, sizeof(SIZE_TYPE));
