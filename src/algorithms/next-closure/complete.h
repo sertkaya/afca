@@ -18,19 +18,16 @@
 #define AF_COMPLETE_EXTENSIONS_NC_H_
 
 #include "../../af/af.h"
-#include "../../utils/linked_list.h"
 
 // Computes all complete extensions and puts them into result
-ListNode* ee_co_next_closure(AF* af);
+// ListNode* ee_co_next_closure(AF* af);
 
 // Assuming arguments are sorted in descending order of victim count: -s 1 -d 1
-BitSet* dc_co_next_closure(AF* attacks, int argument);
+// BitSet* dc_co_next_closure(AF* attacks, int argument);
 
-BitSet* dc_co_next_closure_2(AF* attacks, int argument);
+// BitSet* dc_co_next_closure_2(AF* attacks, int argument);
 
-BitSet* dc_co_subgraph_next_closure(AF* attacks, int argument);
-
-BitSet* dc_co_subgraph_next_closure_adj(AF* attacks, int argument);
-
+// BitSet* dc_co_subgraph_next_closure(AF* attacks, int argument);
+List* dc_co_subgraph(AF* attacks, ARG_TYPE argument);
 
 #endif /* AF_COMPLETE_EXTENSIONS_NC_H_ */

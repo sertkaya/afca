@@ -36,9 +36,6 @@ AC_CONFIG_FILES([Makefile
 	src/Makefile 
 	src/utils/Makefile
 	src/parser/Makefile
-	src/bitset/Makefile
-	src/algorithms/Makefile
 	src/af/Makefile
-	src/hashing/Makefile
 	src/test/Makefile])
 AC_OUTPUT

@@ -27,26 +27,22 @@
 #include "../utils/timer.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
-	AF *af = calloc(1, sizeof(AF));
+	AF* af = calloc(1, sizeof(AF));
 	assert(af != NULL);
 
 	af->size = size;
 
-	af->graph = (BitSet**) calloc(size, sizeof(BitSet*));
-	assert(af->graph != NULL);
-
+	// af->lists = calloc(af->size, sizeof(List*));
+	af->lists = calloc(af->size, sizeof(ARG_TYPE*));
+	assert(af->lists != NULL);
 	af->list_sizes = calloc(af->size, sizeof(SIZE_TYPE));
 	assert(af->list_sizes != NULL);
-	af->lists = calloc(af->size, sizeof(SIZE_TYPE*));
-	assert(af->lists != NULL);
 
-	int i;
-	for (i = 0; i < size; ++i) {
-		af->graph[i] = create_bitset(size);
-		af->list_sizes[i] = 0;
-		af->lists[i] = NULL;
+	/*
+	for (SIZE_TYPE i = 0; i < size; ++i) {
+		af->lists[i] = list_create();
 	}
-
+	*/
 
 	return(af);
 }
@@ -54,16 +50,22 @@ AF* create_argumentation_framework(SIZE_TYPE size) {
 int free_argumentation_framework(AF* af) {
 	int freed_bytes = 0;
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		freed_bytes += free_bitset(af->graph[i]);
+		// freed_bytes += list_free(af->lists[i]);
+		free(af->lists[i]);
+		freed_bytes += af->list_sizes[i] * sizeof(ARG_TYPE);
 	}
-	free(af->graph);
-	freed_bytes += (af->size * sizeof(BitSet*));
+	free(af->lists);
+	freed_bytes += af->size * sizeof(ARG_TYPE*);
+	// freed_bytes += af->size * sizeof(List*);
+	free(af->list_sizes);
+	freed_bytes += af->size * sizeof(SIZE_TYPE);
 	free(af);
 	freed_bytes += sizeof(AF);
 	return(freed_bytes);
 }
 
 
+/*
 int free_projected_argumentation_framework(PAF* paf) {
 	free(paf->index_mapping);
 	int freed_bytes = paf->af->size * sizeof(SIZE_TYPE);
@@ -71,72 +73,73 @@ int free_projected_argumentation_framework(PAF* paf) {
 	free(paf);
 	return freed_bytes + sizeof(PAF);
 }
+*/
 
 
 void print_argumentation_framework(AF* af) {
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		print_bitset(af->graph[i], stdout);
-		printf("\n");
+		// print_list(af->lists[i]);
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j)
+			printf("%d %d\n", i + 1, af->lists[i][j] + 1);
 	}
 }
 
-AF* complement_argumentation_framework(AF *af ){
-	AF* c_af = create_argumentation_framework(af->size);
-
-	c_af->size = af->size;
-
-	for (SIZE_TYPE i = 0; i < af->size; ++i)
-		complement_bitset(af->graph[i], c_af->graph[i]);
-
-	return(c_af);
+int cmp(const void* arg_1, const void* arg_2) {
+	if ((*(ARG_TYPE*) arg_1) < *((ARG_TYPE*) arg_2))
+		return(-1);
+	if ((*(ARG_TYPE*) arg_1) > *((ARG_TYPE*) arg_2))
+		return(1);
+	return(0);
 }
 
 AF* transpose_argumentation_framework(AF *af) {
-	struct timeval start_time, stop_time;
-	START_TIMER(start_time);
 	AF* t_af = create_argumentation_framework(af->size);
 
 	t_af->size = af->size;
 
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
-		for (SIZE_TYPE j = 0; j < af->size; ++j)
-			if (TEST_BIT(af->graph[i], j))
-				SET_BIT(t_af->graph[j], i);
-	STOP_TIMER(stop_time);
-	printf("Transposing AF time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+		// for (SIZE_TYPE j = 0; j < af->lists[i]->size; ++j)
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			// ADD_ATTACK(t_af, j + 1, i + 1);
+			add_attack(t_af, af->lists[i][j], i);
+		}
+
+	// Sort the adjacency lists
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		// qsort(t_af->lists[i]->elements, t_af->lists[i]->size, sizeof(ARG_TYPE), cmp);
+		qsort(t_af->lists[i], t_af->list_sizes[i], sizeof(ARG_TYPE), cmp);
+
 	return(t_af);
 }
 
-AF* create_conflict_framework(AF* af) {
-	// make it undirected and take loops into account
-	AF* conflicts = create_argumentation_framework(af->size);
 
-	conflicts->size = af->size;
-
-	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		bool iconflict = TEST_BIT(af->graph[i], i);
-		for (SIZE_TYPE j = i; j < af->size; ++j) {
-			if (iconflict || TEST_BIT(af->graph[i], j) || TEST_BIT(af->graph[j], i) || TEST_BIT(af->graph[j], j)) {
-				SET_BIT(conflicts->graph[i], j);
-				SET_BIT(conflicts->graph[j], i);
-			}
-		}
-	}
-
-	return conflicts;
-}
-
-PAF* project_argumentation_framework(AF *af, BitSet *mask) {
+/*
+PAF* project_argumentation_framework(AF *af, bool* mask) {
 	PAF *paf = calloc(1, sizeof(PAF));
 	assert(paf != NULL);
 
-    SIZE_TYPE size = count_bits(mask);
+	SIZE_TYPE mapping_size = 0;
+	SIZE_TYPE mapped_index = 0;
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (mask[i]) {
+			SIZE_TYPE* tmp = realloc(paf->index_mapping, (mapping_size + 1) * sizeof(SIZE_TYPE));
+			assert(tmp != NULL);
+			paf->index_mapping = tmp;
+
+			++mapping_size;
+		}
+	}
+
+    SIZE_TYPE size = 0;
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		if (mask[i])
+			++size;
 	assert(size > 0);
 
     paf->index_mapping = calloc(size, sizeof(SIZE_TYPE));
     SIZE_TYPE j = 0;
     for (SIZE_TYPE i = 0; i < af->size; ++i) {
-        if (TEST_BIT(mask, i)) {
+        if (mask[i]) {
             paf->index_mapping[j++] = i;
         }
     }
@@ -197,3 +200,4 @@ BitSet *map_indices(BitSet *s, int *mapping) {
 
   return(c);
 }
+*/

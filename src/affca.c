@@ -22,49 +22,61 @@
 #include <assert.h>
 #include <getopt.h>
 
+/*
 #include "af/sort.h"
 #include "algorithms/cbo/preferred.h"
 #include "algorithms/ideal/ideal.h"
 #include "algorithms/maximal-independent-sets/mis.h"
 #include "algorithms/next-closure/preferred.h"
 #include "algorithms/next-closure/stable.h"
-#include "algorithms/next-closure/complete.h"
 #include "algorithms/norris/stable.h"
 #include "algorithms/nourine/stable.h"
 #include "algorithms/connected-components/cc.h"
+*/
+#include "algorithms/next-closure/complete.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
 
-enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH, SUBGRAPH_ADJ};
-enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO, DC_CO};
+#define EXTENSION_TYPE_COUNT 4
+enum extension_types {ST, PR, CO, ID};
 
+#define DECISION_PROBLEM_TYPE_COUNT 2
+enum decision_problem_types {DC, DS};
 
-void print_not_supported(char* problem, char* algorithm, FILE* output)
-{
+#define ENUMERATION_PROBLEM_TYPE_COUNT 2
+enum problem_types {EE, SE};
+
+#define ALGORITHM_COUNT 14
+enum algorithms {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH};
+
+void print_not_supported(char* problem, char* algorithm, FILE* output) {
 	fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 	fclose(output);
 	exit(EXIT_FAILURE);
 }
 
+void unsupported_feature(char* problem, char* extension, char* algorithm) {
+	fprintf(stderr, "Problem %s-%s is not supported with algorithm %s.\n", problem, extension, algorithm);
+}
 
 int main(int argc, char *argv[]) {
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, verbose_flag = 0, sort_flag = 0, argument_flag = 0;
-	char *problem = "", *algorithm = "", *af_file_name = "", *output_file = "";
-	int sort_type = 0, sort_direction = 0, argument;
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0;
+	char *prob= "", *alg= "", *af_file_name = "", *output_file = "";
+	ARG_TYPE argument;
 	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph] "
 					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
 
-	while ((c = getopt(argc, argv, "l:p:f:o:v:s:d:a:")) != -1)
+	while ((c = getopt(argc, argv, "l:p:f:o:v:a:")) != -1)
 		switch (c) {
 		case 'l':
 			algorithm_flag = 1;
-			algorithm = optarg;
+			alg = optarg;
 			break;
 		case 'p':
 			problem_flag = 1;
-			problem = optarg;
+			prob = optarg;
 			break;
 		case 'f':
 			input_flag = 1;
@@ -73,16 +85,6 @@ int main(int argc, char *argv[]) {
 		case 'o':
 			output_flag = 1;
 			output_file = optarg;
-			break;
-		case 'v':
-			verbose_flag = 1;
-			break;
-		case 's':
-			sort_flag = 1;
-			sort_type = atoi(optarg);
-			break;
-		case 'd':
-			sort_direction = atoi(optarg);
 			break;
 		case 'a':
 			argument_flag = 1;
@@ -97,84 +99,85 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	enum alg_type alg;
-	if (strcmp(algorithm, "cbo") == 0) {
-		alg = CBO;
-	} else if (strcmp(algorithm, "mis") == 0) {
-		alg = MIS;
-	} else if (strcmp(algorithm, "next-closure") == 0) {
-		alg = NEXT_CLOSURE;
-	} else if (strcmp(algorithm, "norris") == 0) {
-		alg = NORRIS;
-	} else if (strcmp(algorithm, "nourine") == 0) {
-		alg = NOURINE;
-	} else if (strcmp(algorithm, "scc-mis") == 0) {
-		alg = SCC_MIS;
-	} else if (strcmp(algorithm, "wcc-mis") == 0) {
-		alg = WCC_MIS;
-	} else if (strcmp(algorithm, "scc-norris") == 0) {
-		alg = SCC_NORRIS;
-	} else if (strcmp(algorithm, "wcc-norris") == 0) {
-		alg = WCC_NORRIS;
-	} else if (strcmp(algorithm, "norris-bu") == 0) {
-		alg = NORRIS_BU;
-	} else if (strcmp(algorithm, "scc-norris-bu") == 0) {
-		alg = SCC_NORRIS_BU;
-	} else if (strcmp(algorithm, "scc-nourine") == 0) {
-		alg = SCC_NOURINE;
-	} else if (strcmp(algorithm, "wcc-nourine") == 0) {
-		alg = WCC_NOURINE;
-	} else if (strcmp(algorithm, "subgraph") == 0) {
-		alg = SUBGRAPH;
-	} else if (strcmp(algorithm, "subgraph_adj") == 0) {
-		alg = SUBGRAPH_ADJ;
+	enum algorithms algorithm;
+	if (strcmp(alg, "cbo") == 0) {
+		algorithm = CBO;
+	} else if (strcmp(alg, "mis") == 0) {
+		algorithm = MIS;
+	} else if (strcmp(alg, "next-closure") == 0) {
+		algorithm = NEXT_CLOSURE;
+	} else if (strcmp(alg, "norris") == 0) {
+		algorithm = NORRIS;
+	} else if (strcmp(alg, "nourine") == 0) {
+		algorithm = NOURINE;
+	} else if (strcmp(alg, "scc-mis") == 0) {
+		algorithm = SCC_MIS;
+	} else if (strcmp(alg, "wcc-mis") == 0) {
+		algorithm = WCC_MIS;
+	} else if (strcmp(alg, "scc-norris") == 0) {
+		algorithm = SCC_NORRIS;
+	} else if (strcmp(alg, "wcc-norris") == 0) {
+		algorithm = WCC_NORRIS;
+	} else if (strcmp(alg, "norris-bu") == 0) {
+		algorithm = NORRIS_BU;
+	} else if (strcmp(alg, "scc-norris-bu") == 0) {
+		algorithm = SCC_NORRIS_BU;
+	} else if (strcmp(alg, "scc-nourine") == 0) {
+		algorithm = SCC_NOURINE;
+	} else if (strcmp(alg, "wcc-nourine") == 0) {
+		algorithm = WCC_NOURINE;
+	} else if (strcmp(alg, "subgraph") == 0) {
+		algorithm = SUBGRAPH;
 	} else {
-		fprintf(stderr, "Unknown algorithm %s\n", algorithm);
+		fprintf(stderr, "Unknown algorithm %s\n", alg);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
-	enum prob_type prob;
-	if (strcmp(problem, "EE-ST") == 0)
-		prob = EE_ST;
-	else if (strcmp(problem, "SE-ST") == 0)
-		prob = SE_ST;
-	else if (strcmp(problem, "CE-ST") == 0)
-		prob = CE_ST;
-	else if (strcmp(problem, "DC-ST") == 0) {
-		prob = DC_ST;
+	char *prob_type = strtok(prob, "_");
+	char *ext_type = strtok(NULL, "_");
+
+	enum problem_types problem_type;
+	bool decision_problem = false;
+	// enumeration problems
+	if (strcmp(prob_type, "EE") == 0)
+		problem_type = EE;
+	else if (strcmp(prob_type, "SE") == 0)
+		problem_type = SE;
+	//decision problems
+	else if (strcmp(prob_type, "DC") == 0) {
+		decision_problem = true;
+		problem_type = DC;
 		if (!argument_flag) {
 			fprintf(stderr, usage, argv[0]);
 			exit(EXIT_FAILURE);
 		}
-	} else if (strcmp(problem, "EE-PR") == 0) {
-		prob = EE_PR;
-	} else if (strcmp(problem, "SE-PR") == 0) {
-		prob = SE_PR;
-	} else if (strcmp(problem, "DC-PR") == 0) {
-		prob = DC_PR;
+	}
+	else if (strcmp(prob_type, "DS") == 0) {
+		decision_problem = true;
+		problem_type = DS;
 		if (!argument_flag) {
 			fprintf(stderr, usage, argv[0]);
 			exit(EXIT_FAILURE);
 		}
-	} else if (strcmp(problem, "DS-PR") == 0) {
-		prob = DS_PR;
-		if (!argument_flag) {
-			fprintf(stderr, usage, argv[0]);
-			exit(EXIT_FAILURE);
-		}
-	} else if (strcmp(problem, "SE-ID") == 0) {
-		prob = SE_ID;
-	} else if (strcmp(problem, "EE-CO") == 0) {
-		prob = EE_CO;
-	} else if (strcmp(problem, "DC-CO") == 0) {
-		prob = DC_CO;
-		if (!argument_flag) {
-			fprintf(stderr, usage, argv[0]);
-			exit(EXIT_FAILURE);
-		}
-	} else {
-		fprintf(stderr, "Unknown problem %s\n", problem);
+	}
+	else {
+		fprintf(stderr, "Unknown problem type %s\n", prob_type);
+		fprintf(stderr, usage, argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	enum extension_types extension_type;
+	if (strcmp(ext_type, "ST") == 0)
+		extension_type = ST;
+	else if (strcmp(ext_type, "PR") == 0)
+		extension_type = PR;
+	else if (strcmp(ext_type, "ID") == 0)
+		extension_type = ID;
+	else if (strcmp(ext_type, "CO") == 0)
+		extension_type = CO;
+	else {
+		fprintf(stderr, "Unknown extension type %s\n", ext_type);
 		fprintf(stderr, usage, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -186,309 +189,54 @@ int main(int argc, char *argv[]) {
 	assert(input_fd != NULL);
 
 	struct timeval start_time, stop_time;
-	START_TIMER(start_time);
 
+	START_TIMER(start_time);
 	// Read the file into an argumentation framework.
 	AF *input_af = read_af(input_fd);
 	fclose(input_fd);
-
 	STOP_TIMER(stop_time);
 	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-
-	// Sort the af
-	AF *af = input_af;
-	int *mapping;
-	if (sort_flag) {
-		// START_TIMER(start_time);
-		mapping = sort_af(input_af, af, sort_type, sort_direction);
-		// STOP_TIMER(stop_time);
-		// printf("Sorting time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	}
-	// TODO: free the input_af? Needed for mapping back the sorted af?
-
-
-	if (verbose_flag) {
-		// print_short_stats(kb);
-	}
 
 	// open the output file
 	output = fopen(output_file, "w");
 	assert(output != NULL);
 
+	// matrix of functions for decision problems.
+	// Function prototype: List* f(AF*, ARG_TYPE)
+    List* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*, ARG_TYPE);
+	for (int i = 0; i < DECISION_PROBLEM_TYPE_COUNT; ++i)
+		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
+			for (int k = 0; k < ALGORITHM_COUNT; ++k)
+				decision_functions[i][j][k] = NULL;
+
+	// decision_functions[DC][CO][SUBGRAPH] = &dc_co_subgraph;
+	// ...
+	// ...
+
+	// matrix of functions for enumeration problems.
+	// Function prototype: List* f(AF*)
+    List* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*);
+	for (int i = 0; i < ENUMERATION_PROBLEM_TYPE_COUNT; ++i)
+		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
+			for (int k = 0; k < ALGORITHM_COUNT; ++k)
+				enumeration_functions[i][j][k] = NULL;
+	// enumeration_functions[..][..][..] = ..
+
 	START_TIMER(start_time);
-
-	// TODO: Think about a matrix with pointers to relevant functions.
-	ListNode *result_list = NULL;
-	switch(prob) {
-		case EE_ST:
-			switch (alg) {
-				case MIS:
-					result_list = ee_st_maximal_independent_sets(af);
-					break;
-				case NEXT_CLOSURE:
-					result_list = ee_st_next_closure(af);
-					break;
-				case NORRIS:
-					result_list = ee_st_norris(af);
-					break;
-				case NOURINE:
-					result_list = ee_st_nourine(af);
-					break;
-				case SCC_MIS:
-					run_cc_mis(af, output, true);
-					break;
-				case WCC_MIS:
-					run_cc_mis(af, output, false);
-					break;
-				case SCC_NORRIS:
-					run_cc_norris(af, output, true);
-					break;
-				case WCC_NORRIS:
-					run_cc_norris(af, output, false);
-					break;
-				case NORRIS_BU:
-					run_norris_bu(af, output);
-					break;
-				case SCC_NORRIS_BU:
-					run_cc_norris_bu(af, output, true);
-					break;
-				case SCC_NOURINE:
-					run_cc_nourine(af, output, true);
-					break;
-				case WCC_NOURINE:
-					run_cc_nourine(af, output, false);
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);			}
-			if (sort_flag) {
-				ListNode* node = result_list;
-				while (node) {
-					// map back the indices if af was sorted before
-					BitSet *x = map_indices(node->c, mapping);
-					print_set(x, output, "\n");
-					node = node->next;
-				}
-			}
-			else {
-				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
-			}
-			free_list(result_list, (void (*)(void *)) free_bitset);
-			break;
-		case SE_ST: {
-			BitSet *result_se = create_bitset(af->size);
-			switch (alg) {
-				case NEXT_CLOSURE:
-					se_st_next_closure(af, result_se);
-					break;
-				case MIS:
-					result_se = se_st_mis(af);
-					break;
-				case NORRIS:
-					// se = se_st_norris(af, output);
-					se_st_norris(af, output);
-					break;
-				case NOURINE:
-					se_st_nourine(af, result_se);
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);
-			}
-			if (sort_flag) {
-				// map back the indices if af was sorted before
-				BitSet *x = map_indices(result_se, mapping);
-				print_set(x, output, "\n");
-				free_bitset(x);
-			}
-			else {
-				print_set(result_se, output, "\n");
-			}
-			free_bitset(result_se);
-			break;
-		}
-		case DC_ST:
-			// On the command line arguments are named starting from 1. Internally, they start from 0:
-			--argument;
-			BitSet *result_dc =  create_bitset(af->size);
-			switch (alg) {
-				case NEXT_CLOSURE:
-					dc_st_next_closure(af, argument, result_dc);
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);
-			}
-		    if (bitset_is_emptyset(result_dc)) {
-				// No stable extension containing argument
-			    fprintf(output, "NO\n");
-		    }
-			else {
-				if (sort_flag) {
-					// map back the indices if af was sorted before
-					BitSet *x = map_indices(result_dc, mapping);
-					print_set(x, output, "\n");
-					free_bitset(x);
-				}
-				else {
-					print_set(result_dc, output, "\n");
-				}
-				free_bitset(result_dc);
-			}
-			break;
-		case CE_ST:
-			switch (alg) {
-				case NORRIS:
-					run_scc_norris_count(af, output);
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);
-			}
-			break;
-		case SE_ID:
-			if (alg == NEXT_CLOSURE) {
-				BitSet* ideal = se_id(af, ee_pr_next_closure);
-				print_set(ideal, output, "\n");
-				free_bitset(ideal);
-			} else {
-				print_not_supported(problem, algorithm, output);				
-			}
-			break;
-		case EE_PR:
-			switch (alg) {
-				case NEXT_CLOSURE:
-					result_list = ee_pr_next_closure(af);
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);
-			}
-			if (sort_flag) {
-				ListNode* node = result_list;
-				while (node) {
-					// map back the indices if af was sorted before
-					BitSet *x = map_indices(node->c, mapping);
-					print_set(x, output, "\n");
-					node = node->next;
-				}
-			}
-			else {
-				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
-			}
-			free_list(result_list, (void (*)(void *)) free_bitset);
-			break;
-		case SE_PR:
-			if (alg == CBO) {
-				BitSet* preferred = se_pr_cbo(af);
-				print_set(preferred, output, "\n");
-				free_bitset(preferred);
-			} else {
-				print_not_supported(problem, algorithm, output);				
-			}
-			break;
-		case DC_PR:
-			if (alg == CBO) {
-				BitSet* preferred = dc_pr_cbo(af, --argument);
-				if (preferred) {
-					print_set(preferred, output, "\n");
-					free_bitset(preferred);
-				}
-			} else {
-				print_not_supported(problem, algorithm, output);				
-			}
-			break;
-		case DS_PR:
-			if (alg == CBO) {
-				BitSet* preferred = ds_pr_cbo(af, --argument);
-				if (preferred) {
-					print_set(preferred, output, "\n");
-					free_bitset(preferred);
-				}
-			} else {
-				print_not_supported(problem, algorithm, output);				
-			}
-			break;
-		case EE_CO:
-			switch (alg) {
-				case NEXT_CLOSURE:
-					result_list = ee_co_next_closure(af);
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);
-			}
-			if (sort_flag) {
-				ListNode* node = result_list;
-				while (node) {
-					// map back the indices if af was sorted before
-					BitSet *x = map_indices(node->c, mapping);
-					print_set(x, output, "\n");
-					node = node->next;
-				}
-			}
-			else {
-				print_list(result_list, (void (*)(void *, FILE*, const char*)) print_set, output);
-			}
-			free_list(result_list, (void (*)(void *)) free_bitset);
-			break;
-		case DC_CO:
-			// On the command line arguments are named starting from 1. Internally, they start from 0:
-			--argument;
-			switch (alg) {
-				case NEXT_CLOSURE:
-					// sort the af in the descending order of victim count
-					// (ignores if the af was already sorted)
-					// af = sort_af(input_af, VICTIM_COUNT, SORT_DESCENDING);
-					// map argument
-					// int mapped_argument_index = map_argument(argument);
-					// printf("mapped argument: %d\n", mapped_argument_index);
-					// result_dc = dc_co_next_closure(af, mapped_argument_index);
-
-					// map back the indices
-					// BitSet *x = map_indices(result_dc);
-					// print_set(x, output, "\n");
-					// free_bitset(x);
-
-					result_dc = dc_co_next_closure_2(af, argument);
-					if (result_dc == NULL)
-						fprintf(output, "NO\n");
-					else {
-						print_set(result_dc, output, "\n");
-						free_bitset(result_dc);
-					}
-					break;
-				case SUBGRAPH:
-					result_dc = dc_co_subgraph_next_closure(af, argument);
-					if (result_dc == NULL)
-						fprintf(output, "NO\n");
-					else {
-						print_set(result_dc, output, "\n");
-						free_bitset(result_dc);
-					}
-					break;
-				case SUBGRAPH_ADJ:
-					result_dc = dc_co_subgraph_next_closure_adj(af, argument);
-					if (result_dc == NULL)
-						fprintf(output, "NO\n");
-					else {
-						print_set(result_dc, output, "\n");
-						free_bitset(result_dc);
-					}
-					break;
-				default:
-					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
-					fclose(output);
-					exit(EXIT_FAILURE);
-			}
+	if (decision_problem) {
+		// decision problem
+		if (decision_functions[problem_type][extension_type][algorithm] == NULL)
+			unsupported_feature(prob_type,ext_type,alg);
+		else
+			decision_functions[DC][CO][SUBGRAPH](input_af, argument);
 	}
-
+	else {
+		// enumeration problem
+		if (enumeration_functions[problem_type][extension_type][algorithm] == NULL)
+			unsupported_feature(prob_type,ext_type,alg);
+		else
+			enumeration_functions[DC][CO][SUBGRAPH](input_af);
+	}
 	STOP_TIMER(stop_time);
 	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 

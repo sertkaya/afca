@@ -15,26 +15,28 @@
  */
 
 /**
- * A simple list implementation that supports adding and removing elements.
+ * List of integers.
  */
 
 #ifndef LIST_H_
 #define LIST_H_
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <assert.h>
+#include "../af/datatypes.h"
 
 typedef struct list List;
 typedef struct list_iterator ListIterator;
 
 struct list {
-	int size;
-	void** elements;
+	SIZE_TYPE size;
+	ARG_TYPE* elements;
 };
 
 struct list_iterator {
 	List* list;
-	int current_index;
+	SIZE_TYPE current_index;
 };
 
 /**
@@ -53,14 +55,14 @@ List* list_create();
  * Appends element e to list l. Does not check for duplicates.
  * Returns 1.
  */
-inline char list_add(void* e, List* l) {
-	void** tmp = realloc(l->elements, (l->size + 1) * sizeof(void*));
+inline bool list_add(ARG_TYPE e, List* l) {
+	ARG_TYPE* tmp = realloc(l->elements, (l->size + 1) * sizeof(ARG_TYPE));
 	assert(tmp != NULL);
 	l->elements = tmp;
 	l->elements[l->size] = e;
 	++l->size;
 
-	return 1;
+	return(true);
 }
 
 /**
@@ -71,7 +73,7 @@ inline char list_add(void* e, List* l) {
 /**
  * TODO
  */
-inline char list_remove(void* e, List* l) {
+inline bool list_remove(ARG_TYPE e, List* l) {
 	int i;
 
 	for (i = 0; i < l->size; ++i) {
@@ -82,19 +84,19 @@ inline char list_remove(void* e, List* l) {
 	// if we reached the last element and it is not e,
 	// then e does not exist in l.
 	if ((i == l->size - 1) && (l->elements[i] != e))
-		return 1;
+		return(false);
 	// now shift the elements, overwrite index i
 	int j;
 	for (j = i; j < l->size - 1; ++j) {
 		l->elements[j] = l->elements[j + 1];
 	}
 	// shrink the allocated space
-	void** tmp = realloc(l->elements, (l->size - 1) * sizeof(void*));
+	ARG_TYPE* tmp = realloc(l->elements, (l->size - 1) * sizeof(ARG_TYPE));
 	assert(l->size == 1 || tmp != NULL);
 	l->elements = tmp;
 	// decrement the element count
 	--l->size;
-	return 0;
+	return(true);
 }
 /**
  * Free the space allocated for this list.
@@ -115,12 +117,15 @@ ListIterator* list_iterator_create(List* l);
 
 /**
  * Returns the next element of the given iterator.
- * NULL if there is no next element.
+ * -1 if there is no next element.
  */
-inline void* list_iterator_next(ListIterator* it) {
-	void* next = (it->current_index == it->list->size) ? NULL : it->list->elements[it->current_index];
+inline ARG_TYPE list_iterator_next(ListIterator* it) {
+	ARG_TYPE next = (it->current_index == it->list->size) ? -1 : it->list->elements[it->current_index];
 	++it->current_index;
 
-	return next;
+	return(next);
 }
+
+void print_list(List* l);
+
 #endif

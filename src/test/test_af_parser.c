@@ -20,7 +20,7 @@
 
 #include "../parser/af_parser.h"
 #include "../af/af.h"
-#include "../bitset/bitset.h"
+// #include "../bitset/bitset.h"
 
 int main(int argc, char *argv[]) {
 
@@ -28,22 +28,21 @@ int main(int argc, char *argv[]) {
 	assert(input_fd != NULL);
 
 	AF *af = read_af(input_fd);
-
 	print_argumentation_framework(af);
 
 	int size = af->size;
-	BitSet* bs = create_bitset(size);
-	BitSet* r = create_bitset(size);
+	// BitSet* bs = create_bitset(size);
+	// BitSet* r = create_bitset(size);
 
-	SET_BIT(bs, 4);
-	printf("bs: ");
-	print_bitset(bs, stdout);
-	printf("\n");
+	// SET_BIT(bs, 4);
+	// printf("bs: ");
+	// print_bitset(bs, stdout);
+	// printf("\n");
 
 	// down_up_arrow(af, bs, r);
-	printf("r: ");
-	print_bitset(r, stdout);
-	printf("\n");
+	// printf("r: ");
+	// print_bitset(r, stdout);
+	// printf("\n");
 
 	return(0);
 }

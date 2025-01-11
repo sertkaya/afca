@@ -15,6 +15,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "list.h"
@@ -30,26 +31,31 @@ List* list_create() {
 
 int list_free(List* l) {
 	free(l->elements);
-	int freed_bytes = l->size * sizeof(void*);
+	int freed_bytes = l->size * sizeof(ARG_TYPE);
 	free(l);
 	freed_bytes+= sizeof(List);
 
-	return freed_bytes;
+	return(freed_bytes);
 }
 
 int list_reset(List* l) {
 	free(l->elements);
-	int freed_bytes = l->size * sizeof(void*);
+	int freed_bytes = l->size * sizeof(ARG_TYPE);
 	l->size = 0;
 	l->elements = NULL;
 
-	return freed_bytes;
+	return(freed_bytes);
 }
 
-extern inline char list_add(void* e, List* l);
+void print_list(List* l) {
+	for (int i = 0; i < l->size; ++i)
+		printf("%d ", l->elements[i]);
+}
+
+extern inline bool list_add(ARG_TYPE e, List* l);
 
 
-extern inline char list_remove(void* e, List* l);
+extern inline bool list_remove(ARG_TYPE e, List* l);
 
 ListIterator* list_iterator_create(List* l) {
 	ListIterator* it = (ListIterator*) malloc(sizeof(ListIterator));
@@ -60,8 +66,7 @@ ListIterator* list_iterator_create(List* l) {
 	return it;
 }
 
-
-extern inline void* list_iterator_next(ListIterator* it);
+extern inline ARG_TYPE list_iterator_next(ListIterator* it);
 
 int list_iterator_free(ListIterator* it) {
 	free(it);

@@ -30,22 +30,23 @@ int main(int argc, char *argv[]) {
 	print_argumentation_framework(af);
 	printf("\n");
 
-	AF *af_c = complement_argumentation_framework(af);
-	print_argumentation_framework(af_c);
-	printf("\n");
+	AF *af_t = transpose_argumentation_framework(af);
+	// print_argumentation_framework(af_t);
+	// print_argumentation_framework(af_c);
+	// printf("\n");
 
-	BitSet* bs = create_bitset(af->size);
-	BitSet* r = create_bitset(af->size);
+	// BitSet* bs = create_bitset(af->size);
+	// BitSet* r = create_bitset(af->size);
 
-	SET_BIT(bs, 4);
-	printf("bs: ");
-	print_bitset(bs, stdout);
-	printf("\n");
+	// SET_BIT(bs, 4);
+	// printf("bs: ");
+	// print_bitset(bs, stdout);
+	// printf("\n");
 
 	// up_arrow(af, bs, r);
-	printf("r: ");
-	print_bitset(r, stdout);
-	printf("\n");
+	// printf("r: ");
+	// print_bitset(r, stdout);
+	// printf("\n");
 
 	return(0);
 }

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+
 #include "../../af/af.h"
 #include "complete.h"
 #include "../connected-components/scc.h"
-
-#include <string.h>
-#include <time.h>
-
 #include "../../utils/linked_list.h"
 #include "../../utils/stack.h"
 #include "../../utils/timer.h"
@@ -30,102 +31,58 @@
 // I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
 // Semi-complete extensions form a closure system.
 
-struct argumentation_framework_adjacency_list {
-	// Number of arguments
-	SIZE_TYPE size;
-    // Adjacency lists
-    SIZE_TYPE **lists;
-    // Number of elements in each adjacency list
-    SIZE_TYPE *list_sizes;
-};
-
-typedef struct argumentation_framework_adjacency_list AF_ADJ_L;
-
-AF_ADJ_L *af_to_af_adj_l(AF *af) {
-	struct timeval start_time, stop_time;
-	START_TIMER(start_time);
-	AF_ADJ_L *af_adj = calloc(1, sizeof(AF_ADJ_L));
-	assert(af_adj != NULL);
-	af_adj->size = af->size;
-	af_adj->list_sizes = calloc(af->size, sizeof(SIZE_TYPE));
-	assert(af_adj->list_sizes != NULL);
-	af_adj->lists = calloc(af->size, sizeof(SIZE_TYPE*));
-	assert(af_adj->lists != NULL);
-	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		af_adj->list_sizes[i] = 0;
-		af_adj->lists[i] = NULL;
-		for (SIZE_TYPE j = 0; j < af->size; ++j ) {
-			if (TEST_BIT(af->graph[i], j)) {
-				SIZE_TYPE *tmp = realloc(af_adj->lists[i], (af_adj->list_sizes[i] + 1) * sizeof(SIZE_TYPE));
-				assert(tmp != NULL);
-				af_adj->lists[i] = tmp;
-				af_adj->lists[i][af_adj->list_sizes[i]] = j;
-				++af_adj->list_sizes[i];
-			}
-		}
-	}
-	STOP_TIMER(stop_time);
-	printf("Creating AF-ADJ time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	return(af_adj);
-}
-
-void print_argumentation_framework_adj(AF_ADJ_L *af) {
-	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
-			printf("%d ", af->lists[i][j] + 1);
-		}
-		printf("\n");
-	}
-}
-
-void closure_semi_complete_adj(AF* attacks, AF* attacked_by, BitSet* s, BitSet* r, AF_ADJ_L *attacks_adj, AF_ADJ_L *attacked_by_adj) {
-	struct timeval start_time, stop_time;
-	START_TIMER(start_time);
-	copy_bitset(s, r);
-
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
-		if (bitset_is_emptyset(attacked_by->graph[i]))
-			SET_BIT(r, i);
-
-	SIZE_TYPE* tmp_list_sizes = calloc(attacks_adj->size, sizeof(SIZE_TYPE));
-	assert(tmp_list_sizes != NULL);
-	memcpy(tmp_list_sizes, attacks_adj->list_sizes, attacked_by_adj->size * sizeof(SIZE_TYPE));
-
+// s: the set to be closed
+// r: the closure of s
+// TODO: Caution! We assume that s and r do not contain double values!
+void closure_semi_complete(AF* attacks, AF* attacked_by, List* s, List* r) {
 	Stack update;
 	init_stack(&update);
-	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
-		if (TEST_BIT(r, i))
-			push(&update, i);
 
-	BitSet* victims_a = create_bitset(attacks->size);
+	// Push elements of s to the stack
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		push(&update, s->elements[i]);
+
+	// Push the unattacked arguments to the stack. They are defended by every set.
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
+		if (attacked_by->list_sizes[i] == 0) {
+			push(&update, i);
+		}
+
+	SIZE_TYPE* unattacked_attackers_count = calloc(attacked_by->size, sizeof(SIZE_TYPE));
+	assert(unattacked_attackers_count != NULL);
+	memcpy(unattacked_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+
+	bool* victims_a = calloc(attacks->size, sizeof(bool));
+	assert(victims_a != NULL);
+	// TODO: initialize all to false? check if required
+
 	SIZE_TYPE a = pop(&update);
 	while (a != -1) {
-		if (attacks_adj->lists[a] == NULL) {
+		if (attacks->list_sizes[a] == 0) {
 			// a does not attack anybody, pop and continue
 			a = pop(&update);
 			continue;
 		}
-		for (SIZE_TYPE i = 0; i < attacks_adj->list_sizes[a]; ++i) {
-			SIZE_TYPE victim_a = attacks_adj->lists[a][i];
-			if (!TEST_BIT(victims_a, victim_a)) {
-				SET_BIT(victims_a, victim_a);
-				for (SIZE_TYPE j = 0; j < attacks_adj->list_sizes[victim_a]; ++j) {
-					SIZE_TYPE victim_victim_a = attacks_adj->lists[victim_a][j];
-					--tmp_list_sizes[victim_victim_a];
-					if ((tmp_list_sizes[victim_victim_a] == 0)) { // && (!TEST_BIT(r, victim_victim_a)))  {
+		for (SIZE_TYPE i = 0; i < attacks->list_sizes[a]; ++i) {
+			SIZE_TYPE victim_a = attacks->lists[a][i];
+			if (!victims_a[victim_a]) {
+				victims_a[victim_a] = true;
+				for (SIZE_TYPE j = 0; j < attacks->list_sizes[victim_a]; ++j) {
+					SIZE_TYPE victim_victim_a = attacks->lists[victim_a][j];
+					--unattacked_attackers_count[victim_victim_a];
+					if ((unattacked_attackers_count[victim_victim_a] == 0)) { // && (!TEST_BIT(r, victim_victim_a)))  {
 						push(&update, victim_victim_a);
-						SET_BIT(r, victim_victim_a);
 					}
 				}
 			}
 		}
 		a = pop(&update);
 	}
-	free_bitset(victims_a);
-	free(tmp_list_sizes);
+	free(unattacked_attackers_count);
+	free(victims_a);
 
-	STOP_TIMER(stop_time);
-	printf("closure_semi_complete_adj time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	// STOP_TIMER(stop_time);
+	// printf("closure_semi_complete_adj time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	/*
 	SIZE_TYPE i;
 	copy_bitset(s, r);
@@ -199,15 +156,13 @@ bool next_conflict_free_semi_complete_intent_adj(AF* attacks, AF* attacked_by, B
 	return(0);
 }
 
-BitSet* dc_co_next_closure_adj(AF* attacks, int argument, AF_ADJ_L *attacks_adj, AF_ADJ_L *attacked_by_adj) {
-	printf("=== dc_co_next_closure starting ===\n");
-	struct timeval start_time, stop_time;
-	BitSet* current = create_bitset(attacks->size);
-	AF* attacked_by = transpose_argumentation_framework(attacks);
+BitSet* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
+	List* current = list_create();
+	List* current_closure = list_create();
 
-	SET_BIT(current, argument);
-	closure_semi_complete_adj(attacks, attacked_by, current, current, attacks_adj, attacked_by_adj);
-	START_TIMER(start_time);
+	list_add(current, argument);
+	closure_semi_complete(attacks, attacked_by, current, current_closure);
+
 	if (!is_set_conflict_free(attacks, current)) {
 		// closure has a conflict. complete extension
 		// does not exist.
@@ -315,7 +270,7 @@ BitSet* dc_co_next_closure_adj(AF* attacks, int argument, AF_ADJ_L *attacks_adj,
 	do {
 		// print_bitset(current, stdout);
 		// printf("\n");
-		// print_set(current, stdout, "\n");
+		print_set(current, stdout, "\n");
 		++concept_count;
 		get_attackers(attacked_by_sorted, current, attackers);
 		get_victims(attacks_sorted, current, victims);
@@ -341,70 +296,47 @@ BitSet* dc_co_next_closure_adj(AF* attacks, int argument, AF_ADJ_L *attacks_adj,
 	return(NULL);
 }
 
-BitSet *extract_subgraph(AF_ADJ_L *attacked_by_adj, SIZE_TYPE argument) {
+AF* extract_subgraph(AF* attacked_by, ARG_TYPE argument) {
+	AF* subgraph = create_argumentation_framework(attacked_by->size);
+
 	Stack s;
 	init_stack(&s);
-	BitSet *subgraph = create_bitset(attacked_by_adj->size);
+
+	bool* visited = calloc(attacked_by->size, sizeof(bool));
+	assert(visited != NULL);
+
 	SIZE_TYPE a = argument;
-	SET_BIT(subgraph, a);
 	while (a != -1) {
-		for (SIZE_TYPE i = 0; i < attacked_by_adj->list_sizes[a]; ++i) {
-			if (!TEST_BIT(subgraph, attacked_by_adj->lists[a][i])) {
-				push(&s, attacked_by_adj->lists[a][i]);
-				SET_BIT(subgraph, attacked_by_adj->lists[a][i]);
+		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[a]; ++i) {
+			if (!visited[attacked_by->lists[a][i]]) {
+				push(&s, attacked_by->lists[a][i]);
+				visited[attacked_by->lists[a][i]] = true;
+				add_attack(subgraph, a, i);
 			}
 		}
 		a = pop(&s);
 	}
+	free(visited);
 	return(subgraph);
 }
 
-BitSet* dc_co_subgraph_next_closure_adj(AF* af, int argument) {
-
-	BitSet *subgraph = create_bitset(af->size);
-	BitSet *arguments = create_bitset(af->size);
-	set_bitset(arguments);
+List* dc_co_subgraph(AF* attacks, int argument) {
 
 	struct timeval start_time, stop_time;
 
-	// create framework with adjacency lists, using the original framework and its transposition
-	AF_ADJ_L *attacks_adj = af_to_af_adj_l(af);
-	AF *attacked_by = transpose_argumentation_framework(af);
-	AF_ADJ_L *attacked_by_adj = af_to_af_adj_l(attacked_by);
+	AF* attacked_by = transpose_argumentation_framework(attacks);
 
-	// extract nodes of the subgraph induced by argument
-	// backward_dfs(af, argument, arguments, subgraph);
+	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
-	subgraph = extract_subgraph(attacked_by_adj, argument);
+	bool* subgraph_nodes = calloc(attacks->size, sizeof(bool));
+	assert(subgraph_nodes != NULL);
+	AF* subgraph = extract_subgraph(attacked_by, argument);
 	STOP_TIMER(stop_time);
 	printf("Extracting subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
-	// the projected framework induced by argument
+	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	PAF *projection = project_argumentation_framework(af, subgraph);
-	STOP_TIMER(stop_time);
-	printf("Projecting af: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	printf("Projected framework size: %d\n", projection->af->size);
-	AF *attacked_by_projection = transpose_argumentation_framework(projection->af);
-
-	// create framework with adjacency lists using the projected framework and its transposition
-	AF_ADJ_L *attacks_projection_adj = af_to_af_adj_l(projection->af);
-	AF_ADJ_L *attacked_by_projection_adj = af_to_af_adj_l(attacked_by_projection);
-
-	// find argument in the projected framework
-	SIZE_TYPE i, projected_argument;
-	for (i = 0; i < projection->af->size; ++i) {
-		if (projection->index_mapping[i] == argument) {
-			projected_argument = i;
-			break;
-		}
-	}
-	if (i == projection->af->size)
-		printf("THIS SHOULD NOT HAPPEN!\n\n");
-
-	// solve DC-CO for the projected framework
-	START_TIMER(start_time);
-	BitSet *extension = dc_co_next_closure_adj(projection->af, projected_argument, attacks_projection_adj, attacked_by_projection_adj);
+	BitSet *extension = dc_co_next_closure(subgraph, projected_argument, attacks_projection_adj, attacked_by_projection_adj);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	// TODO!
