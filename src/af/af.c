@@ -57,13 +57,17 @@ int free_argumentation_framework(AF* af) {
 }
 
 
-int free_projected_argumentation_framework(PAF* paf) {
+void free_paf(PAF* paf, bool free_af) {
 	free(paf->base_mapping);
 	free(paf->parent_mapping);
-	int freed_bytes = paf->af->size * sizeof(SIZE_TYPE);
-	freed_bytes += free_argumentation_framework(paf->af);
+	if (free_af) {
+		free_argumentation_framework(paf->af);
+	}
 	free(paf);
-	return freed_bytes + sizeof(PAF);
+}
+
+void free_projected_argumentation_framework(PAF* paf) {
+	free_paf(paf, true);
 }
 
 
