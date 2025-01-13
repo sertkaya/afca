@@ -51,7 +51,8 @@ AF* create_argumentation_framework(SIZE_TYPE size);
 // Return the number of bytes freed
 int free_argumentation_framework(AF *af);
 
-int free_projected_argumentation_framework(PAF *af);
+void free_paf(PAF* paf, bool free_af);
+void free_projected_argumentation_framework(PAF *af);
 
 void print_argumentation_framework(AF *af);
 
