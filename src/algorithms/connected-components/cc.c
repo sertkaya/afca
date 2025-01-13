@@ -96,5 +96,5 @@ void run_cc_preferred(AF* af, ListNode* (*preferred_extensions)(AF* af), FILE* o
 		head = next;
 	}
 
-	// af is freed by ee_pr_scc
+	free_argumentation_framework(af);
 }

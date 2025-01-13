@@ -188,7 +188,7 @@ ListNode* ee_pr_scc(AF* af, ListNode* (*preferred_extensions)(AF* af))
     // TODO: free subextensions (without destroying extensions in the returned list)
     free_bitset(all_arguments);
     free_bitset(no_arguments);
-    free_projected_argumentation_framework(paf); // af will be destroyed, too
+    free_paf(paf, false);
     return first_extension;
 }
 
