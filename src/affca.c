@@ -24,6 +24,7 @@
 
 #include "af/sort.h"
 #include "algorithms/cbo/preferred.h"
+#include "algorithms/connected-components/scc.h"
 #include "algorithms/ideal/ideal.h"
 #include "algorithms/maximal-independent-sets/mis.h"
 #include "algorithms/next-closure/preferred.h"
@@ -38,6 +39,12 @@
 
 enum alg_type {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NEXT_CLOSURE, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH, SUBGRAPH_ADJ};
 enum prob_type {EE_ST, SE_ST, CE_ST, DC_ST, EE_PR, SE_PR, DC_PR, DS_PR, SE_ID, EE_CO, DC_CO};
+
+
+ListNode* ee_pr_scc_next_closure(AF* af)
+{
+	return ee_pr_scc(af, ee_pr_next_closure);
+}
 
 
 void print_not_supported(char* problem, char* algorithm, FILE* output)
@@ -353,13 +360,20 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 		case SE_ID:
-			if (alg == NEXT_CLOSURE) {
-				BitSet* ideal = se_id(af, ee_pr_next_closure);
-				print_set(ideal, output, "\n");
-				free_bitset(ideal);
-			} else {
-				print_not_supported(problem, algorithm, output);				
+			{BitSet* ideal = NULL;
+			switch (alg) {
+				case NEXT_CLOSURE:
+					ideal = se_id(af, ee_pr_next_closure);
+					break;
+				case SCC_NEXT_CLOSURE:
+					ideal = se_id(af, ee_pr_scc_next_closure);
+					break;
+				default:
+					print_not_supported(problem, algorithm, output);				
 			}
+			print_set(ideal, output, "\n");
+			free_bitset(ideal);
+			free_argumentation_framework(af);}
 			break;
 		case EE_PR:
 			switch (alg) {
