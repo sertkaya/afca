@@ -235,8 +235,7 @@ int main(int argc, char *argv[]) {
 		if (extension == NULL)
 			fprintf(output, "NO\n");
 		else
-			print_list(output, extension);
-		fclose(output);
+			print_list(output, extension,"\n");
 	}
 	else {
 		// enumeration problem

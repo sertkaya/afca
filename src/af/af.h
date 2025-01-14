@@ -96,34 +96,22 @@ inline bool check_set_attacks_arg(AF* af, List* s, ARG_TYPE arg) {
 }
 // Returns true if s is consistent
 // TODO: Optimize!
-inline bool is_set_consistent(AF* af, List* s) {
+inline bool is_set_consistent(AF* attacks, List* s) {
+	/*
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
 		if (check_arg_attacks_set(af, s->elements[i], s) || check_set_attacks_arg(af, s, s->elements[i]))
 			return(true);
 	return(false);
-}
-
-inline bool is_set_self_defending(AF* attacks, AF* attacked_by, List* s) {
-	bool* victims = calloc(attacks->size, sizeof(bool));
-	assert(victims != NULL);
+	*/
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
-		for (SIZE_TYPE j = 0; j < attacks->list_sizes[s->elements[i]]; ++j) {
-			victims[attacks->lists[s->elements[i]][j]] = true;
-		}
-
-	bool* attackers = calloc(attacks->size, sizeof(bool));
-	assert(attackers != NULL);
-	for (SIZE_TYPE i = 0; i < s->size; ++i)
-		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[s->elements[i]]; ++j) {
-			victims[attacked_by->lists[s->elements[i]][j]] = true;
-		}
-
-	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
-		if (attackers[i] && !victims[i])
-			return(false);
-
+		for (SIZE_TYPE j = 0; j < s->size; ++j)
+			for (SIZE_TYPE k = 0; k < attacks->list_sizes[s->elements[j]]; ++k)
+				if (attacks->lists[s->elements[j]][k] == i)
+					return(false);
 	return(true);
 }
+
+bool is_set_self_defending(AF* attacks, AF* attacked_by, List* s);
 
 // Check if argument i attacks argument j
 // Here i and j start from "0"

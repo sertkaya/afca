@@ -81,10 +81,10 @@ void closure_semi_complete(AF* attacks, AF* attacked_by, List* s, List* r, bool 
 				for (SIZE_TYPE j = 0; j < attacks->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = attacks->lists[victim_a][j];
 					--unattacked_attackers_count[victim_victim_a];
-					if ((unattacked_attackers_count[victim_victim_a] == 0)) { // && (!TEST_BIT(r, victim_victim_a)))  {
+					if ((unattacked_attackers_count[victim_victim_a] == 0) && !r_bv[victim_victim_a])  {
 						push(&update, victim_victim_a);
-						list_add(a, r);
-						r_bv[a] = true;
+						list_add(victim_victim_a, r);
+						r_bv[victim_victim_a] = true;
 					}
 				}
 			}
@@ -185,11 +185,9 @@ List* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	list_add(argument, current);
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
 	printf("current: ");
-	print_list(stdout, current);
-	printf("\n");
+	print_list(stdout, current,"\n");
 	printf("current_closure: ");
-	print_list(stdout, current_closure);
-	printf("\n");
+	print_list(stdout, current_closure, "\n");
 
 	if (!is_set_consistent(attacks, current_closure)) {
 		// closure has a conflict. complete extension
@@ -368,8 +366,9 @@ List* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	*/
 
 	// closure_semi_complete_adj(af, attacked_by, back_projected_extension, closure, attacks_adj, attacked_by_adj);
-	List* closure;
+	List* closure = list_create();
 	bool* closure_bv = calloc(attacks->size, sizeof(bool));
+	assert(closure_bv != NULL);
 	closure_semi_complete(attacks, attacked_by, extension, closure, closure_bv);
 
 	return(closure);
