@@ -47,9 +47,9 @@ int list_reset(List* l) {
 	return(freed_bytes);
 }
 
-void print_list(List* l) {
+void print_list(FILE* fp, List* l) {
 	for (int i = 0; i < l->size; ++i)
-		printf("%d ", l->elements[i]);
+		fprintf(fp,"%d ", l->elements[i]);
 }
 
 extern inline bool list_add(ARG_TYPE e, List* l);

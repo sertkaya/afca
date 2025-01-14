@@ -126,6 +126,6 @@ inline ARG_TYPE list_iterator_next(ListIterator* it) {
 	return(next);
 }
 
-void print_list(List* l);
+void print_list(FILE* fp, List* l);
 
 #endif

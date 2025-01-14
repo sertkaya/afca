@@ -102,6 +102,29 @@ inline bool is_set_consistent(AF* af, List* s) {
 			return(true);
 	return(false);
 }
+
+inline bool is_set_self_defending(AF* attacks, AF* attacked_by, List* s) {
+	bool* victims = calloc(attacks->size, sizeof(bool));
+	assert(victims != NULL);
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		for (SIZE_TYPE j = 0; j < attacks->list_sizes[s->elements[i]]; ++j) {
+			victims[attacks->lists[s->elements[i]][j]] = true;
+		}
+
+	bool* attackers = calloc(attacks->size, sizeof(bool));
+	assert(attackers != NULL);
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[s->elements[i]]; ++j) {
+			victims[attacked_by->lists[s->elements[i]][j]] = true;
+		}
+
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
+		if (attackers[i] && !victims[i])
+			return(false);
+
+	return(true);
+}
+
 // Check if argument i attacks argument j
 // Here i and j start from "0"
 // #define CHECK_ARG_ATTACKS_ARG(af,i,j)		TEST_BIT(af->graph[i],j)

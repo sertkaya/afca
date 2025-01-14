@@ -60,7 +60,7 @@ size_t count_nodes(ListNode* node) {
 	return n;
 }
 
-void print_list(ListNode* head, void (*print_list_element)(void *e, FILE *file, const char *end), FILE *out_file) {
+void print_linked_list(ListNode* head, void (*print_list_element)(void *e, FILE *file, const char *end), FILE *out_file) {
 	while (head) {
 		print_list_element(head->c, out_file, "\n");
 		head = head->next;

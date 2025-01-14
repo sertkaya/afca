@@ -134,8 +134,8 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	char *prob_type = strtok(prob, "_");
-	char *ext_type = strtok(NULL, "_");
+	char *prob_type = strtok(prob, "-");
+	char *ext_type = strtok(NULL, "-");
 
 	enum problem_types problem_type;
 	bool decision_problem = false;
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
 			for (int k = 0; k < ALGORITHM_COUNT; ++k)
 				decision_functions[i][j][k] = NULL;
 
-	// decision_functions[DC][CO][SUBGRAPH] = &dc_co_subgraph;
+	decision_functions[DC][CO][SUBGRAPH] = &dc_co_subgraph;
 	// ...
 	// ...
 
@@ -223,12 +223,20 @@ int main(int argc, char *argv[]) {
 	// enumeration_functions[..][..][..] = ..
 
 	START_TIMER(start_time);
+	List* extension = NULL;
 	if (decision_problem) {
+		// arguments are internally indices
+		--argument;
 		// decision problem
 		if (decision_functions[problem_type][extension_type][algorithm] == NULL)
 			unsupported_feature(prob_type,ext_type,alg);
 		else
-			decision_functions[DC][CO][SUBGRAPH](input_af, argument);
+			extension = decision_functions[problem_type][extension_type][algorithm](input_af, argument);
+		if (extension == NULL)
+			fprintf(output, "NO\n");
+		else
+			print_list(output, extension);
+		fclose(output);
 	}
 	else {
 		// enumeration problem
