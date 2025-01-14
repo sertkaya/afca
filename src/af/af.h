@@ -103,11 +103,15 @@ inline bool is_set_consistent(AF* attacks, List* s) {
 			return(true);
 	return(false);
 	*/
-	for (SIZE_TYPE i = 0; i < s->size; ++i)
-		for (SIZE_TYPE j = 0; j < s->size; ++j)
-			for (SIZE_TYPE k = 0; k < attacks->list_sizes[s->elements[j]]; ++k)
-				if (attacks->lists[s->elements[j]][k] == i)
+	for (SIZE_TYPE i = 0; i < s->size; ++i) {
+		for (SIZE_TYPE j = 0; j < s->size; ++j) {
+			for (SIZE_TYPE k = 0; k < attacks->list_sizes[s->elements[j]]; ++k) {
+				if (attacks->lists[s->elements[j]][k] == s->elements[i]) {
 					return(false);
+				}
+			}
+		}
+	}
 	return(true);
 }
 

@@ -184,10 +184,6 @@ List* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	list_add(argument, current);
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
-	printf("current: ");
-	print_list(stdout, current,"\n");
-	printf("current_closure: ");
-	print_list(stdout, current_closure, "\n");
 
 	if (!is_set_consistent(attacks, current_closure)) {
 		// closure has a conflict. complete extension
@@ -338,8 +334,6 @@ List* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	AF* subgraph = extract_subgraph(attacked_by, argument);
 	STOP_TIMER(stop_time);
 	printf("Extracting subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	printf("subgraph:\n");
-	print_argumentation_framework(subgraph);
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
