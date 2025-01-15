@@ -23,6 +23,7 @@
 #include <getopt.h>
 
 #include "af/sort.h"
+#include "algorithms/dc.h"
 #include "algorithms/cbo/preferred.h"
 #include "algorithms/connected-components/scc.h"
 #include "algorithms/ideal/ideal.h"
@@ -323,6 +324,9 @@ int main(int argc, char *argv[]) {
 			--argument;
 			BitSet *result_dc =  create_bitset(af->size);
 			switch (alg) {
+				case MIS:
+					result_dc = dc(af, argument, se_st_mis);
+					break;
 				case NEXT_CLOSURE:
 					dc_st_next_closure(af, argument, result_dc);
 					break;
@@ -331,7 +335,7 @@ int main(int argc, char *argv[]) {
 					fclose(output);
 					exit(EXIT_FAILURE);
 			}
-		    if (bitset_is_emptyset(result_dc)) {
+		    if (!result_dc || bitset_is_emptyset(result_dc)) {
 				// No stable extension containing argument
 			    fprintf(output, "NO\n");
 		    }
