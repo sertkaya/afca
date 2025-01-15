@@ -111,15 +111,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 			// RESET_BIT(tmp, i);
 			current_bv[i] = false;
 			// remove i from current
-			// TODO: not the best method.
-			// accesses beyond the array if j = current->size - 1
-			for (SIZE_TYPE j = 0; j < current->size; ++j) {
-				if (current->elements[j] == i) {
-					current->elements[j] = current->elements[j+1];
-					--current->size;
-					break;
-				}
-			}
+			list_remove(i, current);
 
 		} else if (!check_arg_attacks_arg(attacks, i, i) &&
 				   !check_arg_attacks_set(attacks, i, current) &&
@@ -158,15 +150,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 			// RESET_BIT(tmp, i);
 			current_bv[i] = false;
 			// remove i from current
-			// TODO: not the best method.
-			// accesses beyond the array if j = current->size - 1
-			for (SIZE_TYPE j = 0; j < current->size; ++j) {
-				if (current->elements[j] == i) {
-					current->elements[j] = current->elements[j+1];
-					--current->size;
-					break;
-				}
-			}
+			list_remove(i, current);
 		}
 	}
 	free(current_bv);

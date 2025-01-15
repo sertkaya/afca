@@ -32,7 +32,6 @@ typedef struct list_iterator ListIterator;
 struct array_list {
 	SIZE_TYPE size;
 	ARG_TYPE* elements;
-	bool* elements_bv;
 };
 
 struct list_iterator {
