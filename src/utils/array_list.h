@@ -26,16 +26,17 @@
 #include <assert.h>
 #include "../af/datatypes.h"
 
-typedef struct list List;
+typedef struct array_list ArrayList;
 typedef struct list_iterator ListIterator;
 
-struct list {
+struct array_list {
 	SIZE_TYPE size;
 	ARG_TYPE* elements;
+	bool* elements_bv;
 };
 
 struct list_iterator {
-	List* list;
+	ArrayList* list;
 	SIZE_TYPE current_index;
 };
 
@@ -43,7 +44,7 @@ struct list_iterator {
  * Create list.
  * Returns a pointer to the created list.
  */
-List* list_create();
+ArrayList* list_create();
 
 /**
  * Initialize a given list. Intended for not dynamically created
@@ -55,7 +56,7 @@ List* list_create();
  * Appends element e to list l. Does not check for duplicates.
  * Returns 1.
  */
-inline bool list_add(ARG_TYPE e, List* l) {
+inline bool list_add(ARG_TYPE e, ArrayList* l) {
 	ARG_TYPE* tmp = realloc(l->elements, (l->size + 1) * sizeof(ARG_TYPE));
 	assert(tmp != NULL);
 	l->elements = tmp;
@@ -73,7 +74,7 @@ inline bool list_add(ARG_TYPE e, List* l) {
 /**
  * TODO
  */
-inline bool list_remove(ARG_TYPE e, List* l) {
+inline bool list_remove(ARG_TYPE e, ArrayList* l) {
 	int i;
 
 	for (i = 0; i < l->size; ++i) {
@@ -101,18 +102,18 @@ inline bool list_remove(ARG_TYPE e, List* l) {
 /**
  * Free the space allocated for this list.
  */
-int list_free(List* l);
+int list_free(ArrayList* l);
 
 /**
  * Free the space allocated for the elements of the given list.
  */
-int list_reset(List* l);
+int list_reset(ArrayList* l);
 
 /**
  * Creates an iterator for the given list.
  * Returns the created iterator.
  */
-ListIterator* list_iterator_create(List* l);
+ListIterator* list_iterator_create(ArrayList* l);
 
 
 /**
@@ -126,6 +127,6 @@ inline ARG_TYPE list_iterator_next(ListIterator* it) {
 	return(next);
 }
 
-void print_list(FILE* fp, List* l, char* end);
+void print_list(FILE* fp, ArrayList* l, char* end);
 
 #endif

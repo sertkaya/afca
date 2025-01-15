@@ -20,7 +20,7 @@
 #include <stdbool.h>
 
 #include "datatypes.h"
-#include "../utils/list.h"
+#include "../utils/array_list.h"
 
 
 struct argumentation_framework {
@@ -80,7 +80,7 @@ inline bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
 }
 
 // Returns true if arg attacks s
-inline bool check_arg_attacks_set(AF* af, ARG_TYPE arg, List* s) {
+inline bool check_arg_attacks_set(AF* af, ARG_TYPE arg, ArrayList* s) {
 	for (SIZE_TYPE i; i < s->size; ++i)
 		if (check_arg_attacks_arg(af, arg, s->elements[i]))
 			return(true);
@@ -88,7 +88,7 @@ inline bool check_arg_attacks_set(AF* af, ARG_TYPE arg, List* s) {
 }
 
 // Returns true if s attacks arg
-inline bool check_set_attacks_arg(AF* af, List* s, ARG_TYPE arg) {
+inline bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
 	for (SIZE_TYPE i; i < s->size; ++i)
 		if (check_arg_attacks_arg(af, s->elements[i], arg))
 			return(true);
@@ -96,7 +96,7 @@ inline bool check_set_attacks_arg(AF* af, List* s, ARG_TYPE arg) {
 }
 // Returns true if s is consistent
 // TODO: Optimize!
-inline bool is_set_consistent(AF* attacks, List* s) {
+inline bool is_set_consistent(AF* attacks, ArrayList* s) {
 	/*
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
 		if (check_arg_attacks_set(af, s->elements[i], s) || check_set_attacks_arg(af, s, s->elements[i]))
@@ -115,7 +115,7 @@ inline bool is_set_consistent(AF* attacks, List* s) {
 	return(true);
 }
 
-bool is_set_self_defending(AF* attacks, AF* attacked_by, List* s);
+bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s);
 
 // Check if argument i attacks argument j
 // Here i and j start from "0"

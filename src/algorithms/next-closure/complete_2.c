@@ -34,7 +34,7 @@
 // r: the closure of s
 // r_bits: bool array representation of r
 // TODO: Caution! We assume that s and r do not contain double values!
-void closure_semi_complete(AF* attacks, AF* attacked_by, List* s, List* r, bool *r_bv) {
+void closure_semi_complete(AF* attacks, AF* attacked_by, ArrayList* s, ArrayList* r, bool *r_bv) {
 	Stack update;
 	init_stack(&update);
 
@@ -95,7 +95,7 @@ void closure_semi_complete(AF* attacks, AF* attacked_by, List* s, List* r, bool 
 	free(victims_a);
 }
 
-bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, List* current, List* current_closure) {
+bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, ArrayList* current, ArrayList* current_closure) {
 	bool* current_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_bv!=NULL);
 	// copy_bitset(current, tmp);
@@ -174,11 +174,11 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, List*
 	return(0);
 }
 
-List* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
+ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
 
-	List* current = list_create();
-	List* current_closure = list_create();
+	ArrayList* current = list_create();
+	ArrayList* current_closure = list_create();
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
@@ -321,7 +321,7 @@ AF* extract_subgraph(AF* af, ARG_TYPE argument) {
 	return(subgraph);
 }
 
-List* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
+ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	struct timeval start_time, stop_time;
 
@@ -338,7 +338,7 @@ List* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
 	// BitSet *extension = dc_co_next_closure(subgraph, projected_argument, attacks_projection_adj, attacked_by_projection_adj);
-	List *extension = dc_co_next_closure(subgraph, argument, attacked_by);
+	ArrayList *extension = dc_co_next_closure(subgraph, argument, attacked_by);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	// TODO!
@@ -360,7 +360,7 @@ List* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	*/
 
 	// closure_semi_complete_adj(af, attacked_by, back_projected_extension, closure, attacks_adj, attacked_by_adj);
-	List* closure = list_create();
+	ArrayList* closure = list_create();
 	bool* closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(closure_bv != NULL);
 	closure_semi_complete(attacks, attacked_by, extension, closure, closure_bv);

@@ -18,10 +18,10 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "list.h"
+#include "array_list.h"
 
-List* list_create() {
-	List* l = (List*) malloc(sizeof(List));
+ArrayList* list_create() {
+	ArrayList* l = (ArrayList*) malloc(sizeof(ArrayList));
 	assert(l != NULL);
  	l->size = 0;
 	l->elements = NULL;
@@ -29,16 +29,16 @@ List* list_create() {
 	return l;
 }
 
-int list_free(List* l) {
+int list_free(ArrayList* l) {
 	free(l->elements);
 	int freed_bytes = l->size * sizeof(ARG_TYPE);
 	free(l);
-	freed_bytes+= sizeof(List);
+	freed_bytes+= sizeof(ArrayList);
 
 	return(freed_bytes);
 }
 
-int list_reset(List* l) {
+int list_reset(ArrayList* l) {
 	free(l->elements);
 	int freed_bytes = l->size * sizeof(ARG_TYPE);
 	l->size = 0;
@@ -47,19 +47,28 @@ int list_reset(List* l) {
 	return(freed_bytes);
 }
 
-void print_list(FILE* fp, List* l, char* end) {
-	fprintf(fp, "[ ");
-	for (int i = 0; i < l->size; ++i)
-		fprintf(fp,"%d ", l->elements[i] + 1);
-	fprintf(fp, "]%s", end);
+int cmp(const void* arg_1, const void* arg_2) {
+	if ((*(ARG_TYPE*) arg_1) < *((ARG_TYPE*) arg_2))
+		return(-1);
+	if ((*(ARG_TYPE*) arg_1) > *((ARG_TYPE*) arg_2))
+		return(1);
+	return(0);
 }
 
-extern inline bool list_add(ARG_TYPE e, List* l);
+void print_list(FILE* fp, ArrayList* l, char* end) {
+	qsort(l->elements, l->size, sizeof(ARG_TYPE), cmp);
+	fprintf(fp, "w ");
+	for (int i = 0; i < l->size; ++i)
+		fprintf(fp,"%d ", l->elements[i] + 1);
+	fprintf(fp, "%s", end);
+}
+
+extern inline bool list_add(ARG_TYPE e, ArrayList* l);
 
 
-extern inline bool list_remove(ARG_TYPE e, List* l);
+extern inline bool list_remove(ARG_TYPE e, ArrayList* l);
 
-ListIterator* list_iterator_create(List* l) {
+ListIterator* list_iterator_create(ArrayList* l) {
 	ListIterator* it = (ListIterator*) malloc(sizeof(ListIterator));
 	assert(it != NULL);
 	it->list = l;

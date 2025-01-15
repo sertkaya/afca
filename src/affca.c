@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 
 	// matrix of functions for decision problems.
 	// Function prototype: List* f(AF*, ARG_TYPE)
-    List* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*, ARG_TYPE);
+    ArrayList* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*, ARG_TYPE);
 	for (int i = 0; i < DECISION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
 			for (int k = 0; k < ALGORITHM_COUNT; ++k)
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
 
 	// matrix of functions for enumeration problems.
 	// Function prototype: List* f(AF*)
-    List* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*);
+    ArrayList* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*);
 	for (int i = 0; i < ENUMERATION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
 			for (int k = 0; k < ALGORITHM_COUNT; ++k)
@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
 	// enumeration_functions[..][..][..] = ..
 
 	START_TIMER(start_time);
-	List* extension = NULL;
+	ArrayList* extension = NULL;
 	if (decision_problem) {
 		// arguments are internally indices
 		--argument;
@@ -234,8 +234,10 @@ int main(int argc, char *argv[]) {
 			extension = decision_functions[problem_type][extension_type][algorithm](input_af, argument);
 		if (extension == NULL)
 			fprintf(output, "NO\n");
-		else
+		else {
+			fprintf(output, "YES\n");
 			print_list(output, extension,"\n");
+		}
 	}
 	else {
 		// enumeration problem

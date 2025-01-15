@@ -84,6 +84,7 @@ void print_argumentation_framework(AF* af) {
 	}
 }
 
+/*
 int cmp(const void* arg_1, const void* arg_2) {
 	if ((*(ARG_TYPE*) arg_1) < *((ARG_TYPE*) arg_2))
 		return(-1);
@@ -91,6 +92,7 @@ int cmp(const void* arg_1, const void* arg_2) {
 		return(1);
 	return(0);
 }
+*/
 
 AF* transpose_argumentation_framework(AF *af) {
 	AF* t_af = create_argumentation_framework(af->size);
@@ -104,15 +106,17 @@ AF* transpose_argumentation_framework(AF *af) {
 			add_attack(t_af, af->lists[i][j], i);
 		}
 
+	/*
 	// Sort the adjacency lists
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		// qsort(t_af->lists[i]->elements, t_af->lists[i]->size, sizeof(ARG_TYPE), cmp);
 		qsort(t_af->lists[i], t_af->list_sizes[i], sizeof(ARG_TYPE), cmp);
+		*/
 
 	return(t_af);
 }
 
-bool is_set_self_defending(AF* attacks, AF* attacked_by, List* s) {
+bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s) {
 	bool* victims = calloc(attacks->size, sizeof(bool));
 	assert(victims != NULL);
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
