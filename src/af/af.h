@@ -103,7 +103,7 @@ inline bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
 	return(false);
 }
 // Returns true if s is consistent
-inline bool is_set_consistent(AF* attacks, ArrayList* s) {
+inline bool is_set_conflict_free(AF* attacks, ArrayList* s) {
 	bool* victims = calloc(attacks->size, sizeof(bool));
 	assert(victims != NULL);
 

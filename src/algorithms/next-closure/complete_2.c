@@ -168,7 +168,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	return(0);
 }
 
-ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
+ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by, ARG_TYPE* mapping) {
 	struct timeval start_time, stop_time;
 
 	ArrayList* current = list_create();
@@ -184,9 +184,10 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// if (!is_set_consistent(attacks, current_closure)) {
-	if (!is_set_consistent(attacks, current_closure)) {
+	if (!is_set_conflict_free(attacks, current_closure)) {
 		// closure has a conflict. complete extension
 		// does not exist.
+		print_list(stdout, current_closure, "\n");
 		printf("=== dc_co_next_closure finished 1===\n");
 		return(NULL);
 	}
@@ -297,7 +298,11 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			free(current_closure_bv);
 			free_argumentation_framework(attacks);
 			free_argumentation_framework(attacked_by);
-			return(current_closure);
+		printf("=== dc_co_next_closure finished 3===\n");
+			ArrayList* current_closure_mapped = list_create();
+			for (SIZE_TYPE i = 0; i < current_closure->size; ++i)
+				list_add(mapping[current_closure->elements[i]], current_closure_mapped);
+			return(current_closure_mapped);
 		}
 		list_free(current);
 		current = list_duplicate(current_closure);
@@ -309,7 +314,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	free_argumentation_framework(attacks);
 	free_argumentation_framework(attacked_by);
 
-	printf("=== dc_co_next_closure finished 3===\n");
+	printf("=== dc_co_next_closure finished 4===\n");
 	return(NULL);
 }
 
@@ -330,7 +335,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
+	ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af, subgraph->mapping_from_subgraph);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	// TODO!
