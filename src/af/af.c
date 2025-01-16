@@ -25,6 +25,7 @@
 #include "af.h"
 #include "../bitset/bitset.h"
 #include "../utils/timer.h"
+#include "../utils/stack.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
 	AF* af = calloc(1, sizeof(AF));
@@ -141,6 +142,62 @@ bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s) {
 	free(victims);
 	free(attackers);
 	return(true);
+}
+
+Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
+	Stack s;
+	init_stack(&s);
+
+	bool* visited = calloc(af->size, sizeof(bool));
+	assert(visited != NULL);
+
+	// find the nodes reachable from argument, put into visited
+	SIZE_TYPE a = argument;
+	SIZE_TYPE subgraph_size = 0;
+	while (a != -1) {
+		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i)
+			if (!visited[af->lists[a][i]]) {
+				push(&s, af->lists[a][i]);
+				visited[af->lists[a][i]] = true;
+				++subgraph_size;
+			}
+		a = pop(&s);
+	}
+
+	// create a mapping from indices of the subgraph to
+	// the indices of af
+	ARG_TYPE* mapping_subgraph_af = calloc(subgraph_size, sizeof(ARG_TYPE));
+	assert(mapping_subgraph_af != NULL);
+	// and a mapping from indices of af to the
+	// indices of subgraph
+	ARG_TYPE* mapping_af_subgraph = calloc(subgraph_size, sizeof(ARG_TYPE));
+	assert(mapping_af_subgraph != NULL);
+	SIZE_TYPE subgraph_index = 0;
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		if (visited[i]) {
+			mapping_af_subgraph[i] = subgraph_index;
+			mapping_subgraph_af[subgraph_index++] = i;
+		}
+
+	// create the subgraph with backwards edges
+	Subgraph* subgraph = calloc(1, sizeof(Subgraph));
+	assert(subgraph != NULL);
+	subgraph->af = create_argumentation_framework(subgraph_size);
+	subgraph->mapping_from_subgraph = mapping_subgraph_af;
+	subgraph->mapping_to_subgraph = mapping_af_subgraph;
+
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (visited[i]) {
+			for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+				add_attack(subgraph->af, mapping_af_subgraph[af->lists[i][j]], mapping_af_subgraph[i]);
+			}
+		}
+	}
+
+	free(visited);
+	// free(mapping_af_subgraph);
+	// free(mapping_subgraph_af);
+	return(subgraph);
 }
 
 /*

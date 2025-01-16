@@ -34,14 +34,18 @@
 // r: the closure of s
 // r_bits: bool array representation of r
 // TODO: Caution! We assume that s and r do not contain double values!
-void closure_semi_complete(AF* attacks, AF* attacked_by, ArrayList* s, ArrayList* r, bool *r_bv) {
+void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv) {
 	Stack update;
 	init_stack(&update);
 
 	// empty r
 	list_reset(r);
 	// empty r_bv
-	memset(r_bv, 0, attacks->size * sizeof(bool));
+	memset(r_bv, 0, af->size * sizeof(bool));
+	/*
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
+		r_bv[i] = false;
+		*/
 
 	// Push elements of s to the stack, add to r and to r_bv
 	for (SIZE_TYPE i = 0; i < s->size; ++i) {
@@ -52,34 +56,35 @@ void closure_semi_complete(AF* attacks, AF* attacked_by, ArrayList* s, ArrayList
 
 	// Push the unattacked arguments to the stack. They are defended by every set.
 	// TODO: This is independent of s. It can be done outside the closure function.
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
-		if (attacked_by->list_sizes[i] == 0) {
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i)
+		if (af_t->list_sizes[i] == 0) {
 			push(&update, i);
 			list_add(i, r);
 			r_bv[i] = true;
 		}
 
-	SIZE_TYPE* unattacked_attackers_count = calloc(attacked_by->size, sizeof(SIZE_TYPE));
+	SIZE_TYPE* unattacked_attackers_count = calloc(af_t->size, sizeof(SIZE_TYPE));
 	assert(unattacked_attackers_count != NULL);
-	memcpy(unattacked_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+	memcpy(unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 
-	bool* victims_a = calloc(attacks->size, sizeof(bool));
+	bool* victims_a = calloc(af->size, sizeof(bool));
 	assert(victims_a != NULL);
+	memset(victims_a, 0, af->size * sizeof(bool));
 	// TODO: initialize all to false? check if required
 
 	SIZE_TYPE a = pop(&update);
 	while (a != -1) {
-		if (attacks->list_sizes[a] == 0) {
+		if (af->list_sizes[a] == 0) {
 			// a does not attack anybody, pop and continue
 			a = pop(&update);
 			continue;
 		}
-		for (SIZE_TYPE i = 0; i < attacks->list_sizes[a]; ++i) {
-			SIZE_TYPE victim_a = attacks->lists[a][i];
+		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
+			SIZE_TYPE victim_a = af->lists[a][i];
 			if (!victims_a[victim_a]) {
 				victims_a[victim_a] = true;
-				for (SIZE_TYPE j = 0; j < attacks->list_sizes[victim_a]; ++j) {
-					SIZE_TYPE victim_victim_a = attacks->lists[victim_a][j];
+				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
+					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--unattacked_attackers_count[victim_victim_a];
 					if ((unattacked_attackers_count[victim_victim_a] == 0) && !r_bv[victim_victim_a])  {
 						push(&update, victim_victim_a);
@@ -167,8 +172,23 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	assert(current_closure_bv!=NULL);
 
 	list_add(argument, current);
+
+	/*
+	printf("attacks:");
+	print_argumentation_framework(attacks);
+	printf("attacked_by:");
+	print_argumentation_framework(attacked_by);
+	printf("current:");
+	print_list(stdout, current, "\n");
+	*/
+
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
 
+	printf("current_closure:");
+	print_list(stdout, current_closure, "\n");
+
+
+	// if (!is_set_consistent(attacks, current_closure)) {
 	if (!is_set_consistent(attacks, current_closure)) {
 		// closure has a conflict. complete extension
 		// does not exist.
@@ -279,31 +299,6 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	return(NULL);
 }
 
-AF* extract_subgraph(AF* af, ARG_TYPE argument) {
-	AF* subgraph = create_argumentation_framework(af->size);
-
-	Stack s;
-	init_stack(&s);
-
-	bool* visited = calloc(af->size, sizeof(bool));
-	assert(visited != NULL);
-
-	SIZE_TYPE a = argument;
-	while (a != -1) {
-		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
-			add_attack(subgraph, a, af->lists[a][i]);
-			if (!visited[af->lists[a][i]] && a != af->lists[a][i]) {
-				push(&s, af->lists[a][i]);
-				// visited[af->lists[a][i]] = true;
-				// add_attack(subgraph, a, i);
-			}
-		}
-		visited[a] = true;
-		a = pop(&s);
-	}
-	free(visited);
-	return(subgraph);
-}
 
 ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
@@ -313,16 +308,14 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
-	bool* subgraph_nodes = calloc(attacks->size, sizeof(bool));
-	assert(subgraph_nodes != NULL);
-	AF* subgraph = extract_subgraph(attacked_by, argument);
+	Subgraph* subgraph = extract_subgraph_backwards(attacked_by, argument);
+	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
 	STOP_TIMER(stop_time);
-	printf("Extracting subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	// BitSet *extension = dc_co_next_closure(subgraph, projected_argument, attacks_projection_adj, attacked_by_projection_adj);
-	ArrayList *extension = dc_co_next_closure(subgraph, argument, attacked_by);
+	ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	// TODO!

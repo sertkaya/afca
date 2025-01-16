@@ -26,11 +26,20 @@ int main(int argc, char *argv[]) {
 	FILE *input_fd = fopen(argv[1], "r");
 	assert(input_fd != NULL);
 
+	ARG_TYPE a = atoi(argv[2]) - 1;
+
 	AF *af = read_af(input_fd);
+	printf("AF:\n");
 	print_argumentation_framework(af);
 	printf("\n");
 
-	AF *af_t = transpose_argumentation_framework(af);
+	AF* af_t = transpose_argumentation_framework(af);
+
+	Subgraph* subgraph = extract_subgraph_backwards(af_t, a);
+	printf("Subgraph:\n");
+	print_argumentation_framework(subgraph->af);
+	printf("\n");
+
 	// print_argumentation_framework(af_t);
 	// print_argumentation_framework(af_c);
 	// printf("\n");

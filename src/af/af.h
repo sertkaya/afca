@@ -35,6 +35,14 @@ struct argumentation_framework {
 
 typedef struct argumentation_framework AF;
 
+struct subgraph {
+	AF* af;
+	ARG_TYPE* mapping_to_subgraph;
+	ARG_TYPE* mapping_from_subgraph;
+};
+
+typedef struct subgraph Subgraph;
+
 struct projected_argumentation_framework {
 	AF* af;
 	// index_mapping[i] is the index of the ith argument of af in the original framework
@@ -116,6 +124,8 @@ inline bool is_set_consistent(AF* attacks, ArrayList* s) {
 }
 
 bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s);
+
+Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument);
 
 // Check if argument i attacks argument j
 // Here i and j start from "0"
