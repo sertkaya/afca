@@ -170,7 +170,7 @@ Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
 	assert(mapping_subgraph_af != NULL);
 	// and a mapping from indices of af to the
 	// indices of subgraph
-	ARG_TYPE* mapping_af_subgraph = calloc(subgraph_size, sizeof(ARG_TYPE));
+	ARG_TYPE* mapping_af_subgraph = calloc(af->size, sizeof(ARG_TYPE));
 	assert(mapping_af_subgraph != NULL);
 	SIZE_TYPE subgraph_index = 0;
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
@@ -186,6 +186,7 @@ Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
 	subgraph->mapping_from_subgraph = mapping_subgraph_af;
 	subgraph->mapping_to_subgraph = mapping_af_subgraph;
 
+	int attack_count = 0;
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		if (visited[i]) {
 			for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {

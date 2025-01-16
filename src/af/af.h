@@ -105,12 +105,29 @@ inline bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
 // Returns true if s is consistent
 // TODO: Optimize!
 inline bool is_set_consistent(AF* attacks, ArrayList* s) {
+	bool* victims = calloc(attacks->size, sizeof(bool));
+	assert(victims != NULL);
+
+	for (SIZE_TYPE i = 0; i < s->size; ++i) {
+		for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
+			victims[attacks->lists[i][j]] = true;
+		}
+	}
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		if (victims[s->elements[i]]) {
+			free(victims);
+			return(false);
+		}
+
+	free(victims);
+	return(true);
 	/*
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
-		if (check_arg_attacks_set(af, s->elements[i], s) || check_set_attacks_arg(af, s, s->elements[i]))
+		if (check_arg_attacks_set(attacks, s->elements[i], s) || check_set_attacks_arg(attacks, s, s->elements[i]))
 			return(true);
 	return(false);
 	*/
+	/*
 	for (SIZE_TYPE i = 0; i < s->size; ++i) {
 		for (SIZE_TYPE j = 0; j < s->size; ++j) {
 			for (SIZE_TYPE k = 0; k < attacks->list_sizes[s->elements[j]]; ++k) {
@@ -121,6 +138,7 @@ inline bool is_set_consistent(AF* attacks, ArrayList* s) {
 		}
 	}
 	return(true);
+	*/
 }
 
 bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s);

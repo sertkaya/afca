@@ -178,7 +178,10 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	list_add(argument, current);
 
+	START_TIMER(start_time);
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
+	STOP_TIMER(stop_time);
+	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// if (!is_set_consistent(attacks, current_closure)) {
 	if (!is_set_consistent(attacks, current_closure)) {
@@ -188,7 +191,6 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		return(NULL);
 	}
 
-	START_TIMER(start_time);
 	// Check if closure is self-defending
 	START_TIMER(start_time);
 	if (is_set_self_defending(attacks, attacked_by, current_closure)) {
