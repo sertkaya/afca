@@ -47,6 +47,14 @@ int list_reset(ArrayList* l) {
 	return(freed_bytes);
 }
 
+ArrayList* list_duplicate(ArrayList* l) {
+	ArrayList* copy = list_create();
+	for (SIZE_TYPE i = 0; i < l->size; ++i)
+		list_add(l->elements[i], copy);
+	return(copy);
+}
+
+
 int cmp(const void* arg_1, const void* arg_2) {
 	if ((*(ARG_TYPE*) arg_1) < *((ARG_TYPE*) arg_2))
 		return(-1);
