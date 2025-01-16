@@ -129,7 +129,7 @@ bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s) {
 	assert(attackers != NULL);
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
 		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[s->elements[i]]; ++j) {
-			victims[attacked_by->lists[s->elements[i]][j]] = true;
+			attackers[attacked_by->lists[s->elements[i]][j]] = true;
 		}
 
 	for (SIZE_TYPE i = 0; i < attacks->size; ++i)

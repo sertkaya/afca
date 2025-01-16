@@ -165,6 +165,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 
 ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
+	printf("argument: %d\n", argument);
 
 	ArrayList* current = list_create();
 	ArrayList* current_closure = list_create();
@@ -178,9 +179,9 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	print_argumentation_framework(attacks);
 	printf("attacked_by:");
 	print_argumentation_framework(attacked_by);
+	*/
 	printf("current:");
 	print_list(stdout, current, "\n");
-	*/
 
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
 
@@ -309,6 +310,9 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
 	Subgraph* subgraph = extract_subgraph_backwards(attacked_by, argument);
+	printf("Subgraph size:%d\n", subgraph->af->size);
+	for (SIZE_TYPE i = 0; i < subgraph->af->size; ++i)
+		printf("%d %d %d\n", i, subgraph->mapping_from_subgraph[i], subgraph->mapping_to_subgraph[i]);
 	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
 	STOP_TIMER(stop_time);
 	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
