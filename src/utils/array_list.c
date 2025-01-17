@@ -54,6 +54,16 @@ ArrayList* list_duplicate(ArrayList* l) {
 	return(copy);
 }
 
+// copy elements of l1 into l2.
+// removes existing elements of l1.
+void list_copy(ArrayList* l1, ArrayList* l2) {
+	list_reset(l2);
+	l2->size = l1->size;
+	l2->elements = calloc(l2->size, sizeof(ARG_TYPE));
+	assert(l2->elements != NULL);
+	for (SIZE_TYPE i = 0; i < l2->size; ++i)
+		l2->elements[i] = l1->elements[i];
+}
 
 int cmp(const void* arg_1, const void* arg_2) {
 	if ((*(ARG_TYPE*) arg_1) < *((ARG_TYPE*) arg_2))

@@ -168,7 +168,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	return(0);
 }
 
-ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by, ARG_TYPE* mapping) {
+ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
 
 	ArrayList* current = list_create();
@@ -183,10 +183,8 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by, A
 	STOP_TIMER(stop_time);
 	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
-	// if (!is_set_consistent(attacks, current_closure)) {
 	if (!is_set_conflict_free(attacks, current_closure)) {
-		// closure has a conflict. complete extension
-		// does not exist.
+		// closure has a conflict. complete extension does not exist.
 		print_argumentation_framework(attacks);
 		print_list(stdout, current_closure, "\n");
 		printf("=== dc_co_next_closure finished 1===\n");
@@ -202,96 +200,19 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by, A
 		printf("=== dc_co_next_closure finished 2===\n");
 		return(current_closure);
 	}
-	// Not self-defending. That is, the argument is not defended.
-	// reset_bitset(current);
-	// list_reset(current);
-	// list_add(argument, current);
+	// Not self-defending. That is, the given argument is not defended.
 	list_reset(current_closure);
 
-	/*
-	printf("HERE 1\n");
-
 	// Sort in descending order of victims
-	AF* attacks_sorted = create_argumentation_framework(attacks->size);
-	int *mapping = sort_af(attacks, attacks_sorted, VICTIM_COUNT, SORT_DESCENDING);
-
-	printf("HERE 2\n");
-	// Search the argument in the mapping
-	int argument_index;
-	for (int i = 0; i < attacks_sorted->size; ++i)
-		if (mapping[i] == argument)
-			// The argument is at index i after sorting
-			argument_index = i;
+	// ...
 
 	// Move defenders of the argument to the right-end.
-	AF* attacked_by_sorted = transpose_argumentation_framework(attacks_sorted);
-	int next_index_to_use = attacks_sorted->size - 1;
-	for (int i = attacks_sorted->size - 1; i >= 0; --i) {
-		int tmp;
-		// check if a defender of the (mapped) argument
-		if (bitset_is_subset(attacked_by_sorted->graph[argument_index], attacks_sorted->graph[i])) {
-			// index i of attacks_sorted is a defender of the argument, swap index_to_use and i
-			// do the swap in the frameworks
-			swap_arguments(attacks_sorted, next_index_to_use, i);
-			swap_arguments(attacked_by_sorted, next_index_to_use, i);
-			// do the swap in the mapping
-			tmp = mapping[next_index_to_use];
-			mapping[next_index_to_use] = mapping[i];
-			mapping[i] = tmp;
-
-			// We do not need to check if the argument itself is also moved. This cannot be the case
-			// since otherwise the set current would be self-defending.
-			--next_index_to_use;
-		}
-	}
-	printf("HERE 3\n");
+	// ...
 
 	// Now move the argument to the very left bit ...
-	swap_arguments(attacks_sorted, 0, argument_index);
-	swap_arguments(attacked_by_sorted, 0, argument_index);
-	int tmp = mapping[0];
-	mapping[0] = mapping[argument_index];
-	mapping[argument_index] = tmp;
-	// and set the very left bit
-	SET_BIT(current, 0);
-
-*/
+	// ...
 
 	int concept_count = 0;
-	/*
-	do {
-		// print_bitset(current, stdout);
-		// printf("\n");
-		print_set(current, stdout, "\n");
-		++concept_count;
-		get_attackers(attacked_by_sorted, current, attackers);
-		get_victims(attacks_sorted, current, victims);
-		// Check if current is self-defending
-		if (bitset_is_subset(attackers, victims)) {
-			printf("Number of concepts generated: %d\n", concept_count);
-			free_bitset(attackers);
-			free_bitset(victims);
-			printf("=== dc_co_next_closure finished ===\n");
-			return(map_indices(current, mapping));
-		}
-	} while (next_conflict_free_semi_complete_intent(attacks_sorted, attacked_by_sorted, current, current, attacks_adj, attacked_by_adj));
-	*/
-
-	/*
-	do {
-		++concept_count;
-		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
-			free(current_closure_bv);
-			free_argumentation_framework(attacks);
-			free_argumentation_framework(attacked_by);
-	printf("current:");
-	print_list(stdout, current, "\n");
-		printf("current_closure:");
-		print_list(stdout, current_closure, "\n");
-			return(current_closure);
-		}
-	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure));
-	*/
 
 	while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure)) {
 		++concept_count;
@@ -299,14 +220,10 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by, A
 			free(current_closure_bv);
 			free_argumentation_framework(attacks);
 			free_argumentation_framework(attacked_by);
-		printf("=== dc_co_next_closure finished 3===\n");
-			ArrayList* current_closure_mapped = list_create();
-			for (SIZE_TYPE i = 0; i < current_closure->size; ++i)
-				list_add(mapping[current_closure->elements[i]], current_closure_mapped);
-			return(current_closure_mapped);
+			printf("=== dc_co_next_closure finished 3===\n");
+			return(current_closure);
 		}
-		list_free(current);
-		current = list_duplicate(current_closure);
+		list_copy(current_closure, current);
 	}
 
 	printf("Number of concepts generated: %d\n", concept_count);
@@ -336,7 +253,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af, subgraph->mapping_from_subgraph);
+	ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	// TODO!

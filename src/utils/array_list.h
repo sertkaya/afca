@@ -129,4 +129,6 @@ inline ARG_TYPE list_iterator_next(ListIterator* it) {
 void print_list(FILE* fp, ArrayList* l, char* end);
 
 ArrayList* list_duplicate(ArrayList* l);
+
+void list_copy(ArrayList* l1, ArrayList* l2);
 #endif
