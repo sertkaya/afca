@@ -333,7 +333,7 @@ ListNode* ee_st_norris(AF* attacks)
 
 	ListNode* extensions = NULL;
 	for (SIZE_TYPE i = 0; i < not_attacks->size; ++i) {
-		printf("\ni = %d, concepts = %d\n", i, concept_count);
+		// printf("\ni = %d, concepts = %d\n", i, concept_count);
 		extensions = add_to_list(not_attacks, i, &head, argument_extents, extensions);
 	}
 
