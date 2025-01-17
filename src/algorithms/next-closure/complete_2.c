@@ -201,6 +201,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		return(current_closure);
 	}
 	// Not self-defending. That is, the given argument is not defended.
+	list_reset(current);
 	list_reset(current_closure);
 
 	// Sort in descending order of victims
@@ -210,11 +211,21 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// ...
 
 	// Now move the argument to the very left bit ...
-	// ...
+	printf("Argument: %d\n", argument);
+	swap_arguments(attacks, 0, argument);
+
+	// recompute the attacked_by framework
+	free_argumentation_framework(attacked_by);
+	attacked_by = transpose_argumentation_framework(attacks);
+
+	// add argument 0 to current
+	list_add(0, current);
 
 	int concept_count = 0;
 
 	while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure)) {
+		printf("current:");
+		print_list(stdout, current, "\n");
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
 			free(current_closure_bv);
@@ -263,22 +274,17 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	if (!extension)
 		return(NULL);
 
-	// print_set(extension,stdout,"\n");
-	// close the computed extension in the whole framework
-	/*
-	START_TIMER(start_time);
-	BitSet* back_projected_extension = project_back(extension, projection, af->size);
-	STOP_TIMER(stop_time);
-	printf("Projecting af back: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	BitSet *closure = create_bitset(af->size);
-	// closure_semi_complete(af, attacked_by, back_projected_extension, extension);
-	*/
+	// map indices of the computed extension back
+	// ...
+	ArrayList *mapped_extension = list_create();
+	for (SIZE_TYPE i = 0; i < extension->size; ++i)
+		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], mapped_extension);
 
-	// closure_semi_complete_adj(af, attacked_by, back_projected_extension, closure, attacks_adj, attacked_by_adj);
+	// now close the mapped extension in the whole framework
 	ArrayList* closure = list_create();
 	bool* closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(closure_bv != NULL);
-	closure_semi_complete(attacks, attacked_by, extension, closure, closure_bv);
+	closure_semi_complete(attacks, attacked_by, mapped_extension, closure, closure_bv);
 
 	return(closure);
 }

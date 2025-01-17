@@ -33,11 +33,16 @@ int main(int argc, char *argv[]) {
 	print_argumentation_framework(af);
 	printf("\n");
 
-	AF* af_t = transpose_argumentation_framework(af);
+	// AF* af_t = transpose_argumentation_framework(af);
 
-	Subgraph* subgraph = extract_subgraph_backwards(af_t, a);
-	printf("Subgraph:\n");
-	print_argumentation_framework(subgraph->af);
+	// Subgraph* subgraph = extract_subgraph_backwards(af_t, a);
+	// printf("Subgraph:\n");
+	// print_argumentation_framework(subgraph->af);
+	// printf("\n");
+
+	swap_arguments(af, 0, 4);
+	printf("AF:\n");
+	print_argumentation_framework(af);
 	printf("\n");
 
 	// print_argumentation_framework(af_t);

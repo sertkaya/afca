@@ -222,6 +222,32 @@ bool is_set_conflict_free(AF* attacks, ArrayList* s) {
 	free(victims);
 	return(true);
 }
+
+// swap arguments a1 and a2 in the framework af
+void swap_arguments(AF* af, ARG_TYPE a1, ARG_TYPE a2) {
+	// pointer to list a1
+	ARG_TYPE *list_a1 = af->lists[a1];
+	// size of list a1
+	SIZE_TYPE list_size_a1 = af->list_sizes[a1];
+
+	// swap list sizes
+	af->list_sizes[a1] = af->list_sizes[a2];
+	af->list_sizes[a2] = list_size_a1;
+
+	// swap lists
+	af->lists[a1] = af->lists[a2];
+	af->lists[a2] = list_a1;
+
+	// do swapping in the whole graph
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			if (af->lists[i][j] == a1)
+				af->lists[i][j] = a2;
+			else if (af->lists[i][j] == a2)
+				af->lists[i][j] = a1;
+		}
+}
+
 /*
 PAF* project_argumentation_framework(AF *af, bool* mask) {
 	PAF *paf = calloc(1, sizeof(PAF));
