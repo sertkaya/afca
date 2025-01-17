@@ -34,6 +34,7 @@
 #include "algorithms/connected-components/cc.h"
 */
 #include "algorithms/next-closure/complete.h"
+#include "validator/validator.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
@@ -62,13 +63,14 @@ void unsupported_feature(char* problem, char* extension, char* algorithm) {
 
 int main(int argc, char *argv[]) {
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0;
-	char *prob= "", *alg= "", *af_file_name = "", *output_file = "";
-	ARG_TYPE argument;
-	static char usage[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph] "
+	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
+	char *prob= "", *alg= "", *af_file_name = "", *output_file = "", *extension_file_name = "", *semantic_name;
+	ARG_TYPE argument = 0;
+	static char usage_solver[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph] "
 					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
+	static char usage_validator[] = "Usage: %s  -s [ST, PR, CO] -f input -e extension\n";
 
-	while ((c = getopt(argc, argv, "l:p:f:o:v:a:")) != -1)
+	while ((c = getopt(argc, argv, "vl:p:o:f:e:s:a:")) != -1)
 		switch (c) {
 		case 'l':
 			algorithm_flag = 1;
@@ -90,12 +92,36 @@ int main(int argc, char *argv[]) {
 			argument_flag = 1;
 			argument = atoi(optarg);
 			break;
+		case 'v':
+			validate_flag = 1;
+			break;
+		case 'e':
+			extension_flag = 1;
+			extension_file_name = optarg;
+			break;
+		case 's':
+			semantic_flag = 1;
+			semantic_name = optarg;
+			break;
 		case '?':
 			wrong_argument_flag = 1;
 			break;
 		}
+	if (validate_flag) {
+		if (!input_flag || !extension_flag || !semantic_flag) {
+			fprintf(stderr, usage_validator, argv[0]);
+			exit(EXIT_FAILURE);
+		}
+		else {
+			// validate
+			printf("%d\n", validate(af_file_name, extension_file_name, semantic_name));
+			return(0);
+		}
+	}
+
+
 	if (wrong_argument_flag || !input_flag || !output_flag || !algorithm_flag || !problem_flag) {
-		fprintf(stderr, usage, argv[0]);
+		fprintf(stderr, usage_solver, argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -130,7 +156,7 @@ int main(int argc, char *argv[]) {
 		algorithm = SUBGRAPH;
 	} else {
 		fprintf(stderr, "Unknown algorithm %s\n", alg);
-		fprintf(stderr, usage, argv[0]);
+		fprintf(stderr, usage_solver, argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -149,7 +175,7 @@ int main(int argc, char *argv[]) {
 		decision_problem = true;
 		problem_type = DC;
 		if (!argument_flag) {
-			fprintf(stderr, usage, argv[0]);
+			fprintf(stderr, usage_solver, argv[0]);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -157,13 +183,13 @@ int main(int argc, char *argv[]) {
 		decision_problem = true;
 		problem_type = DS;
 		if (!argument_flag) {
-			fprintf(stderr, usage, argv[0]);
+			fprintf(stderr, usage_solver, argv[0]);
 			exit(EXIT_FAILURE);
 		}
 	}
 	else {
 		fprintf(stderr, "Unknown problem type %s\n", prob_type);
-		fprintf(stderr, usage, argv[0]);
+		fprintf(stderr, usage_solver, argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -178,7 +204,7 @@ int main(int argc, char *argv[]) {
 		extension_type = CO;
 	else {
 		fprintf(stderr, "Unknown extension type %s\n", ext_type);
-		fprintf(stderr, usage, argv[0]);
+		fprintf(stderr, usage_solver, argv[0]);
 		exit(EXIT_FAILURE);
 	}
 

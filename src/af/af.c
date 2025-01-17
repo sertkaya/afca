@@ -26,6 +26,7 @@
 #include "../bitset/bitset.h"
 #include "../utils/timer.h"
 #include "../utils/stack.h"
+#include "../utils/array_list.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
 	AF* af = calloc(1, sizeof(AF));
@@ -201,6 +202,26 @@ Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
 	return(subgraph);
 }
 
+// Returns true if s is consistent
+bool is_set_conflict_free(AF* attacks, ArrayList* s) {
+	bool* victims = calloc(attacks->size, sizeof(bool));
+	assert(victims != NULL);
+
+	for (SIZE_TYPE i = 0; i < s->size; ++i) {
+		for (SIZE_TYPE j = 0; j < attacks->list_sizes[s->elements[i]]; ++j) {
+			victims[attacks->lists[s->elements[i]][j]] = true;
+		}
+	}
+
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		if (victims[s->elements[i]]) {
+			free(victims);
+			return(false);
+		}
+
+	free(victims);
+	return(true);
+}
 /*
 PAF* project_argumentation_framework(AF *af, bool* mask) {
 	PAF *paf = calloc(1, sizeof(PAF));

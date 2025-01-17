@@ -187,6 +187,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by, A
 	if (!is_set_conflict_free(attacks, current_closure)) {
 		// closure has a conflict. complete extension
 		// does not exist.
+		print_argumentation_framework(attacks);
 		print_list(stdout, current_closure, "\n");
 		printf("=== dc_co_next_closure finished 1===\n");
 		return(NULL);

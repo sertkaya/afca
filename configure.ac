@@ -38,5 +38,6 @@ AC_CONFIG_FILES([Makefile
 	src/parser/Makefile
 	src/af/Makefile
 	src/algorithms/Makefile
+	src/validator/Makefile
 	src/test/Makefile])
 AC_OUTPUT

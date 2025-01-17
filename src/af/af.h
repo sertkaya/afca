@@ -102,173 +102,26 @@ inline bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
 			return(true);
 	return(false);
 }
-// Returns true if s is consistent
-inline bool is_set_conflict_free(AF* attacks, ArrayList* s) {
-	bool* victims = calloc(attacks->size, sizeof(bool));
-	assert(victims != NULL);
 
-	for (SIZE_TYPE i = 0; i < s->size; ++i) {
-		for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
-			victims[attacks->lists[i][j]] = true;
-		}
-	}
-	for (SIZE_TYPE i = 0; i < s->size; ++i)
-		if (victims[s->elements[i]]) {
-			free(victims);
-			return(false);
-		}
-
-	free(victims);
-	return(true);
-}
 
 bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s);
 
 Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument);
-
-// Check if argument i attacks argument j
-// Here i and j start from "0"
-// #define CHECK_ARG_ATTACKS_ARG(af,i,j)		TEST_BIT(af->graph[i],j)
-
-// Check if arg attacks bs
-// Return 1 if yes, 0 otherwise
-// #define CHECK_ARG_ATTACKS_SET(af,arg,bs)	(!is_bitset_intersection_empty(af->graph[arg],bs))
-
-// Check if set s attacks argument arg
-// Return 1 if yes, 0 otherwise
-// inline char check_set_attacks_arg(AF* af, BitSet* s, int arg) {
-// 	for (SIZE_TYPE i = 0; i < af->size; ++i)
-// 		if (TEST_BIT(s,i) && CHECK_ARG_ATTACKS_ARG(af, i, arg))
-//			return(1);
-//	return(0);
-//}
-
-// Check if set s defends argument arg
-// Return 1 if yes, 0 otherwise
-//inline char check_set_defends_arg(AF* af, BitSet* s, int arg) {
-//	// Check if s attacks all attackers of arg
-//	for (SIZE_TYPE i = 0; i < af->size; ++i)
-//		if (CHECK_ARG_ATTACKS_ARG(af, i, arg) && !check_set_attacks_arg(af, s, i))
-//			return(0);
-//	return(1);
-//}
-
-/*
-int is_conflict_free(Context* attacks, BitSet* x) {
-	BitSet* x_attacks = create_bitset(attacks->size);
-	BitSet* r = create_bitset(attacks->size);
-	int i;
-	for (i = 0; i < attacks->size; ++i) {
-		if (TEST_BIT(x, i))
-			bitset_union(x_attacks, attacks->a[i], x_attacks);
-	}
-	bitset_intersection(x, x_attacks, r);
-	if (bitset_is_emptyset(r))
-		return(1);
-	return(0);
-}
-*/
-
-// TODO: compare to the above. Which is more efficient?
-
-//inline char is_set_conflict_free(AF* af, BitSet* s) {
-//	for (SIZE_TYPE i = 0; i < af->size; ++i)
-//		if (TEST_BIT(s, i))
-//			for (SIZE_TYPE j = i; j < af->size; ++j)
-//				if (TEST_BIT(s, j) && (CHECK_ARG_ATTACKS_ARG(af, i, j) || CHECK_ARG_ATTACKS_ARG(af, j, i)))
-//					return(0);
-//	return(1);
-//}
-/*
-// TODO: Compare to above
-inline char is_set_conflict_free(AF* af, BitSet* s) {
-	for (SIZE_TYPE i = 0; i < af->size; ++i)
-		if (TEST_BIT(s, i) && CHECK_ARG_ATTACKS_SET(af, i, s))
-			return(0);
-	return(1);
-}
-*/
-
-// Compute attackers of set s, store in r.
-// attacked_by: the transposed framework
-// s: the given bitset
-// r: result bitset containing attackers of s
-//static inline void get_attackers(AF* attacked_by, BitSet* s, BitSet* r) {
-//	reset_bitset(r);
-//	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
-//		if (TEST_BIT(s, i))
-//			bitset_union(r, attacked_by->graph[i], r);
-//	}
-//}
-
-
-//static inline void get_true_attackers(AF* af, BitSet* s, BitSet* r) {
-//	reset_bitset(r);
-//	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-//		if (!is_bitset_intersection_empty(af->graph[i], s)) {
-//			SET_BIT(r, i);
-//		}
-//	}
-//}
-
-// Compute victims (attacked arguments) of a set s, store in r
-// attacks: the attacks framework
-// s: the given bitset
-// r: result bitset containing arguments attacked by s
-//static inline void get_victims(AF* attacks, BitSet* s, BitSet* r) {
-//	reset_bitset(r);
-//	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
-//		if (TEST_BIT(s, i))
-//			bitset_union(r, attacks->graph[i], r);
-//	}
-//}
-
-// Compute common victims of the arguments in s (arguments attacked by all elements of s)
-// (up-arrow in FCA terms) Put the result in r
-// inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
-//static inline void up_arrow(AF* af, BitSet* s, BitSet* r) {
-//	// First fill r
-//	// TODO: Improve efficiency?
-//	set_bitset(r);
-//
-//	for (SIZE_TYPE i = 0; i < af->size; ++i)
-//		if (TEST_BIT(s, i))
-//			bitset_intersection(r, af->graph[i], r);
-//}
-
-// Compute total attackers of s (arguments attacking all elements of s)
-// (down-arrow in FCA terms) Put the result in r
-// inline void get_total_attackers(AF* af, BitSet* s, BitSet* r) {
-//static inline void down_arrow(AF* af, BitSet* s, BitSet* r) {
-//	// TODO: Improve efficiency?
-//	reset_bitset(r);
-//
-//	for (SIZE_TYPE i = 0; i < af->size; ++i)
-//		if (bitset_is_subset(s, af->graph[i]))
-//			SET_BIT(r, i);
-//}
-
-// Compute common victims of the total attackers of s
-// (arguments commonly attacked by the arguments that attack all elements of s.
-// In FCA: down-up-arrow closure operator on the formal context)
-// inline void get_common_victims_of_total_attackers(AF* af, BitSet* s, BitSet* r) {
-//static inline void down_up_arrow(AF* af, BitSet* s, BitSet* r) {
-//	// First fill //r
-//	// TODO: Improve efficiency?
-//	set_bitset(r);
-//
-//	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-//		if (bitset_is_subset(s, af->graph[i])) {
-//			bitset_intersection(r, af->graph[i], r);
-//		}
-//	}
-//}
 
 AF* complement_argumentation_framework(AF *af );
 
 AF* transpose_argumentation_framework(AF *af);
 
 AF* create_conflict_framework(AF* af);	// make it undirected
+
+bool is_set_conflict_free(AF* attacks, ArrayList* s);
+
+inline bool is_set_admissible(AF* af, ArrayList* s) {
+	AF* af_t = transpose_argumentation_framework(af);
+	bool admissible = is_set_conflict_free(af, s) && is_set_self_defending(af, af_t, s);
+	free_argumentation_framework(af_t);
+	return(admissible);
+}
 
 //PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
