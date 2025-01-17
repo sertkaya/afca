@@ -354,7 +354,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case CE_ST:
 			switch (alg) {
-				case NORRIS:
+				case SCC_NORRIS:
 					run_scc_norris_count(af, output);
 					break;
 				default:
