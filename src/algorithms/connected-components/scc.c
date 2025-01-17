@@ -77,20 +77,16 @@ void log_set(BitSet* bs) {
 //////////////////// Stable Extensions /////////////////////////
 
 BitSet* extract_residual_arguments(AF* af, BitSet* arguments, BitSet* source_component, BitSet* component_extension) {
-    BitSet* remainder = create_bitset(af->size);
-    // add arguments outside source_component not attacked by component_extension
-    bool something_remains = false;
-	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		if (TEST_BIT(arguments, i) && !TEST_BIT(source_component, i) && !check_set_attacks_arg(af, component_extension, i)) {
-            SET_BIT(remainder, i);
-            something_remains = true;
-        }
-	}
-    if (!something_remains) {
-        free_bitset(remainder);
-        remainder = NULL;
+    BitSet* r = create_bitset(af->size);
+    get_victims(af, source_component, r);
+    bitset_union(r, source_component, r);
+    bitset_set_minus(arguments, r, r);
+
+    if (0 == count_bits(r)) {
+        free_bitset(r);
+        r = NULL;
     }
-	return remainder;
+	return r;
 }
 
 
@@ -98,6 +94,7 @@ ListNode* get_component_extensions(AF* af,
                                    BitSet* component, 
                                    ListNode* (*stable_extensions)(AF* af), 
                                    Map* subextensions) {
+
     ListNode* component_extension = MAP_GET(component, subextensions); 
     if (!component_extension) {
         PAF* projection = project_argumentation_framework(af, component);
