@@ -72,7 +72,9 @@ size_t count_extensions(AF* af,
                                                     subextensions,
                                                     subextension_counts) :
                                     1;
-            // TODO: free_bitset(residual_arguments);
+            if (residual_arguments) {
+                free_bitset(residual_arguments);
+            }
             component_extension = component_extension->next;
         }
     }
