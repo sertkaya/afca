@@ -106,7 +106,7 @@ inline bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
 
 bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s);
 
-Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument);
+Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument);
 
 AF* complement_argumentation_framework(AF *af );
 

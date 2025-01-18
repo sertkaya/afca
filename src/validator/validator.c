@@ -29,7 +29,7 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
 	do {
 		rc = fscanf(e_fd, "%d", &arg);
         if (rc > 0)
-        	list_add(arg, extension);
+        	list_add(arg - 1, extension);
 
 	} while (rc != EOF);
 	fclose(e_fd);

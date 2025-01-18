@@ -145,34 +145,47 @@ bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s) {
 	return(true);
 }
 
-Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
+Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	Stack s;
 	init_stack(&s);
 
-	bool* visited = calloc(af->size, sizeof(bool));
+	bool* visited = calloc(af_t->size, sizeof(bool));
 	assert(visited != NULL);
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i)
+		visited[i] = false;
 
-	// find the nodes reachable from argument, put into visited
-	SIZE_TYPE a = argument;
+	// find those nodes from which the argument is reachable, put them into visited
+	ARG_TYPE a = argument;
 	SIZE_TYPE subgraph_size = 0;
-	while (a != -1) {
-		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i)
-			if (!visited[af->lists[a][i]]) {
-				push(&s, af->lists[a][i]);
-				visited[af->lists[a][i]] = true;
-				++subgraph_size;
+	// visited[a] = true;
+	push(&s, a);
+	++subgraph_size;
+	while ((a = pop(&s)) != -1) {
+		if  (!visited[a]) {
+			visited[a] = true;
+			++subgraph_size;
+		}
+		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
+			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
+				push(&s, af_t->lists[a][i]);
+				// visited[af_t->lists[a][i]] = true;
+				// ++subgraph_size;
 			}
-		a = pop(&s);
 	}
 
 	// create a mapping from indices of the subgraph to
 	// the indices of af
 	ARG_TYPE* mapping_subgraph_af = calloc(subgraph_size, sizeof(ARG_TYPE));
 	assert(mapping_subgraph_af != NULL);
-	// and a mapping from indices of af to the
+
+	// create a mapping from indices of af to the
 	// indices of subgraph
 	ARG_TYPE* mapping_af_subgraph = calloc(af->size, sizeof(ARG_TYPE));
 	assert(mapping_af_subgraph != NULL);
+	// initially every index is mapped to itself
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		mapping_af_subgraph[i] = i;
+
 	SIZE_TYPE subgraph_index = 0;
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (visited[i]) {
@@ -180,7 +193,7 @@ Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
 			mapping_subgraph_af[subgraph_index++] = i;
 		}
 
-	// create the subgraph with backwards edges
+	// create the subgraph
 	Subgraph* subgraph = calloc(1, sizeof(Subgraph));
 	assert(subgraph != NULL);
 	subgraph->af = create_argumentation_framework(subgraph_size);
@@ -191,7 +204,9 @@ Subgraph* extract_subgraph_backwards(AF* af, ARG_TYPE argument) {
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		if (visited[i]) {
 			for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
-				add_attack(subgraph->af, mapping_af_subgraph[af->lists[i][j]], mapping_af_subgraph[i]);
+				// add_attack(subgraph->af, mapping_af_subgraph[af->lists[i][j]], mapping_af_subgraph[i]);
+				if (visited[af->lists[i][j]])
+					add_attack(subgraph->af, mapping_af_subgraph[i], mapping_af_subgraph[af->lists[i][j]]);
 			}
 		}
 	}

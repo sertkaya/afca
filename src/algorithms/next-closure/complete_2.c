@@ -176,17 +176,20 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
+	printf("argument:%d\n", argument);
 	list_add(argument, current);
 
 	START_TIMER(start_time);
+	printf("current:");
+	print_list(stdout, current, "\n");
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
+	printf("current_closure:");
+	print_list(stdout, current_closure, "\n");
 	STOP_TIMER(stop_time);
 	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	if (!is_set_conflict_free(attacks, current_closure)) {
 		// closure has a conflict. complete extension does not exist.
-		print_argumentation_framework(attacks);
-		print_list(stdout, current_closure, "\n");
 		printf("=== dc_co_next_closure finished 1===\n");
 		return(NULL);
 	}
@@ -215,27 +218,32 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	swap_arguments(attacks, 0, argument);
 
 	// recompute the attacked_by framework
-	free_argumentation_framework(attacked_by);
-	attacked_by = transpose_argumentation_framework(attacks);
+	// free_argumentation_framework(attacked_by);
+	// attacked_by = transpose_argumentation_framework(attacks);
+	// or instead do swap in the attacked_by framework
+	swap_arguments(attacked_by, 0, argument);
+	printf("swapping done\n");
 
 	// add argument 0 to current
 	list_add(0, current);
+	list_add(0, current_closure);
 
 	int concept_count = 0;
-
-	while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure)) {
-		printf("current:");
-		print_list(stdout, current, "\n");
+	do {
+		list_copy(current_closure, current);
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
 			free(current_closure_bv);
 			free_argumentation_framework(attacks);
 			free_argumentation_framework(attacked_by);
+	printf("current:");
+	print_list(stdout, current, "\n");
+	printf("current_closure:");
+	print_list(stdout, current_closure, "\n");
 			printf("=== dc_co_next_closure finished 3===\n");
 			return(current_closure);
 		}
-		list_copy(current_closure, current);
-	}
+	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure));
 
 	printf("Number of concepts generated: %d\n", concept_count);
 
@@ -256,15 +264,20 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
-	Subgraph* subgraph = extract_subgraph_backwards(attacked_by, argument);
+	printf("Argument for subgraph extraction:%d\n", argument);
+	// Subgraph* subgraph = extract_subgraph_backwards(attacked_by, argument);
+	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
 	printf("Subgraph size:%d\n", subgraph->af->size);
 	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
+	// print_argumentation_framework(subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
+	printf("Mapped argument:%d\n", subgraph->mapping_to_subgraph[argument]);
+	// ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
+	ArrayList *extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	// TODO!
@@ -279,6 +292,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	ArrayList *mapped_extension = list_create();
 	for (SIZE_TYPE i = 0; i < extension->size; ++i)
 		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], mapped_extension);
+
 
 	// now close the mapped extension in the whole framework
 	ArrayList* closure = list_create();
