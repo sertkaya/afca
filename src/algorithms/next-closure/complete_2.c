@@ -50,21 +50,16 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 		r_bv[s->elements[i]] = true;
 	}
 
-	print_list(stdout, s, "<-s before \n");
-	print_list(stdout, r, "<-r before \n");
 	// Push the unattacked arguments to the stack. They are defended by every set.
 	// TODO: This is independent of s. It can be done outside the closure function.
 	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
 		if (af_t->list_sizes[i] == 0 && !r_bv[i]) {
-		printf("==>i:%d\n", i);
 			push(&update, i);
 			list_add(i, r);
 			r_bv[i] = true;
 		}
 	}
 
-	print_list(stdout, s, "<-s after\n");
-	print_list(stdout, r, "<-r after\n");
 	SIZE_TYPE* unattacked_attackers_count = calloc(af_t->size, sizeof(SIZE_TYPE));
 	assert(unattacked_attackers_count != NULL);
 	memcpy(unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
@@ -133,10 +128,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 			// add i to tmp
 			list_add(i, tmp);
 
-			print_list(stdout, current_closure, " before\n");
-			printf("current_closure->size:%d\n", current_closure->size);
 			closure_semi_complete(attacks, attacked_by, tmp, current_closure, current_closure_bv);
-			print_list(stdout, current_closure, " after\n");
 
 			bool good = true;
 			// is current_closure canonical?
@@ -187,15 +179,10 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
-	printf("argument:%d\n", argument);
 	list_add(argument, current);
 
 	START_TIMER(start_time);
-	printf("current:");
-	print_list(stdout, current, "\n");
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
-	printf("current_closure:");
-	print_list(stdout, current_closure, "\n");
 	STOP_TIMER(stop_time);
 	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
@@ -233,7 +220,6 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// attacked_by = transpose_argumentation_framework(attacks);
 	// or instead do swap in the attacked_by framework
 	swap_arguments(attacked_by, 0, argument);
-	printf("swapping done\n");
 
 	// add argument 0 to current
 	list_add(0, current);
@@ -241,10 +227,6 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	int concept_count = 0;
 	do {
-	printf("current:");
-	print_list(stdout, current, "\n");
-	printf("current_closure:");
-	print_list(stdout, current_closure, "\n");
 		list_copy(current_closure, current);
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
@@ -282,7 +264,6 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
-	printf("Argument for subgraph extraction:%d\n", argument);
 	// Subgraph* subgraph = extract_subgraph_backwards(attacked_by, argument);
 	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
 	printf("Subgraph size:%d\n", subgraph->af->size);
@@ -293,7 +274,6 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	printf("Mapped argument:%d\n", subgraph->mapping_to_subgraph[argument]);
 	// ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
 	ArrayList *extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
 	STOP_TIMER(stop_time);
@@ -309,14 +289,8 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	// ...
 	ArrayList *mapped_extension = list_create();
 	for (SIZE_TYPE i = 0; i < extension->size; ++i) {
-		printf("i:%d\n", i);
-		printf("i:%d\n", extension->elements[i]);
-		printf("i:%d\n\n", subgraph->mapping_from_subgraph[extension->elements[i]]);
 		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], mapped_extension);
 	}
-
-	print_list(stdout, extension, "<-extension\n");
-	print_list(stdout, mapped_extension, "<-mapped_extension\n");
 
 	// now close the mapped extension in the whole framework
 	ArrayList* closure = list_create();

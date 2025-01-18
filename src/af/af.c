@@ -190,7 +190,6 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (visited[i]) {
 			mapping_af_subgraph[i] = subgraph_index;
-			printf("***%d %d\n", subgraph_index, i);
 			mapping_subgraph_af[subgraph_index++] = i;
 		}
 
