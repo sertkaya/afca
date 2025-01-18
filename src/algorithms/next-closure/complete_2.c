@@ -50,15 +50,21 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 		r_bv[s->elements[i]] = true;
 	}
 
+	print_list(stdout, s, "<-s before \n");
+	print_list(stdout, r, "<-r before \n");
 	// Push the unattacked arguments to the stack. They are defended by every set.
 	// TODO: This is independent of s. It can be done outside the closure function.
-	for (SIZE_TYPE i = 0; i < af_t->size; ++i)
-		if (af_t->list_sizes[i] == 0) {
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
+		if (af_t->list_sizes[i] == 0 && !r_bv[i]) {
+		printf("==>i:%d\n", i);
 			push(&update, i);
 			list_add(i, r);
 			r_bv[i] = true;
 		}
+	}
 
+	print_list(stdout, s, "<-s after\n");
+	print_list(stdout, r, "<-r after\n");
 	SIZE_TYPE* unattacked_attackers_count = calloc(af_t->size, sizeof(SIZE_TYPE));
 	assert(unattacked_attackers_count != NULL);
 	memcpy(unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
@@ -97,6 +103,8 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 
 bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, ArrayList* current, ArrayList* current_closure) {
 	bool* current_bv = calloc(attacks->size, sizeof(bool));
+	assert(current_bv != NULL);
+
 	ArrayList* tmp = list_duplicate(current);
 
 	assert(current_bv!=NULL);
@@ -108,7 +116,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
-	for (int i = attacks->size - 1; i >= 0; --i) {
+	for (SIZE_TYPE i = attacks->size - 1; i >= 0; --i) {
 		// if (TEST_BIT(tmp, i)) {
 		if (current_bv[i]) {
 			// RESET_BIT(tmp, i);
@@ -125,7 +133,10 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 			// add i to tmp
 			list_add(i, tmp);
 
+			print_list(stdout, current_closure, " before\n");
+			printf("current_closure->size:%d\n", current_closure->size);
 			closure_semi_complete(attacks, attacked_by, tmp, current_closure, current_closure_bv);
+			print_list(stdout, current_closure, " after\n");
 
 			bool good = true;
 			// is current_closure canonical?
@@ -230,16 +241,23 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	int concept_count = 0;
 	do {
+	printf("current:");
+	print_list(stdout, current, "\n");
+	printf("current_closure:");
+	print_list(stdout, current_closure, "\n");
 		list_copy(current_closure, current);
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
 			free(current_closure_bv);
 			free_argumentation_framework(attacks);
 			free_argumentation_framework(attacked_by);
-	printf("current:");
-	print_list(stdout, current, "\n");
-	printf("current_closure:");
-	print_list(stdout, current_closure, "\n");
+			// swap back 0 and argument in the current_closure
+			for (SIZE_TYPE i = 0; i < current_closure->size; ++i) {
+				if (current_closure->elements[i] == 0)
+					current_closure->elements[i] = argument;
+				else if (current_closure->elements[i] == argument)
+					current_closure->elements[i] = 0;
+			}
 			printf("=== dc_co_next_closure finished 3===\n");
 			return(current_closure);
 		}
@@ -290,9 +308,15 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	// map indices of the computed extension back
 	// ...
 	ArrayList *mapped_extension = list_create();
-	for (SIZE_TYPE i = 0; i < extension->size; ++i)
+	for (SIZE_TYPE i = 0; i < extension->size; ++i) {
+		printf("i:%d\n", i);
+		printf("i:%d\n", extension->elements[i]);
+		printf("i:%d\n\n", subgraph->mapping_from_subgraph[extension->elements[i]]);
 		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], mapped_extension);
+	}
 
+	print_list(stdout, extension, "<-extension\n");
+	print_list(stdout, mapped_extension, "<-mapped_extension\n");
 
 	// now close the mapped extension in the whole framework
 	ArrayList* closure = list_create();

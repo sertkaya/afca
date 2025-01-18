@@ -20,6 +20,7 @@
 
 #include "../parser/af_parser.h"
 #include "../af/af.h"
+#include "../utils/array_list.h"
 
 int main(int argc, char *argv[]) {
 
@@ -45,6 +46,15 @@ int main(int argc, char *argv[]) {
 	print_argumentation_framework(af);
 	printf("\n");
 
+
+	ArrayList* l = list_create();
+	list_add(3, l);
+	list_add(5, l);
+	list_add(3, l);
+	list_add(1, l);
+	print_list(stdout, l, "before\n");
+	list_remove(3, l);
+	print_list(stdout, l, "after\n");
 	// print_argumentation_framework(af_t);
 	// print_argumentation_framework(af_c);
 	// printf("\n");
