@@ -43,7 +43,7 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
       // ...
     }
 	else if (strcmp(semantic, "CO") == 0) {
-      return(is_set_admissible(input_af, extension));
+      return(is_set_complete(input_af, extension));
     }
 
  }

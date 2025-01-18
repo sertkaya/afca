@@ -27,6 +27,7 @@
 #include "../utils/timer.h"
 #include "../utils/stack.h"
 #include "../utils/array_list.h"
+#include "../algorithms/next-closure/complete.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
 	AF* af = calloc(1, sizeof(AF));
@@ -263,6 +264,27 @@ void swap_arguments(AF* af, ARG_TYPE a1, ARG_TYPE a2) {
 		}
 }
 
+bool is_set_complete(AF* af, ArrayList* s) {
+	AF* af_t = transpose_argumentation_framework(af);
+	bool admissible = is_set_conflict_free(af, s) && is_set_self_defending(af, af_t, s);
+	if (!admissible) {
+		free_argumentation_framework(af_t);
+		return(0);
+	}
+
+	ArrayList* closure = list_create();
+	bool* closure_bv = calloc(af->size, sizeof(bool));
+	assert(closure_bv != NULL);
+	closure_semi_complete(af, af_t, s, closure, closure_bv);
+
+	bool equal = is_list_equal(s, closure);
+
+	free_argumentation_framework(af_t);
+	free(closure_bv);
+	list_free(closure);
+
+	return(equal);
+}
 /*
 PAF* project_argumentation_framework(AF *af, bool* mask) {
 	PAF *paf = calloc(1, sizeof(PAF));

@@ -98,6 +98,23 @@ inline bool list_remove(ARG_TYPE e, ArrayList* l) {
 	--l->size;
 	return(true);
 }
+
+void list_sort(ArrayList* l);
+
+inline bool is_list_equal(ArrayList* l1, ArrayList* l2) {
+	if (!(l1->size == l2->size)) {
+		return(0);
+	}
+
+	list_sort(l1);
+	list_sort(l2);
+
+	for (SIZE_TYPE i = 0; i < l1->size; ++i)
+		if (l1->elements[i] != l2->elements[i])
+			return(false);
+	return(true);
+}
+
 /**
  * Free the space allocated for this list.
  */
@@ -131,4 +148,5 @@ void print_list(FILE* fp, ArrayList* l, char* end);
 ArrayList* list_duplicate(ArrayList* l);
 
 void list_copy(ArrayList* l1, ArrayList* l2);
+
 #endif

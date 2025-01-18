@@ -102,3 +102,7 @@ int list_iterator_free(ListIterator* it) {
 
 	return sizeof(ListIterator);
 }
+
+void list_sort(ArrayList* l) {
+	qsort(l->elements, l->size, sizeof(ARG_TYPE), cmp);
+}

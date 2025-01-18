@@ -17,8 +17,8 @@
 #ifndef AF_COMPLETE_EXTENSIONS_NC_H_
 #define AF_COMPLETE_EXTENSIONS_NC_H_
 
-#include "../../af/af.h"
 #include "../../utils/array_list.h"
+#include "../../af/af.h"
 
 // Computes all complete extensions and puts them into result
 // ListNode* ee_co_next_closure(AF* af);
@@ -30,5 +30,7 @@
 
 // BitSet* dc_co_subgraph_next_closure(AF* attacks, int argument);
 ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument);
+
+void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv);
 
 #endif /* AF_COMPLETE_EXTENSIONS_NC_H_ */

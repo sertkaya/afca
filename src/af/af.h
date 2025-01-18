@@ -22,7 +22,6 @@
 #include "datatypes.h"
 #include "../utils/array_list.h"
 
-
 struct argumentation_framework {
 	// Number of arguments
 	SIZE_TYPE size;
@@ -123,7 +122,10 @@ inline bool is_set_admissible(AF* af, ArrayList* s) {
 	return(admissible);
 }
 
+bool is_set_complete(AF* af, ArrayList* s);
+
 void swap_arguments(AF* af, ARG_TYPE a1, ARG_TYPE a2);
+
 //PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
 //BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);
