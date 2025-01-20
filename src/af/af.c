@@ -26,6 +26,7 @@
 #include "../bitset/bitset.h"
 #include "../utils/timer.h"
 #include "../utils/stack.h"
+#include "../utils/queue.h"
 #include "../utils/array_list.h"
 #include "../algorithms/next-closure/complete.h"
 
@@ -147,8 +148,6 @@ bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s) {
 }
 
 Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
-	Stack s;
-	init_stack(&s);
 
 	bool* visited = calloc(af_t->size, sizeof(bool));
 	assert(visited != NULL);
@@ -158,7 +157,9 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	// find those nodes from which the argument is reachable, put them into visited
 	ARG_TYPE a = argument;
 	SIZE_TYPE subgraph_size = 0;
-	// visited[a] = true;
+
+	Stack s;
+	init_stack(&s);
 	push(&s, a);
 	while ((a = pop(&s)) != -1) {
 		if  (!visited[a]) {
@@ -172,6 +173,24 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 				// ++subgraph_size;
 			}
 	}
+
+	/*
+	Queue q;
+	init_queue(&q);
+	enqueue(&q, a);
+	while ((a = dequeue(&q)) != -1) {
+		if  (!visited[a]) {
+			visited[a] = true;
+			++subgraph_size;
+		}
+		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
+			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
+				enqueue(&q, af_t->lists[a][i]);
+				// visited[af_t->lists[a][i]] = true;
+				// ++subgraph_size;
+			}
+	}
+	*/
 
 	// create a mapping from indices of the subgraph to
 	// the indices of af

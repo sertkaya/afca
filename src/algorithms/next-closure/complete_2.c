@@ -185,6 +185,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
 	STOP_TIMER(stop_time);
 	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	print_list(stdout, current_closure, "<-current_closure\n");
 
 	if (!is_set_conflict_free(attacks, current_closure)) {
 		// closure has a conflict. complete extension does not exist.
@@ -271,6 +272,13 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	// print_argumentation_framework(subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	for (SIZE_TYPE i = 0; i < subgraph->af->size; ++i) {
+		printf("%d: ", subgraph->mapping_from_subgraph[i]);
+		for (SIZE_TYPE  j = 0; j < subgraph->af->list_sizes[i]; ++j) {
+			printf("%d ", subgraph->mapping_from_subgraph[subgraph->af->lists[i][j]]);
+		}
+		printf("\n");
+	}
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
