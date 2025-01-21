@@ -161,18 +161,14 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	Stack s;
 	init_stack(&s);
 	push(&s, a);
-	// ArrayList* args = list_create();
 	while ((a = pop(&s)) != -1) {
 		if  (!visited[a]) {
 			visited[a] = true;
 			++subgraph_size;
-			// list_insert_at_head(a, args);
 		}
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
 			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
 				push(&s, af_t->lists[a][i]);
-				// visited[af_t->lists[a][i]] = true;
-				// ++subgraph_size;
 			}
 	}
 
@@ -214,13 +210,6 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 			mapping_af_subgraph[i] = subgraph_index;
 			mapping_subgraph_af[subgraph_index++] = i;
 		}
-
-	/*
-	for (SIZE_TYPE i = 0; i < args->size; ++i) {
-		mapping_af_subgraph[args->elements[i]] = subgraph_index;
-		mapping_subgraph_af[subgraph_index++] = args->elements[i];
-	}
-	*/
 
 	// create the subgraph
 	Subgraph* subgraph = calloc(1, sizeof(Subgraph));
