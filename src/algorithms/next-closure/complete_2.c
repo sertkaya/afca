@@ -121,7 +121,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
-	for (SIZE_TYPE i = attacks->size - 1; i >= 0 ; --i) {
+	for (SIZE_TYPE i = attacks->size - 1; i > 0 ; --i) {
 		// if (TEST_BIT(tmp, i)) {
 		if (current_bv[i]) {
 			// RESET_BIT(tmp, i);
@@ -254,7 +254,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	int concept_count = 0;
 	do {
-		print_list(stdout, current, "\n");
+		// print_list(stdout, current, "\n");
 		list_copy(current_closure, current);
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
