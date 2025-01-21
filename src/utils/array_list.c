@@ -106,3 +106,29 @@ int list_iterator_free(ListIterator* it) {
 void list_sort(ArrayList* l) {
 	qsort(l->elements, l->size, sizeof(ARG_TYPE), cmp);
 }
+
+bool is_list_equal(ArrayList* l1, ArrayList* l2) {
+	if (!(l1->size == l2->size)) {
+		return(0);
+	}
+
+	list_sort(l1);
+	list_sort(l2);
+
+	for (SIZE_TYPE i = 0; i < l1->size; ++i)
+		if (l1->elements[i] != l2->elements[i])
+			return(false);
+	return(true);
+}
+
+bool list_insert_at_head(ARG_TYPE e, ArrayList* l) {
+	ARG_TYPE* tmp = realloc(l->elements, (l->size + 1) * sizeof(ARG_TYPE));
+	assert(tmp != NULL);
+	l->elements = tmp;
+    for (SIZE_TYPE i = l->size; i > 0 ; --i)
+      l->elements[i] = l->elements[i-1];
+	l->elements[0] = e;
+	++l->size;
+
+	return(true);
+}

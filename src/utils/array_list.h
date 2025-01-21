@@ -65,6 +65,8 @@ inline bool list_add(ARG_TYPE e, ArrayList* l) {
 	return(true);
 }
 
+bool list_insert_at_head(ARG_TYPE e, ArrayList* l);
+
 /**
  * Removes the first occurrence of the element e if it is present. The list stays unchanged
  * if e does not occur in l.
@@ -101,19 +103,7 @@ inline bool list_remove(ARG_TYPE e, ArrayList* l) {
 
 void list_sort(ArrayList* l);
 
-inline bool is_list_equal(ArrayList* l1, ArrayList* l2) {
-	if (!(l1->size == l2->size)) {
-		return(0);
-	}
-
-	list_sort(l1);
-	list_sort(l2);
-
-	for (SIZE_TYPE i = 0; i < l1->size; ++i)
-		if (l1->elements[i] != l2->elements[i])
-			return(false);
-	return(true);
-}
+bool is_list_equal(ArrayList* l1, ArrayList* l2);
 
 /**
  * Free the space allocated for this list.

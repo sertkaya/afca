@@ -161,10 +161,12 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	Stack s;
 	init_stack(&s);
 	push(&s, a);
+	// ArrayList* args = list_create();
 	while ((a = pop(&s)) != -1) {
 		if  (!visited[a]) {
 			visited[a] = true;
 			++subgraph_size;
+			// list_insert_at_head(a, args);
 		}
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
 			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
@@ -178,16 +180,16 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	Queue q;
 	init_queue(&q);
 	enqueue(&q, a);
+	ArrayList* args = list_create();
 	while ((a = dequeue(&q)) != -1) {
 		if  (!visited[a]) {
 			visited[a] = true;
 			++subgraph_size;
+			list_insert_at_head(a, args);
 		}
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
 			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
 				enqueue(&q, af_t->lists[a][i]);
-				// visited[af_t->lists[a][i]] = true;
-				// ++subgraph_size;
 			}
 	}
 	*/
@@ -206,11 +208,19 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 		mapping_af_subgraph[i] = i;
 
 	SIZE_TYPE subgraph_index = 0;
+
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		if (visited[i]) {
 			mapping_af_subgraph[i] = subgraph_index;
 			mapping_subgraph_af[subgraph_index++] = i;
 		}
+
+	/*
+	for (SIZE_TYPE i = 0; i < args->size; ++i) {
+		mapping_af_subgraph[args->elements[i]] = subgraph_index;
+		mapping_subgraph_af[subgraph_index++] = args->elements[i];
+	}
+	*/
 
 	// create the subgraph
 	Subgraph* subgraph = calloc(1, sizeof(Subgraph));
@@ -255,6 +265,41 @@ bool is_set_conflict_free(AF* attacks, ArrayList* s) {
 
 	free(victims);
 	return(true);
+}
+
+// Add an attack from argument at index i to argument at index j
+bool add_attack(AF* af, ARG_TYPE i, ARG_TYPE j) {
+	ARG_TYPE* tmp = realloc(af->lists[i], (af->list_sizes[i] + 1) * sizeof(ARG_TYPE));
+	assert(tmp != NULL);
+	af->lists[i] = tmp;
+	af->lists[i][af->list_sizes[i]] = j;
+	++af->list_sizes[i];
+	return(true);
+
+}
+// Returns true if arg_1 attacks arg_2
+// Assumes that the adjacency lists are sorted!
+bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
+	for (SIZE_TYPE i; i < af->list_sizes[arg_1]; ++i)
+		if (af->lists[arg_1][i] == arg_2)
+			return(true);
+	return(false);
+}
+
+// Returns true if s attacks arg
+bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
+	for (SIZE_TYPE i; i < s->size; ++i)
+		if (check_arg_attacks_arg(af, s->elements[i], arg))
+			return(true);
+	return(false);
+}
+
+// Returns true if arg attacks s
+bool check_arg_attacks_set(AF* af, ARG_TYPE arg, ArrayList* s) {
+	for (SIZE_TYPE i; i < s->size; ++i)
+		if (check_arg_attacks_arg(af, arg, s->elements[i]))
+			return(true);
+	return(false);
 }
 
 // swap arguments a1 and a2 in the framework af

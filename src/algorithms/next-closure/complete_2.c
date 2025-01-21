@@ -97,12 +97,22 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 }
 
 bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, ArrayList* current, ArrayList* current_closure) {
+	ArrayList* tmp = list_duplicate(current);
+
 	bool* current_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_bv != NULL);
 
-	ArrayList* tmp = list_duplicate(current);
+	/*
+	bool* allowed = calloc(attacks->size, sizeof(bool));
+	assert(allowed != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
+		allowed[i] = true;
+	// attackers of argument 0 are not allowed. argument 0 is
+	// the given argument
+	for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[0]; ++j)
+		allowed[attacked_by->lists[0][j]] = false;
+		*/
 
-	assert(current_bv!=NULL);
 	// copy_bitset(current, tmp);
 	for (SIZE_TYPE i = 0; i < tmp->size; ++i) {
 		current_bv[tmp->elements[i]] = true;
@@ -111,7 +121,7 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
-	for (SIZE_TYPE i = attacks->size - 1; i >= 0; --i) {
+	for (SIZE_TYPE i = attacks->size - 1; i >= 0 ; --i) {
 		// if (TEST_BIT(tmp, i)) {
 		if (current_bv[i]) {
 			// RESET_BIT(tmp, i);
@@ -119,14 +129,25 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 			// remove i from tmp
 			list_remove(i, tmp);
 
+			/*
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j)
+				allowed[attacked_by->lists[i][j]] = true;
+				*/
+
 		} else if (!check_arg_attacks_arg(attacks, i, i) &&
 				   !check_arg_attacks_set(attacks, i, tmp) &&
 				   !check_set_attacks_arg(attacks, tmp, i)) {
+				   // allowed[i]) {
 
 			// SET_BIT(tmp, i);
 			current_bv[i] = true;
 			// add i to tmp
 			list_add(i, tmp);
+
+			/*
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j)
+				allowed[attacked_by->lists[i][j]] = false;
+				*/
 
 			closure_semi_complete(attacks, attacked_by, tmp, current_closure, current_closure_bv);
 
@@ -164,6 +185,11 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 			current_bv[i] = false;
 			// remove i from tmp
 			list_remove(i, tmp);
+
+			/*
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j)
+				allowed[attacked_by->lists[i][j]] = true;
+				*/
 		}
 	}
 	free(current_bv);
@@ -228,6 +254,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	int concept_count = 0;
 	do {
+		print_list(stdout, current, "\n");
 		list_copy(current_closure, current);
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
@@ -242,6 +269,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 					current_closure->elements[i] = 0;
 			}
 			printf("=== dc_co_next_closure finished 3===\n");
+			printf("Number of concepts generated: %d\n", concept_count);
 			return(current_closure);
 		}
 	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure));
@@ -265,7 +293,6 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
-	// Subgraph* subgraph = extract_subgraph_backwards(attacked_by, argument);
 	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
 	printf("Subgraph size:%d\n", subgraph->af->size);
 	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
@@ -273,16 +300,17 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	STOP_TIMER(stop_time);
 	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	for (SIZE_TYPE i = 0; i < subgraph->af->size; ++i) {
-		printf("%d: ", subgraph->mapping_from_subgraph[i]);
+		// printf("%d: ", subgraph->mapping_from_subgraph[i]);
+		printf("%d: ", i);
 		for (SIZE_TYPE  j = 0; j < subgraph->af->list_sizes[i]; ++j) {
-			printf("%d ", subgraph->mapping_from_subgraph[subgraph->af->lists[i][j]]);
+			// printf("%d ", subgraph->mapping_from_subgraph[subgraph->af->lists[i][j]]);
+			printf("%d ", subgraph->af->lists[i][j]);
 		}
 		printf("\n");
 	}
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
-	// ArrayList *extension = dc_co_next_closure(subgraph_t, subgraph->mapping_to_subgraph[argument], subgraph->af);
 	ArrayList *extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);

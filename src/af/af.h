@@ -66,42 +66,13 @@ void print_argumentation_framework(AF* af);
 // "i-1" and "j-1" since the arguments in the input file start with "1"
 // #define ADD_ATTACK(af,i,j)		list_add(j-1, af->lists[i-1])
 
-// Add an attack from argument at index i to argument at index j
-inline bool add_attack(AF* af, ARG_TYPE i, ARG_TYPE j) {
-	ARG_TYPE* tmp = realloc(af->lists[i], (af->list_sizes[i] + 1) * sizeof(ARG_TYPE));
-	assert(tmp != NULL);
-	af->lists[i] = tmp;
-	af->lists[i][af->list_sizes[i]] = j;
-	++af->list_sizes[i];
-	return(true);
+bool add_attack(AF* af, ARG_TYPE i, ARG_TYPE j);
 
-}
+bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2);
 
-// Returns true if arg_1 attacks arg_2
-// Assumes that the adjacency lists are sorted!
-inline bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
-	for (SIZE_TYPE i; i < af->list_sizes[arg_1]; ++i)
-		if (af->lists[arg_1][i] == arg_2)
-			return(true);
-	return(false);
-}
+bool check_arg_attacks_set(AF* af, ARG_TYPE arg, ArrayList* s);
 
-// Returns true if arg attacks s
-inline bool check_arg_attacks_set(AF* af, ARG_TYPE arg, ArrayList* s) {
-	for (SIZE_TYPE i; i < s->size; ++i)
-		if (check_arg_attacks_arg(af, arg, s->elements[i]))
-			return(true);
-	return(false);
-}
-
-// Returns true if s attacks arg
-inline bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
-	for (SIZE_TYPE i; i < s->size; ++i)
-		if (check_arg_attacks_arg(af, s->elements[i], arg))
-			return(true);
-	return(false);
-}
-
+bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg);
 
 bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s);
 

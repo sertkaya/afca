@@ -48,10 +48,10 @@ int main(int argc, char *argv[]) {
 
 
 	ArrayList* l = list_create();
-	list_add(3, l);
-	list_add(5, l);
-	list_add(3, l);
-	list_add(1, l);
+	list_insert_at_head(3, l);
+	list_insert_at_head(5, l);
+	list_insert_at_head(3, l);
+	list_insert_at_head(1, l);
 	print_list(stdout, l, "before\n");
 	list_remove(3, l);
 	print_list(stdout, l, "after\n");
