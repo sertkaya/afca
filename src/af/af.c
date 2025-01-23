@@ -42,12 +42,6 @@ AF* create_argumentation_framework(SIZE_TYPE size) {
 	af->list_sizes = calloc(af->size, sizeof(SIZE_TYPE));
 	assert(af->list_sizes != NULL);
 
-	/*
-	for (SIZE_TYPE i = 0; i < size; ++i) {
-		af->lists[i] = list_create();
-	}
-	*/
-
 	return(af);
 }
 
@@ -68,18 +62,6 @@ int free_argumentation_framework(AF* af) {
 	return(freed_bytes);
 }
 
-
-/*
-int free_projected_argumentation_framework(PAF* paf) {
-	free(paf->index_mapping);
-	int freed_bytes = paf->af->size * sizeof(SIZE_TYPE);
-	freed_bytes += free_argumentation_framework(paf->af);
-	free(paf);
-	return freed_bytes + sizeof(PAF);
-}
-*/
-
-
 void print_argumentation_framework(AF* af) {
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		// print_list(af->lists[i]);
@@ -87,16 +69,6 @@ void print_argumentation_framework(AF* af) {
 			printf("%d %d\n", i + 1, af->lists[i][j] + 1);
 	}
 }
-
-/*
-int cmp(const void* arg_1, const void* arg_2) {
-	if ((*(ARG_TYPE*) arg_1) < *((ARG_TYPE*) arg_2))
-		return(-1);
-	if ((*(ARG_TYPE*) arg_1) > *((ARG_TYPE*) arg_2))
-		return(1);
-	return(0);
-}
-*/
 
 AF* transpose_argumentation_framework(AF *af) {
 	AF* t_af = create_argumentation_framework(af->size);
@@ -171,24 +143,6 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 				push(&s, af_t->lists[a][i]);
 			}
 	}
-
-	/*
-	Queue q;
-	init_queue(&q);
-	enqueue(&q, a);
-	ArrayList* args = list_create();
-	while ((a = dequeue(&q)) != -1) {
-		if  (!visited[a]) {
-			visited[a] = true;
-			++subgraph_size;
-			list_insert_at_head(a, args);
-		}
-		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
-			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
-				enqueue(&q, af_t->lists[a][i]);
-			}
-	}
-	*/
 
 	// create a mapping from indices of the subgraph to
 	// the indices of af
@@ -337,91 +291,3 @@ bool is_set_complete(AF* af, ArrayList* s) {
 
 	return(equal);
 }
-/*
-PAF* project_argumentation_framework(AF *af, bool* mask) {
-	PAF *paf = calloc(1, sizeof(PAF));
-	assert(paf != NULL);
-
-	SIZE_TYPE mapping_size = 0;
-	SIZE_TYPE mapped_index = 0;
-	for (SIZE_TYPE i = 0; i < af->size; ++i) {
-		if (mask[i]) {
-			SIZE_TYPE* tmp = realloc(paf->index_mapping, (mapping_size + 1) * sizeof(SIZE_TYPE));
-			assert(tmp != NULL);
-			paf->index_mapping = tmp;
-
-			++mapping_size;
-		}
-	}
-
-    SIZE_TYPE size = 0;
-	for (SIZE_TYPE i = 0; i < af->size; ++i)
-		if (mask[i])
-			++size;
-	assert(size > 0);
-
-    paf->index_mapping = calloc(size, sizeof(SIZE_TYPE));
-    SIZE_TYPE j = 0;
-    for (SIZE_TYPE i = 0; i < af->size; ++i) {
-        if (mask[i]) {
-            paf->index_mapping[j++] = i;
-        }
-    }
-
-    paf->af = create_argumentation_framework(size);
-    for (SIZE_TYPE i = 0; i < size; ++i) {
-        for (SIZE_TYPE j = 0; j < size; ++j) {
-            if (TEST_BIT(af->graph[paf->index_mapping[i]], paf->index_mapping[j])) {
-				SET_BIT(paf->af->graph[i], j);
-            }
-        }
-    }
-
-	return paf;
-}
-
-
-BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size) {
-	BitSet* res = create_bitset(base_size);
-	for (SIZE_TYPE i = 0; i < paf->af->size; ++i) {
-		if (TEST_BIT(bs, i)) {
-			SET_BIT(res, paf->index_mapping[i]);
-		}
-	}
-	return res;
-}
-
-
-void swap_arguments(AF* af, SIZE_TYPE i, SIZE_TYPE j) {
-	BitSet* iset = af->graph[i];
-	af->graph[i] = af->graph[j];
-	af->graph[j] = iset;
-
-	for (SIZE_TYPE k = 0; k < af->size; ++k) {
-		bool ibit = TEST_BIT(af->graph[k], i);
-		if (TEST_BIT(af->graph[k], j)) {
-			SET_BIT(af->graph[k], i);
-		} else {
-			RESET_BIT(af->graph[k], i);
-		}
-		if (ibit) {
-			SET_BIT(af->graph[k], j);
-		} else {
-			RESET_BIT(af->graph[k], j);
-		}
-	}
-}
-
-// Map indices of bitset s according to the mapping.
-// Return the new bitset
-BitSet *map_indices(BitSet *s, int *mapping) {
-  int i;
-  BitSet* c = create_bitset(s->size);
-
-  for (i = 0; i < s->size; ++i)
-    if (TEST_BIT(s, i))
-      SET_BIT(c, mapping[i]);
-
-  return(c);
-}
-*/

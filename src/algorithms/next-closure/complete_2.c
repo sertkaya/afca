@@ -102,18 +102,6 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	bool* current_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_bv != NULL);
 
-	/*
-	bool* allowed = calloc(attacks->size, sizeof(bool));
-	assert(allowed != NULL);
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
-		allowed[i] = true;
-	// attackers of argument 0 are not allowed. argument 0 is
-	// the given argument
-	for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[0]; ++j)
-		allowed[attacked_by->lists[0][j]] = false;
-		*/
-
-	// copy_bitset(current, tmp);
 	for (SIZE_TYPE i = 0; i < tmp->size; ++i) {
 		current_bv[tmp->elements[i]] = true;
 	}
@@ -122,32 +110,19 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	assert(current_closure_bv!=NULL);
 
 	for (SIZE_TYPE i = attacks->size - 1; i > 0 ; --i) {
-		// if (TEST_BIT(tmp, i)) {
 		if (current_bv[i]) {
-			// RESET_BIT(tmp, i);
 			current_bv[i] = false;
 			// remove i from tmp
 			list_remove(i, tmp);
 
-			/*
-			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j)
-				allowed[attacked_by->lists[i][j]] = true;
-				*/
-
 		} else if (!check_arg_attacks_arg(attacks, i, i) &&
 				   !check_arg_attacks_set(attacks, i, tmp) &&
-				   !check_set_attacks_arg(attacks, tmp, i)) {
-				   // allowed[i]) {
+				   !check_set_attacks_arg(attacks, tmp, i)) { // &&
+				   // && (attacks->list_sizes[i] > 0)) {
 
-			// SET_BIT(tmp, i);
 			current_bv[i] = true;
 			// add i to tmp
 			list_add(i, tmp);
-
-			/*
-			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j)
-				allowed[attacked_by->lists[i][j]] = false;
-				*/
 
 			closure_semi_complete(attacks, attacked_by, tmp, current_closure, current_closure_bv);
 
@@ -167,29 +142,16 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 						break;
 					}
 				}
-				/*
-				if (!is_set_consistent(attacks, current_closure)) {
-					good = false;
-					break;
-				}
-				*/
 			}
 			if (good) {
 				list_free(tmp);
 				free(current_bv);
 				free(current_closure_bv);
-				// printf("it is conflict-free\n");
 				return(1);
 			}
-			// RESET_BIT(tmp, i);
 			current_bv[i] = false;
 			// remove i from tmp
 			list_remove(i, tmp);
-
-			/*
-			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j)
-				allowed[attacked_by->lists[i][j]] = true;
-				*/
 		}
 	}
 	free(current_bv);
@@ -211,7 +173,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
 	STOP_TIMER(stop_time);
 	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	print_list(stdout, current_closure, "<-current_closure\n");
+	// print_list(stdout, current_closure, "<-current_closure\n");
 
 	if (!is_set_conflict_free(attacks, current_closure)) {
 		// closure has a conflict. complete extension does not exist.
@@ -229,8 +191,6 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		return(current_closure);
 	}
 	// Not self-defending. That is, the given argument is not defended.
-	list_reset(current);
-	list_reset(current_closure);
 
 	// Sort in descending order of victims
 	// ...
@@ -248,13 +208,17 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// or instead do swap in the attacked_by framework
 	swap_arguments(attacked_by, 0, argument);
 
+	list_reset(current);
+	list_reset(current_closure);
 	// add argument 0 to current
 	list_add(0, current);
-	list_add(0, current_closure);
+	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
+	// list_add(0, current_closure);
 
 	int concept_count = 0;
 	do {
-		// print_list(stdout, current, "\n");
+		// print_list(stdout, current, "<- current\n");
+		// print_list(stdout, current_closure, "<- current_closure\n");
 		list_copy(current_closure, current);
 		++concept_count;
 		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
@@ -299,6 +263,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	// print_argumentation_framework(subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	/*
 	for (SIZE_TYPE i = 0; i < subgraph->af->size; ++i) {
 		// printf("%d: ", subgraph->mapping_from_subgraph[i]);
 		printf("%d: ", i);
@@ -308,6 +273,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 		}
 		printf("\n");
 	}
+	*/
 
 	// solve DC-CO in the subgraph
 	START_TIMER(start_time);
