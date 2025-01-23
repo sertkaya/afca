@@ -23,6 +23,9 @@
 #include <stdbool.h>
 
 #include "af.h"
+
+#include <string.h>
+
 #include "../bitset/bitset.h"
 #include "../utils/timer.h"
 #include "../utils/stack.h"
@@ -290,4 +293,26 @@ bool is_set_complete(AF* af, ArrayList* s) {
 	list_free(closure);
 
 	return(equal);
+}
+
+AF* apply_mapping(AF* af, ARG_TYPE* mapping) {
+	AF* mapped_af = create_argumentation_framework(af->size);
+
+	mapped_af->size = af->size;
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		ARG_TYPE mapped_i = mapping[i];
+		mapped_af->list_sizes[i] = af->list_sizes[mapped_i];
+		mapped_af->lists[i] = calloc(mapped_af->list_sizes[i], sizeof(ARG_TYPE));
+		assert(mapped_af->lists[i] != NULL);
+		memcpy(mapped_af->lists[i], af->lists[mapped_i], mapped_af->list_sizes[i] * sizeof(ARG_TYPE));
+	}
+
+	for (SIZE_TYPE i = 0; i < mapped_af->size; ++i) {
+		ARG_TYPE mapped_i = mapping[i];
+		for (SIZE_TYPE j = 0; j < mapped_af->list_sizes[i]; ++j) {
+			mapped_af->lists[i][j] = mapping[af->lists[mapped_i][j]];
+		}
+	}
+
+	return(mapped_af);
 }

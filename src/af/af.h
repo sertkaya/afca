@@ -97,6 +97,11 @@ bool is_set_complete(AF* af, ArrayList* s);
 
 void swap_arguments(AF* af, ARG_TYPE a1, ARG_TYPE a2);
 
+// Return a new af after applying the mapping.
+// Adjacency list at index i of the new af is
+// the adjacency list at mapping[i] of the old af.
+AF* apply_mapping(AF* af, ARG_TYPE *mapping);
+
 //PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
 //BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);

@@ -31,9 +31,18 @@ int main(int argc, char *argv[]) {
 
 	AF *af = read_af(input_fd);
 	printf("AF:\n");
-	print_argumentation_framework(af);
+	// print_argumentation_framework(af);
 	printf("\n");
 
+	ARG_TYPE *mapping = calloc(af->size, sizeof(ARG_TYPE));
+	assert(mapping != NULL);
+
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		// mapping[i] = af->size - 1 - i;
+		mapping[i] =  i;
+
+	AF *mapped_af = apply_mapping(af, mapping);
+	print_argumentation_framework(mapped_af);
 	// AF* af_t = transpose_argumentation_framework(af);
 
 	// Subgraph* subgraph = extract_subgraph_backwards(af_t, a);
@@ -41,6 +50,7 @@ int main(int argc, char *argv[]) {
 	// print_argumentation_framework(subgraph->af);
 	// printf("\n");
 
+	/*
 	swap_arguments(af, 0, 4);
 	printf("AF:\n");
 	print_argumentation_framework(af);
@@ -55,21 +65,8 @@ int main(int argc, char *argv[]) {
 	print_list(stdout, l, "before\n");
 	list_remove(3, l);
 	print_list(stdout, l, "after\n");
-	// print_argumentation_framework(af_t);
+	*/
 	// print_argumentation_framework(af_c);
-	// printf("\n");
-
-	// BitSet* bs = create_bitset(af->size);
-	// BitSet* r = create_bitset(af->size);
-
-	// SET_BIT(bs, 4);
-	// printf("bs: ");
-	// print_bitset(bs, stdout);
-	// printf("\n");
-
-	// up_arrow(af, bs, r);
-	// printf("r: ");
-	// print_bitset(r, stdout);
 	// printf("\n");
 
 	return(0);
