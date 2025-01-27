@@ -167,29 +167,7 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
-	list_add(argument, current);
 
-	START_TIMER(start_time);
-	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
-	STOP_TIMER(stop_time);
-	printf("closure time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	// print_list(stdout, current_closure, "<-current_closure\n");
-
-	if (!is_set_conflict_free(attacks, current_closure)) {
-		// closure has a conflict. complete extension does not exist.
-		printf("=== dc_co_next_closure finished 1===\n");
-		return(NULL);
-	}
-
-	// Check if closure is self-defending
-	START_TIMER(start_time);
-	if (is_set_self_defending(attacks, attacked_by, current_closure)) {
-		// closure is a complete extension containing the argument
-		STOP_TIMER(stop_time);
-		printf("is_set_self_defending time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-		printf("=== dc_co_next_closure finished 2===\n");
-		return(current_closure);
-	}
 	// Not self-defending. That is, the given argument is not defended.
 
 	// Sort in descending order of victims
@@ -260,26 +238,35 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
 	printf("Subgraph size:%d\n", subgraph->af->size);
 	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
-	// print_argumentation_framework(subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
-	/*
-	for (SIZE_TYPE i = 0; i < subgraph->af->size; ++i) {
-		// printf("%d: ", subgraph->mapping_from_subgraph[i]);
-		printf("%d: ", i);
-		for (SIZE_TYPE  j = 0; j < subgraph->af->list_sizes[i]; ++j) {
-			// printf("%d ", subgraph->mapping_from_subgraph[subgraph->af->lists[i][j]]);
-			printf("%d ", subgraph->af->lists[i][j]);
-		}
-		printf("\n");
-	}
-	*/
 
 	// solve DC-CO in the subgraph
-	START_TIMER(start_time);
-	ArrayList *extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
-	STOP_TIMER(stop_time);
-	printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	ArrayList* current = list_create();
+	list_add(subgraph->mapping_to_subgraph[argument], current);
+	ArrayList* current_closure = list_create();
+	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
+	assert(current_closure_bv!=NULL);
+	closure_semi_complete(subgraph->af, subgraph_t, current, current_closure, current_closure_bv);
+	if (!is_set_conflict_free(subgraph->af, current_closure)) {
+		// closure in the subgraph has a conflict. complete extension does not exist.
+		return(NULL);
+	}
+
+	// closure is conflict-free. check if it is self-defending
+	ArrayList *extension = NULL;
+	if (is_set_self_defending(subgraph->af, subgraph_t, current_closure)) {
+		// closure is a complete extension (in the subgraph) containing the argument
+		extension = current_closure;
+	}
+	else {
+		// search for a solution by enumerating
+		START_TIMER(start_time);
+		extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
+		STOP_TIMER(stop_time);
+		printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	}
+
 	// TODO!
 	// free_argumentation_framework(attacks_adj);
 	// free_argumentation_framework(attacked_by_projection_adj)

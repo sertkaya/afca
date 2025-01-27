@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		// mapping[i] = af->size - 1 - i;
-		mapping[i] =  i;
+		mapping[i] = i;
 
 	AF *mapped_af = apply_mapping(af, mapping);
 	print_argumentation_framework(mapped_af);
