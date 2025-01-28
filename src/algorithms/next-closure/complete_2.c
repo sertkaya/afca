@@ -158,7 +158,6 @@ bool next_conflict_free_semi_complete_intent(AF* attacks, AF* attacked_by, Array
 	free(current_closure_bv);
 	return(0);
 }
-
 ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
 
@@ -171,9 +170,11 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// Not self-defending. That is, the given argument is not defended.
 
 	// Sort in descending order of victims
+	// TODO
 	// ...
 
 	// Move defenders of the argument to the right-end.
+	// TODO
 	// ...
 
 	// Now move the argument to the very left bit ...
@@ -185,6 +186,103 @@ ArrayList* dc_co_next_closure(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// attacked_by = transpose_argumentation_framework(attacks);
 	// or instead do swap in the attacked_by framework
 	swap_arguments(attacked_by, 0, argument);
+
+	list_reset(current);
+	list_reset(current_closure);
+	// add argument 0 to current
+	list_add(0, current);
+	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
+	// list_add(0, current_closure);
+
+	int concept_count = 0;
+	do {
+		// print_list(stdout, current, "<- current\n");
+		// print_list(stdout, current_closure, "<- current_closure\n");
+		list_copy(current_closure, current);
+		++concept_count;
+		if (is_set_self_defending(attacks, attacked_by, current_closure)) {
+			free(current_closure_bv);
+			free_argumentation_framework(attacks);
+			free_argumentation_framework(attacked_by);
+			// swap back 0 and argument in the current_closure
+			for (SIZE_TYPE i = 0; i < current_closure->size; ++i) {
+				if (current_closure->elements[i] == 0)
+					current_closure->elements[i] = argument;
+				else if (current_closure->elements[i] == argument)
+					current_closure->elements[i] = 0;
+			}
+			printf("=== dc_co_next_closure finished 3===\n");
+			printf("Number of concepts generated: %d\n", concept_count);
+			return(current_closure);
+		}
+	} while (next_conflict_free_semi_complete_intent(attacks, attacked_by, current, current_closure));
+
+	printf("Number of concepts generated: %d\n", concept_count);
+
+	free(current_closure_bv);
+	free_argumentation_framework(attacks);
+	free_argumentation_framework(attacked_by);
+
+	printf("=== dc_co_next_closure finished 4===\n");
+	return(NULL);
+}
+
+ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
+	struct timeval start_time, stop_time;
+
+	ArrayList* current = list_create();
+	ArrayList* current_closure = list_create();
+	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
+	assert(current_closure_bv!=NULL);
+
+
+	// Not self-defending. That is, the given argument is not defended.
+
+	// move the argument to the very left bit ...
+	// swap_arguments(attacks, 0, argument);
+	// swap_arguments(attacked_by, 0, argument);
+
+	ARG_TYPE *mapping = calloc(attacks->size, sizeof(ARG_TYPE));
+	assert(mapping != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
+		mapping[i] = i;
+	// move the argument to the very left bit ...
+	swap_arguments(attacks, 0, argument);
+	swap_arguments(attacked_by, 0, argument);
+	// move attackers of attackers of 0 to the right-end
+	SIZE_TYPE index = attacked_by->size - 1;
+	bool *tmp = calloc(attacked_by->size, sizeof(bool));
+	assert(tmp != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[0]; ++i) {
+		ARG_TYPE attacker_of_0 = attacked_by->lists[0][i];
+		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_0]; ++j) {
+			ARG_TYPE attacker_of_attacker_of_0 = attacked_by->lists[attacker_of_0][j];
+			if (!tmp[attacker_of_attacker_of_0]) {
+				printf("%d\n", index);
+				mapping[index] = attacker_of_attacker_of_0;
+				mapping[attacker_of_attacker_of_0] = index;
+				--index;
+				tmp[attacker_of_attacker_of_0] = true;
+			}
+		}
+	}
+
+	apply_mapping(attacks, mapping);
+	apply_mapping(attacked_by, mapping);
+	// Sort in descending order of victims
+	// TODO
+	// ...
+
+	// Move defenders of the argument to the right-end.
+	// TODO
+	// ...
+
+
+	// recompute the attacked_by framework
+	// free_argumentation_framework(attacked_by);
+	// attacked_by = transpose_argumentation_framework(attacks);
+	// or instead do swap in the attacked_by framework
+	// swap_arguments(attacked_by, 0, argument);
 
 	list_reset(current);
 	list_reset(current_closure);
@@ -262,7 +360,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	else {
 		// search for a solution by enumerating
 		START_TIMER(start_time);
-		extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
+		extension = dc_co_next_closure_2(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
 		STOP_TIMER(stop_time);
 		printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
@@ -275,7 +373,6 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 		return(NULL);
 
 	// map indices of the computed extension back
-	// ...
 	ArrayList *mapped_extension = list_create();
 	for (SIZE_TYPE i = 0; i < extension->size; ++i) {
 		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], mapped_extension);
