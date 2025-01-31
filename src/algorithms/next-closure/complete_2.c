@@ -241,40 +241,65 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(current_closure_bv!=NULL);
 
+	// prepare the mapping:
+	// first attackers of argument, then the argument, then attackers of its attackers
 
-	// Not self-defending. That is, the given argument is not defended.
-
-	// move the argument to the very left bit ...
-	// swap_arguments(attacks, 0, argument);
-	// swap_arguments(attacked_by, 0, argument);
-
+	// initially every argument is mapped to its index
 	ARG_TYPE *mapping = calloc(attacks->size, sizeof(ARG_TYPE));
 	assert(mapping != NULL);
 	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
 		mapping[i] = i;
-	// move the argument to the very left bit ...
-	swap_arguments(attacks, 0, argument);
-	swap_arguments(attacked_by, 0, argument);
-	// move attackers of attackers of 0 to the right-end
-	SIZE_TYPE index = attacked_by->size - 1;
-	bool *tmp = calloc(attacked_by->size, sizeof(bool));
-	assert(tmp != NULL);
-	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[0]; ++i) {
-		ARG_TYPE attacker_of_0 = attacked_by->lists[0][i];
-		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_0]; ++j) {
-			ARG_TYPE attacker_of_attacker_of_0 = attacked_by->lists[attacker_of_0][j];
-			if (!tmp[attacker_of_attacker_of_0]) {
-				printf("%d\n", index);
-				mapping[index] = attacker_of_attacker_of_0;
-				mapping[attacker_of_attacker_of_0] = index;
-				--index;
-				tmp[attacker_of_attacker_of_0] = true;
+
+	bool *tmp_bv = calloc(attacked_by->size, sizeof(bool));
+	assert(tmp_bv != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
+		tmp_bv[i] = false;
+
+	SIZE_TYPE index = 0;
+	ARG_TYPE tmp_a = mapping[index];
+	// place attackers at the beginning
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[argument]; ++i) {
+		ARG_TYPE attacker_of_argument = attacked_by->lists[argument][i];
+		tmp_a = mapping[index];
+		mapping[index] = mapping[attacker_of_argument];
+		mapping[attacker_of_argument] = tmp_a;
+		tmp_bv[attacker_of_argument] = true;
+		++index;
+	}
+
+	// now place the argument
+	tmp_a = mapping[index];
+	mapping[index] = mapping[argument];
+	mapping[argument] = tmp_a;
+	tmp_bv[argument] = true;
+	++index;
+
+	// as next move attackers of attackers of argument to the right of the argument
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[argument]; ++i) {
+		ARG_TYPE attacker_of_argument = mapping[attacked_by->lists[argument][i]];
+		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_argument]; ++j) {
+			ARG_TYPE attacker_of_attacker_of_argument = mapping[attacked_by->lists[attacker_of_argument][j]];
+			if (!tmp_bv[attacker_of_attacker_of_argument]) {
+				tmp_a = mapping[index];
+				mapping[index] = mapping[attacker_of_attacker_of_argument];
+				mapping[attacker_of_attacker_of_argument] = tmp_a;
+				tmp_bv[attacker_of_attacker_of_argument] = true;
+				++index;
 			}
 		}
 	}
 
+	/*
+	printf("Argument: %d\n", argument);
+	printf("Mapping:\n");
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
+		printf("%d\n", mapping[i]);
+	printf("\n");
+	*/
+
 	apply_mapping(attacks, mapping);
 	apply_mapping(attacked_by, mapping);
+
 	// Sort in descending order of victims
 	// TODO
 	// ...
@@ -365,7 +390,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	else {
 		// search for a solution by enumerating
 		START_TIMER(start_time);
-		extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
+		extension = dc_co_next_closure_2(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
 		STOP_TIMER(stop_time);
 		printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
