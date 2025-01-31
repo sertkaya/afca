@@ -324,7 +324,6 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 	return(NULL);
 }
 
-
 ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 
 	struct timeval start_time, stop_time;
@@ -360,7 +359,7 @@ ArrayList* dc_co_subgraph(AF* attacks, ARG_TYPE argument) {
 	else {
 		// search for a solution by enumerating
 		START_TIMER(start_time);
-		extension = dc_co_next_closure_2(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
+		extension = dc_co_next_closure(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
 		STOP_TIMER(stop_time);
 		printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}

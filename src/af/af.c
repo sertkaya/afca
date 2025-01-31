@@ -226,15 +226,16 @@ bool add_attack(AF* af, ARG_TYPE i, ARG_TYPE j) {
 // Returns true if arg_1 attacks arg_2
 // Assumes that the adjacency lists are sorted!
 bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
-	for (SIZE_TYPE i; i < af->list_sizes[arg_1]; ++i)
-		if (af->lists[arg_1][i] == arg_2)
+	for (SIZE_TYPE i = 0; i < af->list_sizes[arg_1]; ++i)
+		if (af->lists[arg_1][i] == arg_2) {
 			return(true);
+		}
 	return(false);
 }
 
 // Returns true if s attacks arg
 bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
-	for (SIZE_TYPE i; i < s->size; ++i)
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
 		if (check_arg_attacks_arg(af, s->elements[i], arg))
 			return(true);
 	return(false);
@@ -242,7 +243,7 @@ bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg) {
 
 // Returns true if arg attacks s
 bool check_arg_attacks_set(AF* af, ARG_TYPE arg, ArrayList* s) {
-	for (SIZE_TYPE i; i < s->size; ++i)
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
 		if (check_arg_attacks_arg(af, arg, s->elements[i]))
 			return(true);
 	return(false);
