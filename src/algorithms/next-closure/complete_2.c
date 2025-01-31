@@ -45,7 +45,8 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 
 	// Push elements of s to the stack, add to r and to r_bv
 	for (SIZE_TYPE i = 0; i < s->size; ++i) {
-		push(&update, s->elements[i]);
+		// push(&update, s->elements[i]);
+		push(&update, new_stack_element_int(s->elements[i]));
 		list_add(s->elements[i], r);
 		r_bv[s->elements[i]] = true;
 	}
@@ -54,7 +55,8 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 	// TODO: This is independent of s. It can be done outside the closure function.
 	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
 		if (af_t->list_sizes[i] == 0 && !r_bv[i]) {
-			push(&update, i);
+			// push(&update, i);
+			push(&update, new_stack_element_int(i));
 			list_add(i, r);
 			r_bv[i] = true;
 		}
@@ -68,11 +70,13 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 	assert(victims_a != NULL);
 	memset(victims_a, 0, af->size * sizeof(bool));
 
-	SIZE_TYPE a = pop(&update);
+	// SIZE_TYPE a = pop(&update);
+	SIZE_TYPE a = pop_int(&update);
 	while (a != -1) {
 		if (af->list_sizes[a] == 0) {
 			// a does not attack anybody, pop and continue
-			a = pop(&update);
+			// a = pop(&update);
+			a = pop_int(&update);
 			continue;
 		}
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
@@ -83,14 +87,16 @@ void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--unattacked_attackers_count[victim_victim_a];
 					if ((unattacked_attackers_count[victim_victim_a] == 0) && !r_bv[victim_victim_a])  {
-						push(&update, victim_victim_a);
+						// push(&update, victim_victim_a);
+						push(&update, new_stack_element_int(victim_victim_a));
 						list_add(victim_victim_a, r);
 						r_bv[victim_victim_a] = true;
 					}
 				}
 			}
 		}
-		a = pop(&update);
+		// a = pop(&update);
+		a = pop_int(&update);
 	}
 	free(unattacked_attackers_count);
 	free(victims_a);

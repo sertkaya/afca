@@ -20,32 +20,81 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// typedef union stack_element StackElement;
-typedef struct stack Stack;
 
-/*
 union stack_element {
 	int n;
 	void* p;
 };
-*/
+typedef union stack_element StackElement;
 
 struct stack {
 	int size;
-	unsigned int* elements;
-	// StackElement** elements;
+	StackElement** elements;
 };
+typedef struct stack Stack;
 
 void init_stack(Stack* s);
 
-inline void push(Stack* s, unsigned int e) {
-	unsigned int* tmp = realloc(s->elements, (s->size + 1) * sizeof(unsigned int));
+inline void push(Stack* s, StackElement* e) {
+	StackElement** tmp = realloc(s->elements, (s->size + 1) * sizeof(StackElement*));
 	assert(tmp != NULL);
 	s->elements = tmp;
 	s->elements[s->size] = e;
 	++s->size;
 }
 
+inline StackElement* new_stack_element_int(int i) {
+	StackElement* e = calloc(1, sizeof(StackElement));
+	assert(e != NULL);
+	e->n = i;
+	return(e);
+}
+
+inline StackElement* new_stack_element_ptr(void* p) {
+	StackElement* e = calloc(1, sizeof(StackElement));
+	assert(e != NULL);
+	e->p = p;
+	return(e);
+}
+
+inline unsigned int pop_int(Stack* s) {
+	StackElement* e;
+	StackElement** tmp;
+
+	if (s->size == 0)
+		return(-1);
+
+	--s->size;
+	e = s->elements[s->size];
+	tmp = realloc(s->elements, (s->size) * sizeof(StackElement*));
+	assert(tmp != NULL || s->size == 0);
+	s->elements = tmp;
+
+	unsigned int e_n = e->n;
+	free(e);
+
+	return(e_n);
+}
+
+inline void* pop_ptr(Stack* s) {
+	StackElement* e;
+	StackElement** tmp;
+
+	if (s->size == 0)
+		return(NULL);
+
+	--s->size;
+	e = s->elements[s->size];
+	tmp = realloc(s->elements, (s->size) * sizeof(StackElement*));
+	assert(tmp != NULL || s->size == 0);
+	s->elements = tmp;
+
+	void* e_p = e->p;
+	free(e);
+
+	return(e_p);
+}
+/*
 inline unsigned int pop(Stack* s) {
 	unsigned int e;
 	unsigned int* tmp;
@@ -61,8 +110,11 @@ inline unsigned int pop(Stack* s) {
 
 	return e;
 }
+*/
 
 inline void free_stack(Stack* s) {
+	for (unsigned int i = 0; i < s->size; ++i)
+		free(s->elements[i]);
 	free(s->elements);
 }
 

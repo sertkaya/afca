@@ -135,15 +135,18 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 
 	Stack s;
 	init_stack(&s);
-	push(&s, a);
-	while ((a = pop(&s)) != -1) {
+	// push(&s, a);
+	push(&s, new_stack_element_int(a));
+	// while ((a = pop(&s)) != -1) {
+	while ((a = pop_int(&s)) != -1) {
 		if  (!visited[a]) {
 			visited[a] = true;
 			++subgraph_size;
 		}
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i)
 			if (!visited[af_t->lists[a][i]]) { // && (af_t->lists[a][i] != a)) {
-				push(&s, af_t->lists[a][i]);
+				// push(&s, af_t->lists[a][i]);
+				push(&s, new_stack_element_int(af_t->lists[a][i]));
 			}
 	}
 

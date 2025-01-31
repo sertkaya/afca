@@ -19,8 +19,11 @@
 
 #include "stack.h"
 
-extern inline void push(Stack*s, unsigned int e);
-extern inline unsigned int pop(Stack* s);
+// extern inline void push(Stack*s, unsigned int e);
+extern inline void push(Stack*s, StackElement* e);
+// extern inline unsigned int pop(Stack* s);
+extern inline unsigned int pop_int(Stack* s);
+extern inline void* pop_ptr(Stack* s);
 
 void init_stack(Stack* s) {
 	s->size = 0;
