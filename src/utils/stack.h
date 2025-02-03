@@ -85,12 +85,12 @@ inline void* pop_ptr(Stack* s) {
 
 	--s->size;
 	e = s->elements[s->size];
+	void* e_p = e->p;
+	free(e);
+
 	tmp = realloc(s->elements, (s->size) * sizeof(StackElement*));
 	assert(tmp != NULL || s->size == 0);
 	s->elements = tmp;
-
-	void* e_p = e->p;
-	free(e);
 
 	return(e_p);
 }
