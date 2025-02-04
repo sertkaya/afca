@@ -241,9 +241,12 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 
 	// initially every argument is mapped to its index
 	ARG_TYPE *order = calloc(attacks->size, sizeof(ARG_TYPE));
-	assert(order != NULL);
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
+	// ARG_TYPE *reverse_mapping = calloc(attacks->size, sizeof(ARG_TYPE));
+	// assert(order != NULL && reverse_mapping != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
 		order[i] = i;
+		// reverse_mapping[i] = i;
+	}
 
 	bool *tmp_bv = calloc(attacked_by->size, sizeof(bool));
 	assert(tmp_bv != NULL);
@@ -257,7 +260,9 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 		ARG_TYPE attacker_of_argument = attacked_by->lists[argument][i];
 		tmp_a = order[index];
 		order[index] = order[attacker_of_argument];
+		// reverse_mapping[order[attacker_of_argument]] = index;
 		order[attacker_of_argument] = tmp_a;
+		// reverse_mapping[tmp_a] = attacker_of_argument;
 		tmp_bv[attacker_of_argument] = true;
 		++index;
 	}
@@ -279,7 +284,9 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 			if (!tmp_bv[attacker_of_attacker_of_argument]) {
 				tmp_a = order[index];
 				order[index] = order[attacker_of_attacker_of_argument];
+				// reverse_mapping[order[attacker_of_attacker_of_argument]] = index;
 				order[attacker_of_attacker_of_argument] = tmp_a;
+				// reverse_mapping[tmp_a] = attacker_of_attacker_of_argument;
 				tmp_bv[attacker_of_attacker_of_argument] = true;
 				++index;
 			}
@@ -298,81 +305,88 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 	// TODO
 	// ...
 
-	Stack nodes_to_process;
-	init_stack(&nodes_to_process);
-	struct node {ARG_TYPE a; ArrayList* l;};
+	Stack states;
+	init_stack(&states);
+	struct state {ARG_TYPE index; ArrayList* set;};
 
-	ArrayList* current = list_create();
-	ArrayList* current_closure = list_create();
-	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
-	assert(current_closure_bv!=NULL);
+	ArrayList* closure = list_create();
+	bool* closure_bv = calloc(attacks->size, sizeof(bool));
+	assert(closure_bv != NULL);
 
-	list_add(argument, current);
-	closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
+	struct state *current = malloc(sizeof(struct state));
+	assert(current != NULL);
+	current->index = argument_index;
+	current->set = list_create();
+	list_add(argument, current->set);
 
-	struct node *n = malloc(sizeof(struct node));
-	assert(n != NULL);
-	n->a = argument_index;
-	n->l = current_closure;
-	push(&nodes_to_process, new_stack_element_ptr(n));
+	closure_semi_complete(attacks, attacked_by, current->set, closure, closure_bv);
 
-	while (n = (struct node*) pop_ptr(&nodes_to_process)) {
-		printf("-->%d %d\n", ((struct node*) n)->a, order[n->a]);
-		print_list(stdout, n->l, "(n->l)\n");
+	list_free(current->set);
+	current->set = list_duplicate(closure);
+
+	push(&states, new_stack_element_ptr(current));
+
+	ArrayList *tmp = list_create();
+	while (current =  pop_ptr(&states)) {
+		// printf("----------------\n");
+		// print_list(stdout, current->set, "\n");
 		// if (is_set_conflict_free(attacks, n->l) && is_set_self_defending(attacks, attacked_by, n->l)) {
 		// 	return(n->l);
 		// }
-		ArrayList* current = list_duplicate(n->l);
-		bool *current_bv = calloc(attacks->size, sizeof(bool));
-		assert(current_bv != NULL);
 
-		for (SIZE_TYPE i = n->a + 1; !check_arg_attacks_set(attacks, order[i], current) && !check_set_attacks_arg(attacks, current, order[i]) && i < attacks->size; ++i) {
-			printf("i: %d %d\n", i, order[i]);
-			ArrayList* current_closure = list_create();
+		// for (SIZE_TYPE i = current->index + 1; !check_arg_attacks_set(attacks, order[i], current->set) && !check_set_attacks_arg(attacks, current->set, order[i]) && i < attacks->size; ++i) {
+		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
+			list_copy(current->set, tmp);
+			list_add(order[i], tmp);
 
-			list_add(order[i], current);
-			print_list(stdout, current, "(current)\n");
-			closure_semi_complete(attacks, attacked_by, current, current_closure, current_closure_bv);
-			print_list(stdout, current_closure, "(current_closure)\n");
+			if (!is_set_conflict_free(attacks, tmp))
+				continue;
 
-			// if conflict-free and self-defending then found
-			if (is_set_conflict_free(attacks, current_closure) && is_set_self_defending(attacks, attacked_by, current_closure))
-				return(current_closure);
+			// printf("i:%d order[i]:%d\n", i, order[i]);
+			closure_semi_complete(attacks, attacked_by, tmp, closure, closure_bv);
+			// print_list(stdout, closure, "(closure)\n\n");
 
-			memset(current_bv, 0, attacks->size * sizeof(bool));
-			for (SIZE_TYPE j = 0; j < current->size; ++j)
-				current_bv[order[current->elements[j]]] = true;
+			// if closure is conflict-free and self-defending then found
+			if (is_set_conflict_free(attacks, closure) && is_set_self_defending(attacks, attacked_by, closure)) {
+				printf("found\n");
+				return(closure);
+			}
+
+			memset(tmp_bv, 0, attacks->size * sizeof(bool));
+			for (SIZE_TYPE j = 0; j < tmp->size; ++j)
+				tmp_bv[tmp->elements[j]] = true;
+
+			/*
+			memset(current_closure_bv, 0, attacks->size * sizeof(bool));
+			for (SIZE_TYPE j = 0; j < current_closure->size; ++j)
+				current_closure_bv[reverse_mapping[current_closure->elements[j]]] = true;
+				*/
 
 			// TODO: if canonical ...
 			bool canonical = true;
 			for (SIZE_TYPE j = 0; j < i; ++j) {
-				if (current_closure_bv[order[j]] && !current_bv[order[j]]) {
+				if (closure_bv[order[j]] && !tmp_bv[order[j]]) {
 					canonical = false;
-					printf("current_closure not canonical:%d %d\n", j, order[j]);
+					printf("closure not canonical:%d %d\n", j, order[j]);
 					break;
 				}
 			}
 
-			list_free(current);
-			current = NULL;
-			list_free(n->l);
-			n->l = NULL;
-			free(n);
-			n = NULL;
-
 			if (canonical) {
-				n = calloc(1, sizeof(struct node));
-				assert(n != NULL);
-				n->a = i;
-				n->l = current_closure;
-				push(&nodes_to_process, new_stack_element_ptr(n));
-				printf("==>%d\n", n->a);
-				print_list(stdout, n->l, "\n");
+				struct state *new = calloc(1, sizeof(struct state));
+				assert(new != NULL);
+				new->index = i;
+				new->set = list_duplicate(closure);
+				push(&states, new_stack_element_ptr(new));
 			}
 		}
+		list_free(current->set);
+		current->set = NULL;
+		free(current);
+		current = NULL;
 	}
 
-	free(current_closure_bv);
+	free(closure_bv);
 	free_argumentation_framework(attacks);
 	free_argumentation_framework(attacked_by);
 

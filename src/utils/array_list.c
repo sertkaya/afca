@@ -31,8 +31,10 @@ ArrayList* list_create() {
 
 int list_free(ArrayList* l) {
 	free(l->elements);
+	l->elements = NULL;
 	int freed_bytes = l->size * sizeof(ARG_TYPE);
 	free(l);
+	l = NULL;
 	freed_bytes+= sizeof(ArrayList);
 
 	return(freed_bytes);
@@ -55,7 +57,7 @@ ArrayList* list_duplicate(ArrayList* l) {
 }
 
 // copy elements of l1 into l2.
-// removes existing elements of l1.
+// removes existing elements of l2.
 void list_copy(ArrayList* l1, ArrayList* l2) {
 	list_reset(l2);
 	l2->size = l1->size;
