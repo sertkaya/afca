@@ -195,7 +195,7 @@ Subgraph* extract_subgraph_backwards(AF* af, AF* af_t, ARG_TYPE argument) {
 	return(subgraph);
 }
 
-// Returns true if s is consistent
+// Returns true if s is conflict-free
 bool is_set_conflict_free(AF* attacks, ArrayList* s) {
 	bool* victims = calloc(attacks->size, sizeof(bool));
 	assert(victims != NULL);
