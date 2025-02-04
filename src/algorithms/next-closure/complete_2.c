@@ -241,8 +241,48 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 
 	// initially every argument is mapped to its index
 	ARG_TYPE *order = calloc(attacks->size, sizeof(ARG_TYPE));
+	assert(order != NULL);
 	// ARG_TYPE *reverse_mapping = calloc(attacks->size, sizeof(ARG_TYPE));
 	// assert(order != NULL && reverse_mapping != NULL);
+
+	bool *tmp_bv = calloc(attacked_by->size, sizeof(bool));
+	assert(tmp_bv != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
+		tmp_bv[i] = false;
+
+	// place attackers at the beginning
+	SIZE_TYPE index = 0;
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[argument]; ++i) {
+		ARG_TYPE attacker_of_argument = attacked_by->lists[argument][i];
+		if (!tmp_bv[attacker_of_argument]) {
+			order[index++] = attacker_of_argument;
+			tmp_bv[attacker_of_argument] = true;
+		}
+	}
+	// now place the argument
+	// first note the index of the argument
+	ARG_TYPE argument_index = index;
+	order[index++] = argument;
+	tmp_bv[argument] = true;
+
+	// as next move attackers of attackers of argument to the right of the argument
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[argument]; ++i) {
+		ARG_TYPE attacker_of_argument = attacked_by->lists[argument][i];
+		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_argument]; ++j) {
+			ARG_TYPE attacker_of_attacker_of_argument = attacked_by->lists[attacker_of_argument][j];
+			if (!tmp_bv[attacker_of_attacker_of_argument]) {
+				order[index++] = attacker_of_attacker_of_argument;
+				tmp_bv[attacker_of_attacker_of_argument] = true;
+			}
+		}
+	}
+
+	// now the rest
+	for (SIZE_TYPE i = 0; i < attacks->size && !tmp_bv[i]; ++i) {
+		order[index++] = i;
+		tmp_bv[i] = true;
+	}
+	/*
 	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
 		order[i] = i;
 		// reverse_mapping[i] = i;
@@ -292,16 +332,18 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 			}
 		}
 	}
-
-	/*
-	printf("Argument: %d\n", argument);
-	printf("Mapping:\n");
-	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
-		printf("%d\n", mapping[i]);
-	printf("\n");
 	*/
 
-	// Sort in descending order of victims
+	printf("Argument: %d\n", argument);
+	/*
+	printf("Mapping:\n");
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
+		printf("%d:%d\n", i, order[i]);
+	printf("\n");
+	fflush(stdout);
+	*/
+
+	// Sort ?
 	// TODO
 	// ...
 
@@ -313,22 +355,25 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 	bool* closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(closure_bv != NULL);
 
+	ArrayList *tmp = list_create();
+	list_add(argument, tmp);
+	closure_semi_complete(attacks, attacked_by, tmp, closure, closure_bv);
+
+	// if closure is conflict-free and self-defending then found
+	if (is_set_conflict_free(attacks, closure) && is_set_self_defending(attacks, attacked_by, closure)) {
+		return(closure);
+	}
+
 	struct state *current = malloc(sizeof(struct state));
 	assert(current != NULL);
 	current->index = argument_index;
-	current->set = list_create();
-	list_add(argument, current->set);
-
-	closure_semi_complete(attacks, attacked_by, current->set, closure, closure_bv);
-
-	list_free(current->set);
 	current->set = list_duplicate(closure);
 
 	push(&states, new_stack_element_ptr(current));
 
-	ArrayList *tmp = list_create();
 	while (current =  pop_ptr(&states)) {
 		// printf("----------------\n");
+		// printf("%d: ", current->index);
 		// print_list(stdout, current->set, "\n");
 		// if (is_set_conflict_free(attacks, n->l) && is_set_self_defending(attacks, attacked_by, n->l)) {
 		// 	return(n->l);
@@ -344,11 +389,11 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 
 			// printf("i:%d order[i]:%d\n", i, order[i]);
 			closure_semi_complete(attacks, attacked_by, tmp, closure, closure_bv);
+			// print_list(stdout, tmp, "(tmp)\n");
 			// print_list(stdout, closure, "(closure)\n\n");
 
 			// if closure is conflict-free and self-defending then found
 			if (is_set_conflict_free(attacks, closure) && is_set_self_defending(attacks, attacked_by, closure)) {
-				printf("found\n");
 				return(closure);
 			}
 
@@ -367,7 +412,7 @@ ArrayList* dc_co_next_closure_2(AF* attacks, ARG_TYPE argument, AF* attacked_by)
 			for (SIZE_TYPE j = 0; j < i; ++j) {
 				if (closure_bv[order[j]] && !tmp_bv[order[j]]) {
 					canonical = false;
-					printf("closure not canonical:%d %d\n", j, order[j]);
+					// printf("closure not canonical:%d %d\n", j, order[j]);
 					break;
 				}
 			}
