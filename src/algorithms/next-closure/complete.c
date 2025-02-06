@@ -30,6 +30,8 @@
 // I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
 // Semi-complete extensions form a closure system.
 
+static  int closure_count = 0;
+
 // s: the set to be closed
 // r: the closure of s
 // r_bits: bool array representation of r
@@ -37,6 +39,8 @@
 void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv) {
 	Stack update;
 	init_stack(&update);
+
+	++closure_count;
 
 	// empty r
 	list_reset(r);
@@ -257,6 +261,7 @@ ArrayList* dc_co_subgraph_nc(AF* attacks, ARG_TYPE argument) {
 	closure_semi_complete(subgraph->af, subgraph_t, current, current_closure, current_closure_bv);
 	if (!is_set_conflict_free(subgraph->af, current_closure)) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
+		printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 
@@ -278,8 +283,10 @@ ArrayList* dc_co_subgraph_nc(AF* attacks, ARG_TYPE argument) {
 	// free_argumentation_framework(attacks_adj);
 	// free_argumentation_framework(attacked_by_projection_adj)
 
-	if (!extension)
+	if (!extension) {
+		printf("Closure count: %d\n", closure_count);
 		return(NULL);
+	}
 
 	// map indices of the computed extension back
 	ArrayList *mapped_extension = list_create();
@@ -293,5 +300,6 @@ ArrayList* dc_co_subgraph_nc(AF* attacks, ARG_TYPE argument) {
 	assert(closure_bv != NULL);
 	closure_semi_complete(attacks, attacked_by, mapped_extension, closure, closure_bv);
 
+	printf("Closure count: %d\n", closure_count);
 	return(closure);
 }
