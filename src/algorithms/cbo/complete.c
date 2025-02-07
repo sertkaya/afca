@@ -164,6 +164,15 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			tmp_bv[attacker_of_argument] = true;
 		}
 	}
+	// next the victims
+	for (SIZE_TYPE i = 0; i < attacks->list_sizes[argument]; ++i) {
+		ARG_TYPE victim_of_argument = attacks->lists[argument][i];
+		if (!tmp_bv[victim_of_argument]) {
+			order[index++] = victim_of_argument;
+			tmp_bv[victim_of_argument] = true;
+		}
+	}
+
 	// now place the argument
 	// first note the index of the argument
 	ARG_TYPE argument_index = index;
@@ -183,9 +192,11 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	}
 
 	// now the rest
-	for (SIZE_TYPE i = 0; i < attacks->size && !tmp_bv[i]; ++i) {
-		order[index++] = i;
-		tmp_bv[i] = true;
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		if (!tmp_bv[i]) {
+			order[index++] = i;
+			tmp_bv[i] = true;
+		}
 	}
 
 	// Sort ?
@@ -221,10 +232,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
-		// if (is_set_conflict_free(attacks, n->l) && is_set_self_defending(attacks, attacked_by, n->l)) {
-		// 	return(n->l);
-		// }
-
 		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
 			if (current->conflicts[order[i]])
 				continue;
@@ -232,25 +239,9 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			list_copy(current->set, tmp);
 			list_add(order[i], tmp);
 
-			/*
-			if (!is_set_conflict_free(attacks, tmp)) {
-				printf("tmp has conflict\n");
-				continue;
-			}
-			*/
-
-			// printf("i:%d order[i]:%d\n", i, order[i]);
 			is_closure_conflict_free = cbo_closure(attacks, attacked_by, tmp, closure, closure_bv, conflicts);
-			// print_list(stdout, tmp, "(tmp)\n");
-			// print_list(stdout, closure, "(closure)\n\n");
 
 			// if closure is conflict-free and self-defending then found
-			/*
-			if (is_set_conflict_free(attacks, closure) && is_set_self_defending(attacks, attacked_by, closure)) {
-				return(closure);
-			}
-			*/
-			// if (is_set_conflict_free(attacks, closure)) {
 			if (!is_closure_conflict_free) {
 				// printf("closure has conflict\n");
 				continue;
@@ -306,13 +297,14 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 
+	printf("Argument: %d\n", argument);
+
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
 	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
 	printf("Subgraph size:%d\n", subgraph->af->size);
 	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
 	STOP_TIMER(stop_time);
-	printf("Extracting and transposing subgraph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// solve DC-CO in the subgraph
 	ArrayList* current = list_create();
