@@ -39,8 +39,19 @@ inline void push(Stack* s, StackElement* e) {
 	StackElement** tmp = realloc(s->elements, (s->size + 1) * sizeof(StackElement*));
 	assert(tmp != NULL);
 	s->elements = tmp;
+
+	// --> for testing: queue
+	// ++s->size;
+	// for (int i = s->size - 1; i > 0; --i) {
+	// 	s->elements[i] = s->elements[i-1];
+	// }
+	// s->elements[0] = e;
+	// <--
+
+	// --> stack
 	s->elements[s->size] = e;
 	++s->size;
+	// <--
 }
 
 inline StackElement* new_stack_element_int(int i) {
