@@ -92,13 +92,6 @@ bool cbo_closure(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv, bool 
 	SIZE_TYPE a = pop_int(&update);
 	while (a != -1) {
 		/*
-		if (af->list_sizes[a] == 0) {
-			// a does not attack anybody, pop and continue
-			a = pop_int(&update);
-			continue;
-		}
-		*/
-		/*
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
 			printf("%d attacked by %d\n", a, af_t->lists[a][i]);
 			conflicts[af_t->lists[a][i]] = true;
