@@ -26,6 +26,35 @@
 #include "../../utils/timer.h"
 #include "../../af/sort.h"
 
+struct state {
+	ARG_TYPE index;
+	ArrayList* set;
+	bool *conflicts;
+};
+
+typedef struct state State;
+
+inline State *create_state(SIZE_TYPE size, ARG_TYPE index, ArrayList *set, bool *conflicts) {
+	State *s = calloc(1, sizeof(State));
+	assert(s != NULL);
+
+	s->index = index;
+	s->set = list_duplicate(set);
+	s->conflicts = calloc(size, sizeof(bool));
+	assert(conflicts != NULL);
+	memcpy(s->conflicts, conflicts, size * sizeof(bool));
+
+	return(s);
+}
+
+inline void delete_state(State *s) {
+	list_free(s->set);
+	s->set = NULL;
+	free(s->conflicts);
+	s->conflicts = NULL;
+	free(s);
+}
+
 // A complete extension is an admissible extension that contains every argument that it defends.
 // I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
 // Semi-complete extensions form a closure system.
@@ -198,7 +227,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	Stack states;
 	init_stack(&states);
-	struct state {ARG_TYPE index; ArrayList* set; bool *conflicts;};
 
 	ArrayList* closure = list_create();
 	bool* closure_bv = calloc(attacks->size, sizeof(bool));
@@ -215,13 +243,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		return(closure);
 	}
 
-	struct state *current = malloc(sizeof(struct state));
-	assert(current != NULL);
-	current->index = argument_index;
-	current->set = list_duplicate(closure);
-	current->conflicts = calloc(attacks->size, sizeof(bool));
-	memcpy(current->conflicts, conflicts, attacks->size * sizeof(bool));
-
+	State *current = create_state(attacks->size, argument_index, closure, conflicts);
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
@@ -259,20 +281,11 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			}
 
 			if (canonical) {
-				struct state *new = calloc(1, sizeof(struct state));
-				assert(new != NULL);
-				new->index = i;
-				new->set = list_duplicate(closure);
-				new->conflicts = calloc(attacks->size, sizeof(bool));
-				memcpy(new->conflicts, conflicts, attacks->size * sizeof(bool));
+				State *new = create_state(attacks->size, i, closure, conflicts);
 				push(&states, new_stack_element_ptr(new));
 			}
 		}
-		list_free(current->set);
-		current->set = NULL;
-		free(current->conflicts);
-		current->conflicts = NULL;
-		free(current);
+		delete_state(current);
 		current = NULL;
 	}
 
