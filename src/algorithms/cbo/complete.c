@@ -64,7 +64,70 @@ static int closure_count = 0;
 // r: the closure of s
 // r_bits: bool array representation of r
 // TODO: Caution! We assume that s and r do not contain double values!
-bool cbo_closure(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv, bool *conflicts) {
+
+bool cbo_closure(AF* af, AF* af_t, ArrayList* s, ArrayList* r) {
+	Stack update;
+	init_stack(&update);
+
+	++closure_count;
+
+	// empty r
+	list_reset(r);
+
+	bool *r_bv = calloc(af->size, sizeof(bool));
+	assert(r_bv != NULL);
+
+	// Push elements of s to the stack, add to r and to r_bv
+	for (SIZE_TYPE i = 0; i < s->size; ++i) {
+		push(&update, new_stack_element_int(s->elements[i]));
+		list_add(s->elements[i], r);
+		r_bv[s->elements[i]] = true;
+
+	}
+
+	// Push the unattacked arguments to the stack. They are defended by every set.
+	// TODO: This is independent of s. It can be done outside the closure function.
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
+		if (af_t->list_sizes[i] == 0 && !r_bv[i]) {
+			push(&update, new_stack_element_int(i));
+			list_add(i, r);
+			r_bv[i] = true;
+		}
+	}
+
+	SIZE_TYPE* unattacked_attackers_count = calloc(af_t->size, sizeof(SIZE_TYPE));
+	assert(unattacked_attackers_count != NULL);
+	memcpy(unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+
+	bool* victims_a = calloc(af->size, sizeof(bool));
+	assert(victims_a != NULL);
+	memset(victims_a, 0, af->size * sizeof(bool));
+
+	SIZE_TYPE a = pop_int(&update);
+	while (a != -1) {
+		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
+			SIZE_TYPE victim_a = af->lists[a][i];
+			if (!victims_a[victim_a]) {
+				victims_a[victim_a] = true;
+				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
+					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
+					--unattacked_attackers_count[victim_victim_a];
+					if ((unattacked_attackers_count[victim_victim_a] == 0) && !r_bv[victim_victim_a]) { // && !conflicts[victim_victim_a])  {
+						push(&update, new_stack_element_int(victim_victim_a));
+						list_add(victim_victim_a, r);
+						r_bv[victim_victim_a] = true;
+					}
+				}
+			}
+		}
+		a = pop_int(&update);
+	}
+	free(unattacked_attackers_count);
+	free(victims_a);
+	return(true);
+}
+
+bool incremental_closure(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv, bool *conflicts) {
 	Stack update;
 	init_stack(&update);
 
@@ -237,7 +300,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 
-	bool is_closure_conflict_free = cbo_closure(attacks, attacked_by, tmp, closure, closure_bv, conflicts);
+	bool is_closure_conflict_free = incremental_closure(attacks, attacked_by, tmp, closure, closure_bv, conflicts);
 	// if closure is conflict-free and self-defending then found
 	if (is_closure_conflict_free && is_set_self_defending(attacks, attacked_by, closure)) {
 		return(closure);
@@ -254,7 +317,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			list_copy(current->set, tmp);
 			list_add(order[i], tmp);
 
-			is_closure_conflict_free = cbo_closure(attacks, attacked_by, tmp, closure, closure_bv, conflicts);
+			is_closure_conflict_free = incremental_closure(attacks, attacked_by, tmp, closure, closure_bv, conflicts);
 
 			// if closure is conflict-free and self-defending then found
 			if (!is_closure_conflict_free) {
@@ -320,7 +383,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	assert(current_closure_bv!=NULL);
 	bool* conflicts = calloc(attacks->size, sizeof(bool));
 	assert(conflicts!=NULL);
-	cbo_closure(subgraph->af, subgraph_t, current, current_closure, current_closure_bv, conflicts);
+	cbo_closure(subgraph->af, subgraph_t, current, current_closure);
 	if (!is_set_conflict_free(subgraph->af, current_closure)) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
 		printf("Closure count: %d\n", closure_count);
@@ -360,7 +423,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	ArrayList* closure = list_create();
 	bool* closure_bv = calloc(attacks->size, sizeof(bool));
 	assert(closure_bv != NULL);
-	cbo_closure(attacks, attacked_by, mapped_extension, closure, closure_bv, conflicts);
+	cbo_closure(attacks, attacked_by, mapped_extension, closure);
 
 	printf("Closure count: %d\n", closure_count);
 	return(closure);
