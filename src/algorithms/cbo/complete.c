@@ -103,98 +103,110 @@ static int closure_count = 0;
 // r_bits: bool array representation of r
 // TODO: Caution! We assume that s and r do not contain double values!
 
-State *cbo_closure(AF *af, AF *af_t, State *s) {
-	printf("=== cbo_closure starting ===\n");
+State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	++closure_count;
 
 	Stack update;
 	init_stack(&update);
 
-	print_list(stdout, s->set, "<--s->set\n");
+	bool *scheduled = calloc(af->size, sizeof(bool));
+	assert(scheduled != NULL);
 
-	// Push elements of s to the stack, add to c and to c_bv
-	for (SIZE_TYPE i = 0; i < s->set->size; ++i) {
-		push(&update, new_stack_element_int(s->set->elements[i]));
-		printf("++%d\n", s->set->elements[i]);
-		// list_add(s->elements[i], c);
-		// c_bv[s->elements[i]] = true;
+	State *next = create_state(af->size);
+
+	// Push elements of s to the stack, mark them as scheduled
+	for (SIZE_TYPE i = 0; i < s->size; ++i) {
+		if (scheduled[s->elements[i]])
+			continue;
 
 		// mark victims of elements of as conflict
-		for (SIZE_TYPE j = 0; j < af->list_sizes[s->set->elements[i]]; ++j) {
-			s->victims[af->lists[s->set->elements[i]][j]] = true;
-			s->conflicts[af->lists[s->set->elements[i]][j]] = true;
+		for (SIZE_TYPE j = 0; j < af->list_sizes[s->elements[i]]; ++j) {
+			// s->victims[af->lists[s->set->elements[i]][j]] = true;
+			next->conflicts[af->lists[s->elements[i]][j]] = true;
 		}
 		// mark attackers of elements of as conflict
-		for (SIZE_TYPE j = 0; j < af_t->list_sizes[s->set->elements[i]]; ++j) {
-			s->conflicts[af_t->lists[s->set->elements[i]][j]] = true;
+		for (SIZE_TYPE j = 0; j < af_t->list_sizes[s->elements[i]]; ++j) {
+			next->conflicts[af_t->lists[s->elements[i]][j]] = true;
 		}
+
+		if (next->conflicts[s->elements[i]]) {
+			delete_state(next);
+			printf("conflict 1\n");
+			return(NULL);
+		}
+
+		push(&update, new_stack_element_int(s->elements[i]));
+		scheduled[s->elements[i]] = true;
+
 	}
 
 	// Push the unattacked arguments to the stack. They are defended by every set.
 	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
-		// if (af_t->list_sizes[i] == 0 && !c_bv[i]) {
 		if (af_t->list_sizes[i] == 0) {
+			if (scheduled[i])
+				continue;
+
+			if (next->conflicts[i]) {
+				delete_state(next);
+				printf("conflict 2\n");
+				return(NULL);
+			}
+
 			push(&update, new_stack_element_int(i));
-			printf("**%d\n", i);
-			// list_add(i, c);
-			// c_bv[i] = true;
+			scheduled[i] = true;
+
 			// mark victims of i as conflict
 			for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
-				s->victims[af->lists[i][j]] = true;
-				s->conflicts[af->lists[i][j]] = true;
+				// s->victims[af->lists[i][j]] = true;
+				next->conflicts[af->lists[i][j]] = true;
 			}
 			// i has no attackers, no need to traverse the attackers list
 		}
 	}
 
-	State *st = duplicate_state(s, af->size);
-	print_list(stdout, st->set, ": st->set\n");
-	// SIZE_TYPE* unattacked_attackers_count = calloc(af_t->size, sizeof(SIZE_TYPE));
-	// assert(unattacked_attackers_count != NULL);
-	memcpy(st->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+	bool *victims = calloc(af->size, sizeof(bool));
+	assert(victims != NULL);
 
-	// bool* victims_a = calloc(af->size, sizeof(bool));
-	// assert(victims_a != NULL);
-	// memset(victims_a, 0, af->size * sizeof(bool));
+	SIZE_TYPE a = -1;
+	while ((a = pop_int(&update)) != -1) {
+		list_add(a, next->set);
+		next->bset[a] = true;
 
-	SIZE_TYPE a = pop_int(&update);
-	while (a != -1) {
-		printf("a: %d\n", a);
-		if (st->conflicts[a]) {
-			delete_state(st);
-			printf("=== cbo_closure ending 1 ===\n");
-			return(NULL);
-		}
-		if (st->bset[a])
-			continue;
-		list_add(a, st->set);
-		st->bset[a] = true;
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
-		printf("i: %d\n", i);
 			SIZE_TYPE victim_a = af->lists[a][i];
-			if (!st->victims[victim_a]) {
-				st->victims[victim_a] = true;
-				// mark victim of a as conflict
-				st->conflicts[victim_a] = true;
-				// mark attackers of a as conflict
-				for (SIZE_TYPE j = 0; j < af_t->list_sizes[a]; ++j)
-					st->conflicts[af_t->lists[a][j]] = true;
+			if (!victims[victim_a]) {
+				victims[victim_a] = true;
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
-					--(st->unattacked_attackers_count[victim_victim_a]);
-					if ((st->unattacked_attackers_count[victim_victim_a] == 0) && !st->bset[victim_victim_a]) { // && !conflicts[victim_victim_a])  {
+					--(next->unattacked_attackers_count[victim_victim_a]);
+					if ((next->unattacked_attackers_count[victim_victim_a] == 0) && !scheduled[victim_victim_a]) {
+						if (next->conflicts[victim_victim_a]) {
+							delete_state(next);
+							printf("conflict 3\n");
+							return(NULL);
+						}
+
 						push(&update, new_stack_element_int(victim_victim_a));
-						// list_add(victim_victim_a, c);
-						// c_bv[victim_victim_a] = true;
+						scheduled[victim_victim_a] = true;
+
+						// mark victims of victim_victim_a conflict
+						for (SIZE_TYPE j = 0; j < af->list_sizes[victim_victim_a]; ++j) {
+							// s->victims[af->lists[s->set->elements[i]][j]] = true;
+							next->conflicts[af->lists[victim_victim_a][j]] = true;
+						}
+						// mark attackers of elements of as conflict
+						for (SIZE_TYPE j = 0; j < af_t->list_sizes[victim_victim_a]; ++j) {
+							next->conflicts[af_t->lists[victim_victim_a][j]] = true;
+						}
 					}
 				}
 			}
 		}
-		a = pop_int(&update);
 	}
-	// free(victims_a);
-	printf("=== cbo_closure ending 2 ===\n");
-	return(st);
+	free(victims);
+	free(scheduled);
+	return(next);
 }
 
 State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, ARG_TYPE *order, State *current) {
@@ -347,35 +359,39 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		return(closure);
 	}
 	*/
-	State *current = create_state(attacks->size);
-	list_add(argument, current->set);
+	ArrayList *tmp = list_create();
+	list_add(argument, tmp);
+	State *current = first_closure(attacks, attacked_by, tmp);
 	current->index = argument_index;
-	State *next = cbo_closure(attacks, attacked_by, current);
-	next->index = argument_index;
-
-	delete_state(current);
-	push(&states, new_stack_element_ptr(next));
+	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
 		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
 			if (current->conflicts[order[i]])
 				continue;
 
-			next = incremental_closure(attacks, attacked_by, i, order, current);
+			State *next = incremental_closure(attacks, attacked_by, i, order, current);
 
-			// if closure is conflict-free and self-defending then found
+			// if closure has a conflict abandon that branch
 			if (!next) {
-				// printf("closure has conflict\n");
+				delete_state(next);
+				next = NULL;
 				continue;
 			}
+			// if closure is self-defending, then found
 			if (is_set_self_defending(attacks, attacked_by, next->set)) {
 					return(next->set);
 			}
-			// printf("closure not self-defending\n");
 
+			// if not self-defending
 			memset(tmp_bv, 0, attacks->size * sizeof(bool));
 			for (SIZE_TYPE j = 0; j < next->set->size; ++j)
 				tmp_bv[next->set->elements[j]] = true;
+
+			// TODO: move the canonicity test to incremental_closure.
+			// It should return NULL if next->set has a conflict or it is not canonical.
+			// Then the rest of the for loop would just be pushing next to the stack.
+
 
 			// TODO: if canonical ...
 			bool canonical = true;
@@ -434,9 +450,9 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	}
 	*/
 
-	State *current = create_state(subgraph->af->size);
-	list_add(subgraph->mapping_to_subgraph[argument], current->set);
-	State *next = cbo_closure(subgraph->af, subgraph_t, current);
+	ArrayList *current = list_create();
+	list_add(subgraph->mapping_to_subgraph[argument], current);
+	State *next = first_closure(subgraph->af, subgraph_t, current);
 
 	if (!next) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
@@ -444,11 +460,8 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 		return(NULL);
 	}
 
-	print_list(stdout, next->set, "=== next->set ===\n");
-
 	// closure is conflict-free. check if it is self-defending
 	ArrayList *extension = NULL;
-	printf("here\n");
 	if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
 		// closure is a complete extension (in the subgraph) containing the argument
 		extension = next->set;
@@ -471,15 +484,15 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	}
 
 	// now close the mapped extension in the whole framework
-	delete_state(current);
-	current = create_state(attacks->size);
+	list_free(current);
+	current = list_create();
 	// map indices of the computed extension back
 	printf("Extension size: %d\n", extension->size);
 	for (SIZE_TYPE i = 0; i < extension->size; ++i) {
-		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], current->set);
+		list_add(subgraph->mapping_from_subgraph[extension->elements[i]], current);
 	}
 	delete_state(next);
-	next = cbo_closure(attacks, attacked_by, current);
+	next = first_closure(attacks, attacked_by, current);
 
 	/*
 	ArrayList* closure = list_create();
