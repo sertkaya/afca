@@ -214,13 +214,6 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, State *current, ARG
 
 	State *next = duplicate_state(current, af->size);
 
-	/*
-	printf("incr.:");
-	for (SIZE_TYPE i = 0; i < af->size; ++i)
-		printf("%d ", next->unattacked_attackers_count[i]);
-	printf("\n");
-	*/
-
 	// Push the current argument to the stack
 	push(&update, new_stack_element_int(order[index]));
 	next->scheduled[order[index]] = true;
@@ -354,34 +347,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	Stack states;
 	init_stack(&states);
 
-	/*
-	ArrayList* closure = list_create();
-	// ArrayList *tmp = list_create();
-	bool* closure_bv = calloc(attacks->size, sizeof(bool));
-	assert(closure_bv != NULL);
-	bool* conflicts = calloc(attacks->size, sizeof(bool));
-	assert(conflicts != NULL);
-	// closure of the empty set
-	// cbo_closure(attacks, attacked_by, tmp, closure);
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
-		if (attacked_by->list_sizes[i] == 0) {
-			list_add(i, closure);
-			for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
-				conflicts[attacks->lists[i][j]] = true;
-			}
-			for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
-				conflicts[attacks->lists[i][j]] = true;
-			}
-		}
-
-	// State *current = create_state(attacks->size, argument_index, closure, conflicts);
-	// list_add(argument, tmp);
-	bool is_closure_conflict_free = incremental_closure(attacks, attacked_by, argument, current);
-	// if closure is conflict-free and self-defending then found
-	if (is_closure_conflict_free && is_set_self_defending(attacks, attacked_by, closure)) {
-		return(closure);
-	}
-	*/
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
@@ -389,53 +354,23 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
+		print_list(stdout, current->set, "\n");
 		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
 			if (current->conflicts[order[i]] || current->scheduled[order[i]])
 				continue;
 
 			State *next = incremental_closure(attacks, attacked_by, i, current, order, position);
 
-			// if closure has a conflict or is not canonical abandon that branch
+			// if closure has a conflict or is not canonical then abandon that branch
 			if (!next) {
-				// delete_state(next);
-				// next = NULL;
 				continue;
 			}
+
 			// if closure is self-defending, then found
 			if (is_set_self_defending(attacks, attacked_by, next->set)) {
-					print_list(stdout, next->set, "==> dc_co_cbo 1\n");
 					return(next->set);
 			}
 
-			/*
-			// if not self-defending
-			memset(tmp_bv, 0, attacks->size * sizeof(bool));
-			for (SIZE_TYPE j = 0; j < next->set->size; ++j)
-				tmp_bv[next->set->elements[j]] = true;
-
-			// TODO: move the canonicity test to incremental_closure.
-			// It should return NULL if next->set has a conflict or it is not canonical.
-			// Then the rest of the for loop would just be pushing next to the stack.
-
-
-			// TODO: if canonical ...
-			bool canonical = true;
-			for (SIZE_TYPE j = 0; j < i; ++j) {
-				// if (next->bset[order[j]] && !tmp_bv[order[j]]) {
-				if (!tmp_bv[order[j]]) {
-					canonical = false;
-					// printf("closure not canonical\n");
-					break;
-				}
-			}
-
-			if (canonical) {
-				State *new = duplicate_state(next, attacks->size);
-				push(&states, new_stack_element_ptr(new));
-			}
-			*/
-			// State *new = duplicate_state(next, attacks->size);
-			// push(&states, new_stack_element_ptr(new));
 			push(&states, new_stack_element_ptr(next));
 		}
 		delete_state(current);
