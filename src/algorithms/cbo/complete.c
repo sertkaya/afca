@@ -213,10 +213,20 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, State *current, ARG
 	++closure_count;
 
 	State *next = duplicate_state(current, af->size);
+	next->index = index;
 
 	// Push the current argument to the stack
 	push(&update, new_stack_element_int(order[index]));
 	next->scheduled[order[index]] = true;
+	// mark victims conflict
+	for (SIZE_TYPE j = 0; j < af->list_sizes[order[index]]; ++j) {
+		// next->victims[af->lists[victim_victim_a][j]] = true;
+		next->conflicts[af->lists[order[index]][j]] = true;
+	}
+	// mark attackers as conflict
+	for (SIZE_TYPE j = 0; j < af_t->list_sizes[order[index]]; ++j) {
+		next->conflicts[af_t->lists[order[index]][j]] = true;
+	}
 
 	SIZE_TYPE a = -1;
 	while ((a = pop_int(&update)) != -1) {
@@ -226,10 +236,8 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, State *current, ARG
 			SIZE_TYPE victim_a = af->lists[a][i];
 			if (!next->victims[victim_a]) {
 				next->victims[victim_a] = true;
-				// printf("victim_a:%d\n", victim_a);
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
-					// printf("victim_victim_a:%d\n", victim_victim_a);
 					--(next->unattacked_attackers_count[victim_victim_a]);
 					if (next->unattacked_attackers_count[victim_victim_a] == 0 && !next->scheduled[victim_victim_a])  {
 						// check if victim_victim_a causes a conflict
@@ -237,18 +245,18 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, State *current, ARG
 							delete_state(next);
 							return(NULL);
 						}
-						// TODO: here canonicity test
 						// check if victim_victim_a breaks canonicity
 						if (!current->scheduled[victim_victim_a] && position[victim_victim_a] < index) {
 							delete_state(next);
 							return(NULL);
 						}
+						printf("victim_victim_a:%d\n", victim_victim_a);
 						push(&update, new_stack_element_int(victim_victim_a));
 						next->scheduled[victim_victim_a] = true;
 
 						// mark victims of victim_victim_a conflict
 						for (SIZE_TYPE j = 0; j < af->list_sizes[victim_victim_a]; ++j) {
-							// s->victims[af->lists[s->set->elements[i]][j]] = true;
+							// next->victims[af->lists[victim_victim_a][j]] = true;
 							next->conflicts[af->lists[victim_victim_a][j]] = true;
 						}
 						// mark attackers of elements of as conflict
@@ -354,7 +362,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
-		print_list(stdout, current->set, "\n");
 		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
 			if (current->conflicts[order[i]] || current->scheduled[order[i]])
 				continue;
@@ -400,22 +407,6 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	STOP_TIMER(stop_time);
 
 	// solve DC-CO in the subgraph
-	/*
-	ArrayList* current = list_create();
-	list_add(subgraph->mapping_to_subgraph[argument], current);
-	ArrayList* current_closure = list_create();
-	bool* current_closure_bv = calloc(attacks->size, sizeof(bool));
-	assert(current_closure_bv!=NULL);
-	bool* conflicts = calloc(attacks->size, sizeof(bool));
-	assert(conflicts!=NULL);
-	cbo_closure(subgraph->af, subgraph_t, current, current_closure);
-	if (!is_set_conflict_free(subgraph->af, current_closure)) {
-		// closure in the subgraph has a conflict. complete extension does not exist.
-		printf("Closure count: %d\n", closure_count);
-		return(NULL);
-	}
-	*/
-
 	ArrayList *current = list_create();
 	list_add(subgraph->mapping_to_subgraph[argument], current);
 	State *next = first_closure(subgraph->af, subgraph_t, current);
@@ -459,13 +450,6 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	}
 	delete_state(next);
 	next = first_closure(attacks, attacked_by, current);
-
-	/*
-	ArrayList* closure = list_create();
-	bool* closure_bv = calloc(attacks->size, sizeof(bool));
-	assert(closure_bv != NULL);
-	cbo_closure(attacks, attacked_by, mapped_extension, closure);
-	*/
 
 	printf("Closure count: %d\n", closure_count);
 	return(next->set);
