@@ -23,6 +23,8 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
 	AF *input_af = read_af(af_fd);
 	fclose(af_fd);
 
+	char tmp[10];
+	fscanf(e_fd, "YES\nw ", tmp);
     int rc = 0;
     int arg;
     ArrayList* extension = list_create();

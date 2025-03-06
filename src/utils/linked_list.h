@@ -17,25 +17,45 @@
 #ifndef UTILS_LINKED_LIST_H_
 #define UTILS_LINKED_LIST_H_
 
+union list_element {
+	int n;
+	void *p;
+};
+typedef union list_element ListElement;
+
 struct list_node {
-	void *c;
+	ListElement *e;
 	struct list_node *next;
 };
-
 typedef struct list_node ListNode;
 
-ListNode *create_list_node(void *c);
+ListElement *new_list_element_int(int n);
+
+inline ListElement *new_list_element_ptr(void *p) {
+	ListElement *element = calloc(1, sizeof(ListElement));
+	assert(element != NULL);
+	element->p = p;
+
+	return(element);
+}
+
+ListNode *new_list_node(ListElement *e);
 
 // Delete  node
-ListNode *free_list_node(ListNode *n);
+void free_list_element(ListElement *e);
 
-void free_list(ListNode *head, void (*free_list_element)(void *e));
+int free_list(ListNode *head, void (*free_list_element)(ListElement *e));
 
 // Insert at head of the list
-ListNode *insert_list_node(void *c, ListNode *head);
+ListNode *insert_list_int(int n, ListNode *head);
 
-size_t count_nodes(ListNode* node);
+inline ListNode *insert_list_ptr(void *p, ListNode *head) {
+	ListElement *element = new_list_element_ptr(p);
+	ListNode *new_node = new_list_node(element);
+	new_node->next = head;
+	return(new_node);
+}
 
-void print_linked_list(ListNode* head, void (*print_list_element)(void *e, FILE *file, const char *end), FILE* out_file);
+void print_linked_list(ListNode* head, void (*print_list_element)(ListElement *e, FILE *file, const char *end), FILE* out_file);
 
 #endif /* UTILS_LINKED_LIST_H_ */

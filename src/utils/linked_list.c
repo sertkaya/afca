@@ -19,58 +19,45 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../bitset/bitset.h"
 #include "linked_list.h"
-
-ListNode *create_list_node(void* c) {
-	ListNode *n = calloc(sizeof(ListNode), 1);
-	assert(n != NULL);
-	n->c = c;
-	n->next = NULL;
-	return(n);
-}
-
-
-ListNode *free_list_node(ListNode *n) {
-	// TODO: restructure code, improve
-	// n->c should be freed before, not the best implementation.
-	free(n);
-	return(NULL);
-}
-
-
-ListNode *insert_list_node(void *c, ListNode *head) {
-	ListNode *new_node = create_list_node(c);
+// Insert at head of the list
+ListNode *insert_list_int(int n, ListNode *head) {
+	ListElement *element = new_list_element_int(n);
+	ListNode *new_node = new_list_node(element);
 	new_node->next = head;
 	return(new_node);
-	/*
-	ListNode *next = head->next;
-	head->next = create_list_node(c);
-	head->next->next = next;
-	return head->next;
-	*/
 }
 
-size_t count_nodes(ListNode* node) {
-	size_t n = 0;
-	while (node) {
-		++n;
-		node = node->next;
-	}
-	return n;
+ListNode *new_list_node(ListElement *e) {
+	ListNode *node = calloc(1, sizeof(ListNode));
+	assert(node != NULL);
+	node->e = e;
+	node->next = NULL;
+
+	return(node);
 }
 
-void print_linked_list(ListNode* head, void (*print_list_element)(void *e, FILE *file, const char *end), FILE *out_file) {
+ListElement *new_list_element_int(int n) {
+	ListElement *element = calloc(1, sizeof(ListElement));
+	assert(element != NULL);
+	element->n = n;
+
+	return(element);
+}
+
+
+void print_linked_list(ListNode* head, void (*print_list_element)(ListElement *e, FILE *file, const char *end), FILE *out_file) {
 	while (head) {
-		print_list_element(head->c, out_file, "\n");
+		print_list_element(head->e, out_file, "\n");
 		head = head->next;
 	}
 }
-void free_list(ListNode *head, void (*free_list_element)(void *e)) {
+
+int free_list(ListNode *head, void (*free_list_element)(ListElement *e)) {
 	ListNode *previous = NULL;
 	ListNode *current = head;
 	while (current) {
-		free_list_element(current->c);
+		free_list_element(current->e);
 		previous = current;
 		current = current->next;
 		free(previous);

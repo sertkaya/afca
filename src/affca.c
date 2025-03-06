@@ -115,7 +115,11 @@ int main(int argc, char *argv[]) {
 		}
 		else {
 			// validate
-			printf("%d\n", validate(af_file_name, extension_file_name, semantic_name));
+			bool valid = validate(af_file_name, extension_file_name, semantic_name);
+			if (valid)
+				printf("YES\n");
+			else
+				printf("NO\n");
 			return(0);
 		}
 	}
