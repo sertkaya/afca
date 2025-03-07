@@ -24,6 +24,7 @@
 
 #include "../../utils/stack.h"
 #include "../../utils/argument_set.h"
+#include "../../utils/priority_queue.h"
 #include "../../utils/timer.h"
 
 struct state {
@@ -370,16 +371,19 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// TODO
 	// ...
 
-	Stack states;
-	init_stack(&states);
+	// Stack states;
+	// init_stack(&states);
+	QueueNode *states = NULL;
 
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	current->index = argument_index;
-	push(&states, new_stack_element_ptr(current));
+	// push(&states, new_stack_element_ptr(current));
+	states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
-	while (current =  pop_ptr(&states)) {
+	// while (current =  pop_ptr(&states)) {
+	while (current =  dequeue_ptr(&states)) {
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		int min_attacker_count = attacks->size;
@@ -427,7 +431,8 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 					return(next->set);
 			}
 
-			push(&states, new_stack_element_ptr(next));
+			// push(&states, new_stack_element_ptr(next));
+			states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
 		/*
 		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {

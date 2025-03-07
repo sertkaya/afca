@@ -25,6 +25,7 @@ ArgumentSet *new_argument_set(SIZE_TYPE size) {
     assert(new_set->vector != NULL);
 
     new_set->size = size;
+    new_set->count = 0;
     new_set->list = NULL;
 
     return(new_set);
@@ -40,6 +41,7 @@ bool add_to_argument_set(ARG_TYPE a, ArgumentSet *s) {
 
   s->vector[a] = true;
   s->list = insert_list_int(a, s->list);
+  ++s->count;
   return(true);
 }
 
@@ -64,6 +66,7 @@ bool delete_from_argument_set(ARG_TYPE a, ArgumentSet *s) {
   // if a is the first element
   if (current->e->n == a) {
     s->list = current->next;
+    --s->count;
     free(current->e);
     free(current);
     return(true);
@@ -79,6 +82,7 @@ bool delete_from_argument_set(ARG_TYPE a, ArgumentSet *s) {
     previous = current;
     current = current->next;
   }
+  --s->count;
 
   return(true);
 }

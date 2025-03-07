@@ -24,9 +24,12 @@
 #include "linked_list.h"
 
 struct argument_set {
-	bool *vector;
-  SIZE_TYPE size;
-	ListNode *list;
+    bool *vector;
+    // size of the underlying framework
+    SIZE_TYPE size;
+    // actual number of arguments in the set
+    SIZE_TYPE count;
+    ListNode *list;
 };
 typedef struct argument_set ArgumentSet;
 
