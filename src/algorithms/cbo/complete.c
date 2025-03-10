@@ -375,11 +375,45 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	return(NULL);
 }
 
+struct pair {
+	ARG_TYPE arg;
+	SIZE_TYPE victim_count;
+};
+
+int compare_arguments(const void *v1, const void *v2) {
+	if ((((struct pair*) v1)-> victim_count) > (((struct pair*) v2)-> victim_count))
+		return(1);
+	else if ((((struct pair*) v2)-> victim_count) > (((struct pair*) v1)-> victim_count))
+		return(-1);
+	else
+		return(0);
+}
+
+void sort_adjacency_lists(AF *af, AF *af_t) {
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
+		struct pair *pairs = calloc(af_t->list_sizes[i], sizeof(struct pair));
+		assert(pairs != NULL);
+		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
+			pairs[j].arg = af_t->lists[i][j];
+			pairs[j].victim_count = af->list_sizes[af_t->lists[i][j]];
+		}
+		qsort(pairs, af_t->list_sizes[i], sizeof(struct pair), compare_arguments);
+		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
+			af_t->lists[i][j] = pairs[j].arg;
+		}
+		free(pairs);
+	}
+}
+
+
 ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
+	// TODO: experimenting
+	// sort adjacency lists of attacked_by according to number of victims
+	sort_adjacency_lists(attacks, attacked_by);
 
 	printf("Argument: %d\n", argument);
 

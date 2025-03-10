@@ -73,11 +73,11 @@ void print_argumentation_framework(AF* af) {
 	}
 }
 
-int compare_argument(const void *arg1, const void *arg2, AF *af) {
+int compare_argument(const void *arg1, const void *arg2) {
 	if (arg1 < arg2)
-		return(-1);
-	if (arg1 > arg2)
 		return(1);
+	if (arg1 > arg2)
+		return(-1);
 	return(0);
 }
 
