@@ -286,28 +286,43 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
 
-	Stack states;
-	init_stack(&states);
-	// QueueNode *states = NULL;
+	QueueNode *states = NULL;
 
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	current->new_argument = argument;
-	push(&states, new_stack_element_ptr(current));
-	// states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
-	while (current =  pop_ptr(&states)) {
-	// while (current =  dequeue_ptr(&states)) {
+	int min_attacker_count = attacks->size;
+	/*
+	// find the minimum number of attackers of an unattacked attacker
+	ListNode *tmp_node = current->unattacked_attackers->list;
+	ARG_TYPE unattacked_attacker;
+	// ARG_TYPE least_attacked_attacker = -1;
+	// ARG_TYPE least_attacked_attacker = tmp_node->e->n;
+	while (tmp_node) {
+		unattacked_attacker = tmp_node->e->n;
+		if (current->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
+			min_attacker_count = current->unattacked_attackers_count[unattacked_attacker];
+			// least_attacked_attacker = unattacked_attacker;
+		}
+		tmp_node = tmp_node->next;
+	}
+	states = enqueue_ptr(current, states, min_attacker_count);
+	*/
+	states = enqueue_ptr(current, states, current->unattacked_attackers->count);
+
+	while (current =  dequeue_ptr(&states)) {
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
-		int min_attacker_count = attacks->size;
-		ARG_TYPE least_attacked_attacker = -1;
 		ListNode *tmp_node = current->unattacked_attackers->list;
 		// if tmp_node is  NULL, then current->set does not have any unattacked attackers
 		// that is, current->set is self-defending. return it.
 		if (tmp_node == NULL)
 			return(current->set);
+		min_attacker_count = attacks->size;
+		// ARG_TYPE least_attacked_attacker = -1;
+		ARG_TYPE least_attacked_attacker = tmp_node->e->n;
 		// otherwise iterate over the unattacked_attackers to find the least_attacked_argument
 		while (tmp_node) {
 			ARG_TYPE unattacked_attacker = tmp_node->e->n;
@@ -335,8 +350,20 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 				continue;
 			}
 
-			push(&states, new_stack_element_ptr(next));
-			// states = enqueue_ptr(next, states, next->unattacked_attackers->count);
+			/*
+			// find the minimum number of attackers of an unattacked attacker
+			ListNode *tmp_node = next->unattacked_attackers->list;
+			min_attacker_count = attacks->size;
+			while (tmp_node) {
+				ARG_TYPE unattacked_attacker = tmp_node->e->n;
+				if (next->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
+					min_attacker_count = next->unattacked_attackers_count[unattacked_attacker];
+				}
+				tmp_node = tmp_node->next;
+			}
+			states = enqueue_ptr(next, states, min_attacker_count);
+			*/
+			states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
 		delete_state(current);
 		current = NULL;
