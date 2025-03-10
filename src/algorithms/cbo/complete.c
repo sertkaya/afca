@@ -265,8 +265,8 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, State *current, ARG
 						}
 						// check if victim_victim_a breaks canonicity
 						// TODO: Consider canonicity check in the new setting! Is it still correct or needed?
-						if (!current->scheduled[victim_victim_a] && position[victim_victim_a] < index) {
-						// if (current->conflicts[victim_victim_a] || current->scheduled[victim_victim_a]) {
+						// if (!current->scheduled[victim_victim_a] && position[victim_victim_a] < index) {
+						if (current->conflicts[victim_victim_a] || current->scheduled[victim_victim_a]) {
 							delete_state(next);
 							return(NULL);
 						}
@@ -371,19 +371,19 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	// TODO
 	// ...
 
-	// Stack states;
-	// init_stack(&states);
-	QueueNode *states = NULL;
+	Stack states;
+	init_stack(&states);
+	// QueueNode *states = NULL;
 
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	current->index = argument_index;
-	// push(&states, new_stack_element_ptr(current));
-	states = enqueue_ptr(current, states, current->unattacked_attackers->count);
+	push(&states, new_stack_element_ptr(current));
+	// states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
-	// while (current =  pop_ptr(&states)) {
-	while (current =  dequeue_ptr(&states)) {
+	while (current =  pop_ptr(&states)) {
+	// while (current =  dequeue_ptr(&states)) {
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		int min_attacker_count = attacks->size;
@@ -412,7 +412,9 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		// now unattacked attackers of least_attacked_argument: add them one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_argument]; ++i) {
-			if (current->victims[attacked_by->lists[least_attacked_argument][i]] || current->conflicts[attacked_by->lists[least_attacked_argument][i]] || current->scheduled[attacked_by->lists[least_attacked_argument][i]]) {
+			if (// current->victims[attacked_by->lists[least_attacked_argument][i]] ||
+				current->conflicts[attacked_by->lists[least_attacked_argument][i]] ||
+				current->scheduled[attacked_by->lists[least_attacked_argument][i]]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
 				// so skip it
 				continue;
@@ -431,8 +433,8 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 					return(next->set);
 			}
 
-			// push(&states, new_stack_element_ptr(next));
-			states = enqueue_ptr(next, states, next->unattacked_attackers->count);
+			push(&states, new_stack_element_ptr(next));
+			// states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
 		/*
 		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
