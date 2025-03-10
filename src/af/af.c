@@ -73,6 +73,14 @@ void print_argumentation_framework(AF* af) {
 	}
 }
 
+int compare_argument(const void *arg1, const void *arg2, AF *af) {
+	if (arg1 < arg2)
+		return(-1);
+	if (arg1 > arg2)
+		return(1);
+	return(0);
+}
+
 AF* transpose_argumentation_framework(AF *af) {
 	AF* t_af = create_argumentation_framework(af->size);
 
@@ -89,7 +97,7 @@ AF* transpose_argumentation_framework(AF *af) {
 	// Sort the adjacency lists
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		// qsort(t_af->lists[i]->elements, t_af->lists[i]->size, sizeof(ARG_TYPE), cmp);
-		qsort(t_af->lists[i], t_af->list_sizes[i], sizeof(ARG_TYPE), cmp);
+		qsort(t_af->lists[i], t_af->list_sizes[i], sizeof(ARG_TYPE), compare_argument);
 		*/
 
 	return(t_af);

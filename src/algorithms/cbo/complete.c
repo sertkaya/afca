@@ -387,7 +387,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		int min_attacker_count = attacks->size;
-		ARG_TYPE least_attacked_argument = -1;
+		ARG_TYPE least_attacked_attacker = -1;
 		ListNode *tmp_node = current->unattacked_attackers->list;
 		// if tmp_node is  NULL, then current->set does not have any unattacked attackers
 		// that is, current->set is self-defending. return it.
@@ -405,22 +405,22 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			*/
 			if (current->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
 				min_attacker_count = current->unattacked_attackers_count[unattacked_attacker];
-				least_attacked_argument = unattacked_attacker;
+				least_attacked_attacker = unattacked_attacker;
 			}
 			tmp_node = tmp_node->next;
 		}
 		// now unattacked attackers of least_attacked_argument: add them one by one and close.
 		// if none of them leads to a solution, abandon that branch
-		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_argument]; ++i) {
+		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 			if (// current->victims[attacked_by->lists[least_attacked_argument][i]] ||
-				current->conflicts[attacked_by->lists[least_attacked_argument][i]] ||
-				current->scheduled[attacked_by->lists[least_attacked_argument][i]]) {
+				current->conflicts[attacked_by->lists[least_attacked_attacker][i]] ||
+				current->scheduled[attacked_by->lists[least_attacked_attacker][i]]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
 				// so skip it
 				continue;
 			}
 			// otherwise add it and close
-			State *next = incremental_closure(attacks, attacked_by, position[attacked_by->lists[least_attacked_argument][i]], current, order, position);
+			State *next = incremental_closure(attacks, attacked_by, position[attacked_by->lists[least_attacked_attacker][i]], current, order, position);
 
 			// if closure has a conflict or is not canonical then abandon that branch
 			if (!next) {
@@ -429,9 +429,9 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 			// if closure is self-defending, then found
 			// TODO: can be removed? There is a similar check above.
-			if (is_set_self_defending(attacks, attacked_by, next->set)) {
-					return(next->set);
-			}
+			// if (is_set_self_defending(attacks, attacked_by, next->set)) {
+			// 		return(next->set);
+			// }
 
 			push(&states, new_stack_element_ptr(next));
 			// states = enqueue_ptr(next, states, next->unattacked_attackers->count);
