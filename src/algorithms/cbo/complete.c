@@ -28,7 +28,7 @@
 #include "../../utils/timer.h"
 
 struct state {
-	ARG_TYPE index;
+	ARG_TYPE new_argument;
 	ArrayList *set;
 	bool *scheduled;
 	bool *conflicts;
@@ -44,7 +44,7 @@ State *create_state(SIZE_TYPE size) {
 	assert(s != NULL);
 
 	s->set = list_create();
-	s->index = 0;
+	s->new_argument = 0;
 
 	s->conflicts = calloc(size, sizeof(bool));
 	assert(s->conflicts != NULL);
@@ -67,7 +67,7 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	State *n = calloc(1, sizeof(State));
 	assert(n != NULL);
 
-	n->index = s->index;
+	n->new_argument = s->new_argument;
 	n->set = list_duplicate(s->set);
 
 	n->conflicts = calloc(size, sizeof(bool));
@@ -217,26 +217,26 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	return(next);
 }
 
-State *incremental_closure(AF* af, AF* af_t, ARG_TYPE index, State *current, ARG_TYPE *order, ARG_TYPE *position) {
+State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *current) {
 	Stack update;
 	init_stack(&update);
 
 	++closure_count;
 
 	State *next = duplicate_state(current, af->size);
-	next->index = index;
+	next->new_argument = new_argument;
 
 	// Push the current argument to the stack
-	push(&update, new_stack_element_int(order[index]));
-	next->scheduled[order[index]] = true;
+	push(&update, new_stack_element_int(new_argument));
+	next->scheduled[new_argument] = true;
 	// mark victims conflict
-	for (SIZE_TYPE j = 0; j < af->list_sizes[order[index]]; ++j) {
+	for (SIZE_TYPE j = 0; j < af->list_sizes[new_argument]; ++j) {
 		// next->victims[af->lists[victim_victim_a][j]] = true;
-		next->conflicts[af->lists[order[index]][j]] = true;
+		next->conflicts[af->lists[new_argument][j]] = true;
 	}
 	// mark attackers as conflict
-	for (SIZE_TYPE j = 0; j < af_t->list_sizes[order[index]]; ++j) {
-		next->conflicts[af_t->lists[order[index]][j]] = true;
+	for (SIZE_TYPE j = 0; j < af_t->list_sizes[new_argument]; ++j) {
+		next->conflicts[af_t->lists[new_argument][j]] = true;
 	}
 
 	SIZE_TYPE a = -1;
@@ -378,7 +378,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
-	current->index = argument_index;
+	current->new_argument = argument_index;
 	push(&states, new_stack_element_ptr(current));
 	// states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
@@ -420,7 +420,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 				continue;
 			}
 			// otherwise add it and close
-			State *next = incremental_closure(attacks, attacked_by, position[attacked_by->lists[least_attacked_attacker][i]], current, order, position);
+			State *next = incremental_closure(attacks, attacked_by, attacked_by->lists[least_attacked_attacker][i], current);
 
 			// if closure has a conflict or is not canonical then abandon that branch
 			if (!next) {
