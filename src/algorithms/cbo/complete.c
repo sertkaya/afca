@@ -358,15 +358,17 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	// extract the subgraph induced by the argument
 	START_TIMER(start_time);
-	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
-	printf("Subgraph size:%d\n", subgraph->af->size);
-	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
+	// Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
+	// printf("Subgraph size:%d\n", subgraph->af->size);
+	// AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
 	STOP_TIMER(stop_time);
 
 	// solve DC-CO in the subgraph
 	ArrayList *current = list_create();
-	list_add(subgraph->mapping_to_subgraph[argument], current);
-	State *next = first_closure(subgraph->af, subgraph_t, current);
+	// list_add(subgraph->mapping_to_subgraph[argument], current);
+	list_add(argument, current);
+	// State *next = first_closure(subgraph->af, subgraph_t, current);
+	State *next = first_closure(attacks, attacked_by, current);
 
 	if (!next) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
@@ -376,14 +378,16 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	// closure is conflict-free. check if it is self-defending
 	ArrayList *extension = NULL;
-	if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
+	// if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
+	if (is_set_self_defending(attacks, attacked_by, next->set)) {
 		// closure is a complete extension (in the subgraph) containing the argument
 		extension = next->set;
 	}
 	else {
 		// search for a solution by enumerating
 		START_TIMER(start_time);
-		extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
+		// extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t);
+		extension = dc_co_cbo(attacks, argument, attacked_by);
 		STOP_TIMER(stop_time);
 		printf("dc_co_next_closure_adj: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
@@ -397,6 +401,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 		return(NULL);
 	}
 
+	/*
 	// now close the mapped extension in the whole framework
 	list_free(current);
 	current = list_create();
@@ -410,4 +415,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	printf("Closure count: %d\n", closure_count);
 	return(next->set);
+	*/
+	printf("Closure count: %d\n", closure_count);
+	return(extension);
 }
