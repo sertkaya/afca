@@ -263,13 +263,6 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 							delete_state(next);
 							return(NULL);
 						}
-						// check if victim_victim_a breaks canonicity
-						// TODO: Consider canonicity check in the new setting! Is it still correct or needed?
-						// if (!current->scheduled[victim_victim_a] && position[victim_victim_a] < index) {
-						if (current->conflicts[victim_victim_a] || current->scheduled[victim_victim_a]) {
-							delete_state(next);
-							return(NULL);
-						}
 						push(&update, new_stack_element_int(victim_victim_a));
 						next->scheduled[victim_victim_a] = true;
 
@@ -318,66 +311,33 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		// otherwise iterate over the unattacked_attackers to find the least_attacked_argument
 		while (tmp_node) {
 			ARG_TYPE unattacked_attacker = tmp_node->e->n;
-			// if (current->conflicts[order[unattacked_attacker]] || current->scheduled[order[unattacked_attacker]]) {
-			/*
-			if (current->conflicts[unattacked_attacker] || current->scheduled[unattacked_attacker]) {
-				tmp_node = tmp_node->next;
-				continue;
-			}
-			*/
 			if (current->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
 				min_attacker_count = current->unattacked_attackers_count[unattacked_attacker];
 				least_attacked_attacker = unattacked_attacker;
 			}
 			tmp_node = tmp_node->next;
 		}
-		// now unattacked attackers of least_attacked_argument: add them one by one and close.
+		// now unattacked attackers of least_attacked_attacker: add them one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
-			if (// current->victims[attacked_by->lists[least_attacked_argument][i]] ||
-				current->conflicts[attacked_by->lists[least_attacked_attacker][i]] ||
-				current->scheduled[attacked_by->lists[least_attacked_attacker][i]]) {
+			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
+			if ( current->conflicts[attacker_of_least_attacked_attacker] ||
+				current->scheduled[attacker_of_least_attacked_attacker]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
 				// so skip it
 				continue;
 			}
 			// otherwise add it and close
-			State *next = incremental_closure(attacks, attacked_by, attacked_by->lists[least_attacked_attacker][i], current);
+			State *next = incremental_closure(attacks, attacked_by, attacker_of_least_attacked_attacker, current);
 
-			// if closure has a conflict or is not canonical then abandon that branch
+			// if closure has a conflict then abandon that branch
 			if (!next) {
 				continue;
 			}
-
-			// if closure is self-defending, then found
-			// TODO: can be removed? There is a similar check above.
-			// if (is_set_self_defending(attacks, attacked_by, next->set)) {
-			// 		return(next->set);
-			// }
 
 			push(&states, new_stack_element_ptr(next));
 			// states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
-		/*
-		for (SIZE_TYPE i = current->index + 1; i < attacks->size; ++i) {
-			if (current->conflicts[order[i]] || current->scheduled[order[i]])
-				continue;
-
-			State *next = incremental_closure(attacks, attacked_by, i, current, order, position);
-
-			// if closure has a conflict or is not canonical then abandon that branch
-			if (!next) {
-				continue;
-			}
-
-			// if closure is self-defending, then found
-			if (is_set_self_defending(attacks, attacked_by, next->set)) {
-					return(next->set);
-			}
-
-			push(&states, new_stack_element_ptr(next));
-		}
-		*/
 		delete_state(current);
 		current = NULL;
 	}
