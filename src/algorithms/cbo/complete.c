@@ -293,84 +293,6 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
 
-	// prepare the ordering:
-	// first attackers of argument, then the argument, then attackers of its attackers
-
-	// initially every argument is mapped to its index
-	ARG_TYPE *order = calloc(attacks->size, sizeof(ARG_TYPE));
-	assert(order != NULL);
-	// reverse map: argument->position
-	ARG_TYPE *position = calloc(attacks->size, sizeof(ARG_TYPE));
-	assert(position != NULL);
-
-	bool *tmp_bv = calloc(attacked_by->size, sizeof(bool));
-	assert(tmp_bv != NULL);
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i)
-		tmp_bv[i] = false;
-
-	// place attackers at the beginning
-	SIZE_TYPE index = 0;
-	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[argument]; ++i) {
-		ARG_TYPE attacker_of_argument = attacked_by->lists[argument][i];
-		if (!tmp_bv[attacker_of_argument]) {
-			// order[index++] = attacker_of_argument;
-			order[index] = attacker_of_argument;
-			position[attacker_of_argument] = index;
-			++index;
-			tmp_bv[attacker_of_argument] = true;
-		}
-	}
-	// next the victims
-	for (SIZE_TYPE i = 0; i < attacks->list_sizes[argument]; ++i) {
-		ARG_TYPE victim_of_argument = attacks->lists[argument][i];
-		if (!tmp_bv[victim_of_argument]) {
-			// order[index++] = victim_of_argument;
-			order[index] = victim_of_argument;
-			position[victim_of_argument] = index;
-			++index;
-			tmp_bv[victim_of_argument] = true;
-		}
-	}
-
-	// now place the argument
-	// first note the index of the argument
-	ARG_TYPE argument_index = index;
-	// order[index++] = argument;
-	order[index] = argument;
-	position[argument] = index;
-	++index;
-	tmp_bv[argument] = true;
-
-	// as next move attackers of attackers of argument to the right of the argument
-	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[argument]; ++i) {
-		ARG_TYPE attacker_of_argument = attacked_by->lists[argument][i];
-		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_argument]; ++j) {
-			ARG_TYPE attacker_of_attacker_of_argument = attacked_by->lists[attacker_of_argument][j];
-			if (!tmp_bv[attacker_of_attacker_of_argument]) {
-				// order[index++] = attacker_of_attacker_of_argument;
-				order[index] = attacker_of_attacker_of_argument;
-				position[attacker_of_attacker_of_argument] = index;
-				++index;
-				tmp_bv[attacker_of_attacker_of_argument] = true;
-			}
-		}
-	}
-
-	// now the rest
-	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
-		if (!tmp_bv[i]) {
-			// order[index++] = i;
-			order[index] = i;
-			position[i] = index;
-			++index;
-			tmp_bv[i] = true;
-		}
-	}
-
-	// Sort ?
-	// TODO
-	// ...
-
 	Stack states;
 	init_stack(&states);
 	// QueueNode *states = NULL;
@@ -378,7 +300,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
-	current->new_argument = argument_index;
+	current->new_argument = argument;
 	push(&states, new_stack_element_ptr(current));
 	// states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
