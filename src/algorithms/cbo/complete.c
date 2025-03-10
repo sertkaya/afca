@@ -288,17 +288,14 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	Stack states;
 	init_stack(&states);
-	// QueueNode *states = NULL;
 
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	current->new_argument = argument;
 	push(&states, new_stack_element_ptr(current));
-	// states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
 	while (current =  pop_ptr(&states)) {
-	// while (current =  dequeue_ptr(&states)) {
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		int min_attacker_count = attacks->size;
@@ -336,7 +333,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			}
 
 			push(&states, new_stack_element_ptr(next));
-			// states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
 		delete_state(current);
 		current = NULL;
@@ -354,9 +350,9 @@ struct pair {
 };
 
 int compare_arguments(const void *v1, const void *v2) {
-	if ((((struct pair*) v1)-> victim_count) > (((struct pair*) v2)-> victim_count))
+	if ((((struct pair*) v1)-> victim_count) < (((struct pair*) v2)-> victim_count))
 		return(1);
-	else if ((((struct pair*) v2)-> victim_count) > (((struct pair*) v1)-> victim_count))
+	else if ((((struct pair*) v1)-> victim_count) > (((struct pair*) v2)-> victim_count))
 		return(-1);
 	else
 		return(0);
