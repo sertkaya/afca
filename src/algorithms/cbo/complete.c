@@ -35,6 +35,7 @@ struct state {
 	SIZE_TYPE* unattacked_attackers_count;
 	ArgumentSet *unattacked_attackers;
 	bool* victims;
+	int priority;
 };
 
 typedef struct state State;
@@ -88,6 +89,8 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
 
+	n->priority = s->priority;
+
 	return(n);
 }
 
@@ -121,6 +124,7 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	init_stack(&update);
 
 	State *next = create_state(af->size);
+	next->priority = af->size;
 
 	// Push elements of s to the stack, mark them as scheduled
 	for (SIZE_TYPE i = 0; i < s->size; ++i) {
@@ -214,6 +218,18 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 		}
 	}
 
+	/*
+	// set the priority to the smallest number of attackers of an unattacked attacker
+	ListNode *tmp_node = next->unattacked_attackers->list;
+	while (tmp_node) {
+		ARG_TYPE unattacked_attacker = tmp_node->e->n;
+		if (next->unattacked_attackers_count[unattacked_attacker] < next->priority) {
+			next->priority = next->unattacked_attackers_count[unattacked_attacker];
+		}
+		tmp_node = tmp_node->next;
+	}
+	*/
+
 	return(next);
 }
 
@@ -280,6 +296,18 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 			}
 		}
 	}
+	/*
+	// set the priority to the smallest number of attackers of an unattacked attacker
+	ListNode *tmp_node = next->unattacked_attackers->list;
+	while (tmp_node) {
+		ARG_TYPE unattacked_attacker = tmp_node->e->n;
+		if (next->unattacked_attackers_count[unattacked_attacker] < next->priority) {
+			next->priority = next->unattacked_attackers_count[unattacked_attacker];
+		}
+		tmp_node = tmp_node->next;
+	}
+	*/
+
 	return(next);
 }
 
@@ -310,6 +338,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	}
 	states = enqueue_ptr(current, states, min_attacker_count);
 	*/
+	// states = enqueue_ptr(current, states, current->priority);
 	states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
 	while (current =  dequeue_ptr(&states)) {
@@ -363,6 +392,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			}
 			states = enqueue_ptr(next, states, min_attacker_count);
 			*/
+			// states = enqueue_ptr(next, states, next->priority);
 			states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
 		delete_state(current);
@@ -382,9 +412,9 @@ struct pair {
 
 int compare_arguments(const void *v1, const void *v2) {
 	if ((((struct pair*) v1)-> victim_count) > (((struct pair*) v2)-> victim_count))
-		return(1);
-	else if ((((struct pair*) v2)-> victim_count) > (((struct pair*) v1)-> victim_count))
 		return(-1);
+	else if ((((struct pair*) v2)-> victim_count) > (((struct pair*) v1)-> victim_count))
+		return(1);
 	else
 		return(0);
 }
