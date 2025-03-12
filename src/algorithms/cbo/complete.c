@@ -217,19 +217,16 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 			}
 		}
 	}
-
 	/*
-	// set the priority to the smallest number of attackers of an unattacked attacker
-	ListNode *tmp_node = next->unattacked_attackers->list;
-	while (tmp_node) {
-		ARG_TYPE unattacked_attacker = tmp_node->e->n;
-		if (next->unattacked_attackers_count[unattacked_attacker] < next->priority) {
-			next->priority = next->unattacked_attackers_count[unattacked_attacker];
-		}
-		tmp_node = tmp_node->next;
+	ListNode *tmp = next->unattacked_attackers->list;
+	int priority = 0;
+	while (tmp) {
+		priority += next->unattacked_attackers_count[tmp->e->n];
+		tmp = tmp->next;
 	}
+	next->priority = priority;
 	*/
-
+	next->priority = next->unattacked_attackers->count;
 	return(next);
 }
 
@@ -297,64 +294,64 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 		}
 	}
 	/*
-	// set the priority to the smallest number of attackers of an unattacked attacker
-	ListNode *tmp_node = next->unattacked_attackers->list;
-	while (tmp_node) {
-		ARG_TYPE unattacked_attacker = tmp_node->e->n;
-		if (next->unattacked_attackers_count[unattacked_attacker] < next->priority) {
-			next->priority = next->unattacked_attackers_count[unattacked_attacker];
-		}
-		tmp_node = tmp_node->next;
+	ListNode *tmp = next->unattacked_attackers->list;
+	int priority = 0;
+	while (tmp) {
+		priority += next->unattacked_attackers_count[tmp->e->n];
+		tmp = tmp->next;
 	}
+	next->priority = priority;
 	*/
-
+	next->priority = next->unattacked_attackers->count;
 	return(next);
 }
 
 struct p {
 	ARG_TYPE arg;
-	int count;
+	int score;
 };
 int cmp_p(const void *v1, const void *v2) {
-	if ((((struct p*) v1)-> count) < (((struct p*) v2)-> count))
+	if ((((struct p*) v1)-> score) < (((struct p*) v2)-> score))
 		return(-1);
-	else if ((((struct p*) v1)-> count) > (((struct p*) v2)-> count))
+	else if ((((struct p*) v1)-> score) > (((struct p*) v2)-> score))
 		return(1);
 	else
 		return(0);
 }
 
-void *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attacker, State *current, int *c, ARG_TYPE **a) {
+void *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attacker, State *state, int *size, ARG_TYPE **a) {
 	struct  p *pairs = calloc(attacked_by->list_sizes[least_attacked_attacker], sizeof(struct p));
 	assert(pairs != NULL);
 	int index = 0;
 	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 		ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
-		if ( current->conflicts[attacker_of_least_attacked_attacker] ||
-			current->scheduled[attacker_of_least_attacked_attacker]) {
+		if ( state->conflicts[attacker_of_least_attacked_attacker] ||
+			state->scheduled[attacker_of_least_attacked_attacker]) {
 			// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
 			// so skip it
 			continue;
-			}
+		}
 		int count = 0;
 		for (SIZE_TYPE j = 0; j < attacks->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
-			if (current->unattacked_attackers->vector[attacks->lists[attacker_of_least_attacked_attacker][j]]) {
+			if (state->unattacked_attackers->vector[attacks->lists[attacker_of_least_attacked_attacker][j]]) {
 				++count;
 			}
 		}
 		pairs[index].arg = attacker_of_least_attacked_attacker;
-		pairs[index].count = count;
-		// pairs[index].count = (current->unattacked_attackers->count - count) + current->unattacked_attackers_count[attacker_of_least_attacked_attacker];
-		printf("%d %d %d %d %d\n", attacker_of_least_attacked_attacker, count, pairs[index].count, attacks->list_sizes[attacker_of_least_attacked_attacker], attacked_by->list_sizes[attacker_of_least_attacked_attacker]);
+		// pairs[index].score = count;
+		pairs[index].score = (state->unattacked_attackers->count - count) + state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+		printf("%d %d %d %d %d %d\n", attacker_of_least_attacked_attacker, count, pairs[index].score, state->unattacked_attackers_count[attacker_of_least_attacked_attacker], attacks->list_sizes[attacker_of_least_attacked_attacker], attacked_by->list_sizes[attacker_of_least_attacked_attacker]);
 		++index;
 	}
 	qsort(pairs, index, sizeof(struct p), cmp_p);
 	ARG_TYPE *attackers = calloc(index, sizeof(ARG_TYPE));
 	assert(attackers != NULL);
-	for (SIZE_TYPE i = 0; i < index; ++i)
+	for (SIZE_TYPE i = 0; i < index; ++i) {
 		attackers[i] = pairs[i].arg;
+		// printf("%d %d\n", pairs[i].arg, pairs[i].score);
+	}
 	*a = attackers;
-	*c = index;
+	*size = index;
 }
 
 ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
@@ -368,8 +365,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	current->new_argument = argument;
 
 	int min_attacker_count = attacks->size;
-	// states = enqueue_ptr(current, states, current->priority);
-	states = enqueue_ptr(current, states, current->unattacked_attackers->count);
+	states = enqueue_ptr(current, states, current->priority);
 
 	while (current =  dequeue_ptr(&states)) {
 		printf("=>%d %d\n", current->new_argument, current->unattacked_attackers->count);
@@ -415,9 +411,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 				continue;
 			}
 
-			// states = enqueue_ptr(next, states, next->priority);
-			// printf("->%d\n", next->unattacked_attackers->count);
-			states = enqueue_ptr(next, states, next->unattacked_attackers->count);
+			states = enqueue_ptr(next, states, next->priority);
 		}
 		delete_state(current);
 		current = NULL;
