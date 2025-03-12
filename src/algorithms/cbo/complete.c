@@ -316,9 +316,9 @@ struct p {
 	int count;
 };
 int cmp_p(const void *v1, const void *v2) {
-	if ((((struct p*) v1)-> count) > (((struct p*) v2)-> count))
+	if ((((struct p*) v1)-> count) < (((struct p*) v2)-> count))
 		return(-1);
-	else if ((((struct p*) v1)-> count) < (((struct p*) v2)-> count))
+	else if ((((struct p*) v1)-> count) > (((struct p*) v2)-> count))
 		return(1);
 	else
 		return(0);
@@ -344,7 +344,8 @@ void *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attac
 		}
 		pairs[index].arg = attacker_of_least_attacked_attacker;
 		pairs[index].count = count;
-		// printf("%d %d %d\n", attacker_of_least_attacked_attacker, count, attacks->list_sizes[attacker_of_least_attacked_attacker]);
+		// pairs[index].count = (current->unattacked_attackers->count - count) + current->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+		printf("%d %d %d %d %d\n", attacker_of_least_attacked_attacker, count, pairs[index].count, attacks->list_sizes[attacker_of_least_attacked_attacker], attacked_by->list_sizes[attacker_of_least_attacked_attacker]);
 		++index;
 	}
 	qsort(pairs, index, sizeof(struct p), cmp_p);
@@ -371,6 +372,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	states = enqueue_ptr(current, states, current->unattacked_attackers->count);
 
 	while (current =  dequeue_ptr(&states)) {
+		printf("=>%d %d\n", current->new_argument, current->unattacked_attackers->count);
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		ListNode *tmp_node = current->unattacked_attackers->list;
@@ -414,6 +416,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			}
 
 			// states = enqueue_ptr(next, states, next->priority);
+			// printf("->%d\n", next->unattacked_attackers->count);
 			states = enqueue_ptr(next, states, next->unattacked_attackers->count);
 		}
 		delete_state(current);
