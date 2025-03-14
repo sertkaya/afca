@@ -369,7 +369,6 @@ bool sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attack
 		*/
 		pairs[index].arg = attacker_of_least_attacked_attacker;
 		pairs[index].score = count;
-		// pairs[index].score = (state->unattacked_attackers->count - count) + state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
 		// pairs[index].score =  state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
 		printf("%d %d %d %d %d %d\n", attacker_of_least_attacked_attacker, count, pairs[index].score, state->unattacked_attackers_count[attacker_of_least_attacked_attacker], attacks->list_sizes[attacker_of_least_attacked_attacker], attacked_by->list_sizes[attacker_of_least_attacked_attacker]);
 		++index;
@@ -402,7 +401,8 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	states = enqueue_ptr(current, states, current->priority);
 
 	while (current =  dequeue_ptr(&states)) {
-		printf("=>%d %d\n", current->new_argument, current->unattacked_attackers->count);
+		printf("=>%d %d: ", current->new_argument, current->unattacked_attackers->count);
+		print_list(stdout, current->set, "\n");
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		ListNode *tmp_node = current->unattacked_attackers->list;
