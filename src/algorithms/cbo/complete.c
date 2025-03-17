@@ -285,38 +285,46 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 
 struct p {
 	ARG_TYPE arg;
-	int count;
+	int score;
 };
 int cmp_p(const void *v1, const void *v2) {
-	if ((((struct p*) v1)-> count) > (((struct p*) v2)-> count))
+	if ((((struct p*) v1)-> score) > (((struct p*) v2)-> score))
 		return(-1);
-	else if ((((struct p*) v1)-> count) < (((struct p*) v2)-> count))
+	else if ((((struct p*) v1)-> score) < (((struct p*) v2)-> score))
 		return(1);
 	else
 		return(0);
 }
 
-void *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attacker, State *current, int *c, ARG_TYPE **a) {
+void *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attacker, State *state, int *c, ARG_TYPE **a) {
 	struct  p *pairs = calloc(attacked_by->list_sizes[least_attacked_attacker], sizeof(struct p));
 	assert(pairs != NULL);
 	int index = 0;
 	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 		ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
-		if ( current->conflicts[attacker_of_least_attacked_attacker] ||
-			current->scheduled[attacker_of_least_attacked_attacker]) {
+		if ( state->conflicts[attacker_of_least_attacked_attacker]) {
+			// state->scheduled[attacker_of_least_attacked_attacker]) {
 			// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
 			// so skip it
 			continue;
 		}
 		int count = 0;
 		for (SIZE_TYPE j = 0; j < attacks->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
-			if (current->unattacked_attackers->vector[attacks->lists[attacker_of_least_attacked_attacker][j]]) {
+			if (state->unattacked_attackers->vector[attacks->lists[attacker_of_least_attacked_attacker][j]]) {
 				++count;
 			}
 		}
+		/*
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
+				if (state->unattacked_attackers->vector[attacked_by->lists[attacker_of_least_attacked_attacker][j]]) {
+					++count;
+				}
+			}
+			*/
 		pairs[index].arg = attacker_of_least_attacked_attacker;
-		pairs[index].count = count;
-		// printf("%d %d %d\n", attacker_of_least_attacked_attacker, count, attacks->list_sizes[attacker_of_least_attacked_attacker]);
+		pairs[index].score = count;
+		// pairs[index].score =  state->unattacked_attackers->count - count + state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+		printf("%d %d %d\n", attacker_of_least_attacked_attacker, pairs[index].score, attacks->list_sizes[attacker_of_least_attacked_attacker]);
 		++index;
 	}
 	qsort(pairs, index, sizeof(struct p), cmp_p);
@@ -341,6 +349,8 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
+		printf("=>%d:", current->unattacked_attackers->count);
+		print_list(stdout, current->set, "\n");
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		int min_attacker_count = attacks->size;
