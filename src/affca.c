@@ -417,7 +417,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case DC_PR:
 			if (alg == CBO) {
-				BitSet* preferred = dc_pr_cbo(af, --argument);
+				BitSet* preferred = dc_pr_cbo_smart(af, --argument);
 				if (preferred) {
 					print_set(preferred, output, "\n");
 					free_bitset(preferred);
