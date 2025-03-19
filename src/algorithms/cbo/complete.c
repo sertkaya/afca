@@ -363,21 +363,37 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		// otherwise iterate over the unattacked_attackers to find the least_attacked_argument
 		while (tmp_node) {
 			ARG_TYPE unattacked_attacker = tmp_node->e->n;
+			int count = 0;
+			for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[unattacked_attacker]; ++i) {
+				ARG_TYPE unattacked_attacker_attacker = attacked_by->lists[unattacked_attacker][i];
+				if (!current->scheduled[unattacked_attacker_attacker] &&
+					!current->conflicts[unattacked_attacker_attacker]) {
+					++count;
+					}
+			}
+			if (count < min_attacker_count) {
+				min_attacker_count = count;
+				least_attacked_attacker = unattacked_attacker;
+			}
+
+			/*
 			if (current->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
 				min_attacker_count = current->unattacked_attackers_count[unattacked_attacker];
 				least_attacked_attacker = unattacked_attacker;
 			}
+			*/
+
 			tmp_node = tmp_node->next;
 		}
 		// now unattacked attackers of least_attacked_attacker: add them one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		int size;
-		ARG_TYPE *attackers;
-		sort_attackers(attacks, attacked_by, least_attacked_attacker, current, &size, &attackers);
-		// for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
-		for (SIZE_TYPE i = 0; i < size; ++i) {
-			// ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
-			ARG_TYPE attacker_of_least_attacked_attacker = attackers[i];
+		// ARG_TYPE *attackers;
+		// sort_attackers(attacks, attacked_by, least_attacked_attacker, current, &size, &attackers);
+		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
+		// for (SIZE_TYPE i = 0; i < size; ++i) {
+			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
+			// ARG_TYPE attacker_of_least_attacked_attacker = attackers[i];
 			// printf("==>%d\n", attacker_of_least_attacked_attacker);
 			if ( current->conflicts[attacker_of_least_attacked_attacker] ||
 				current->scheduled[attacker_of_least_attacked_attacker]) {
@@ -443,7 +459,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	// TODO: experimenting
 	// sort adjacency lists of attacked_by according to number of victims
-	sort_adjacency_lists(attacks, attacked_by);
+	// sort_adjacency_lists(attacks, attacked_by);
 
 	printf("Argument: %d\n", argument);
 
