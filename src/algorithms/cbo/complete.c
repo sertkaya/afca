@@ -371,7 +371,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 					++count;
 					}
 			}
-			if (count < min_attacker_count) {
+			if (count <= min_attacker_count) {
 				min_attacker_count = count;
 				least_attacked_attacker = unattacked_attacker;
 			}
