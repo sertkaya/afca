@@ -33,6 +33,8 @@ struct stack {
 };
 typedef struct stack Stack;
 
+Stack *new_stack();
+
 void init_stack(Stack* s);
 
 inline void push(Stack* s, StackElement* e) {

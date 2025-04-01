@@ -28,6 +28,14 @@ extern inline void* pop_ptr(Stack* s);
 extern inline StackElement* new_stack_element_int(int i);
 extern inline StackElement* new_stack_element_ptr(void* p);
 
+Stack *new_stack() {
+	Stack *s = calloc(1, sizeof(Stack));
+	assert(s != NULL);
+	s->size = 0;
+	s->elements = NULL;
+	return(s);
+}
+
 void init_stack(Stack* s) {
 	s->size = 0;
 	s->elements = NULL;

@@ -367,8 +367,8 @@ void print_conflicts_matrix(bool **conflicts, AF* af) {
 	}
 }
 
-AF *create_conflicts_argumentation_framework(AF *af, AF *af_t) {
-	ListNode *implications = create_implications(af, af_t);
+AF *create_conflicts_graph(AF *af, AF *af_t) {
+	// ListNode *implications = create_implications(af, af_t);
 	AF *conflicts_af = create_argumentation_framework(af->size);
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {

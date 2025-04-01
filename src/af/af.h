@@ -106,7 +106,7 @@ void sort_adjacency_lists(AF *af, AF *af_t);
 
 void print_conflicts_matrix(bool **conflicts, AF* af);
 
-AF *create_conflicts_argumentation_framework(AF *af, AF *af_t);
+AF *create_conflicts_graph(AF *af, AF *af_t);
 
 //PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
