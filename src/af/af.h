@@ -102,6 +102,12 @@ void swap_arguments(AF* af, ARG_TYPE a1, ARG_TYPE a2);
 // the adjacency list at mapping[i] of the old af.
 AF* apply_mapping(AF* af, ARG_TYPE *mapping);
 
+void sort_adjacency_lists(AF *af, AF *af_t);
+
+void print_conflicts_matrix(bool **conflicts, AF* af);
+
+AF *create_conflicts_argumentation_framework(AF *af, AF *af_t);
+
 //PAF* project_argumentation_framework(AF *af, BitSet* mask);
 
 //BitSet* project_back(BitSet* bs, PAF* paf, SIZE_TYPE base_size);

@@ -17,20 +17,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <inttypes.h>
 #include <math.h>
-#include <inttypes.h>
 #include <stdbool.h>
 
 #include "af.h"
 
 #include <string.h>
 
-#include "../bitset/bitset.h"
-#include "../utils/timer.h"
 #include "../utils/stack.h"
-#include "../utils/queue.h"
+#include "../utils/linked_list.h"
 #include "../utils/array_list.h"
+#include "../utils/implication.h"
 #include "../algorithms/next-closure/complete.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
@@ -327,4 +324,58 @@ AF* apply_mapping(AF* af, ARG_TYPE* mapping) {
 	}
 
 	return(mapped_af);
+}
+
+struct argument_score_pair {
+	ARG_TYPE arg;
+	SIZE_TYPE victim_count;
+};
+
+int compare_arguments(const void *v1, const void *v2) {
+	if ((((struct argument_score_pair*) v1)-> victim_count) < (((struct argument_score_pair*) v2)-> victim_count))
+		return(1);
+	else if ((((struct argument_score_pair*) v1)-> victim_count) > (((struct argument_score_pair*) v2)-> victim_count))
+		return(-1);
+	else
+		return(0);
+}
+
+void sort_adjacency_lists(AF *af, AF *af_t) {
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
+		struct argument_score_pair *pairs = calloc(af_t->list_sizes[i], sizeof(struct argument_score_pair));
+		assert(pairs != NULL);
+		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
+			pairs[j].arg = af_t->lists[i][j];
+			pairs[j].victim_count = af->list_sizes[af_t->lists[i][j]];
+		}
+		qsort(pairs, af_t->list_sizes[i], sizeof(struct argument_score_pair), compare_arguments);
+		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
+			af_t->lists[i][j] = pairs[j].arg;
+		}
+		free(pairs);
+	}
+}
+
+void print_conflicts_matrix(bool **conflicts, AF* af) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		for (SIZE_TYPE j = 0; j < af->size; ++j)
+			if (conflicts[i][j])
+				printf("1");
+			else
+				printf("0");
+		printf("\n");
+	}
+}
+
+AF *create_conflicts_argumentation_framework(AF *af, AF *af_t) {
+	ListNode *implications = create_implications(af, af_t);
+	AF *conflicts_af = create_argumentation_framework(af->size);
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			add_attack(conflicts_af, i, af->lists[i][j]);
+			add_attack(conflicts_af, af->lists[i][j], i);
+		}
+		// close(i, implications, conflicts_matrix[i]);
+	}
+	return(conflicts_af);
 }

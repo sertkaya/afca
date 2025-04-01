@@ -17,6 +17,8 @@
 #ifndef UTILS_LINKED_LIST_H_
 #define UTILS_LINKED_LIST_H_
 
+#include <stdio.h>
+
 union list_element {
 	int n;
 	void *p;
@@ -31,13 +33,7 @@ typedef struct list_node ListNode;
 
 ListElement *new_list_element_int(int n);
 
-inline ListElement *new_list_element_ptr(void *p) {
-	ListElement *element = calloc(1, sizeof(ListElement));
-	assert(element != NULL);
-	element->p = p;
-
-	return(element);
-}
+ListElement *new_list_element_ptr(void *p);
 
 ListNode *new_list_node(ListElement *e);
 
@@ -49,12 +45,7 @@ int free_list(ListNode *head, void (*free_list_element)(ListElement *e));
 // Insert at head of the list
 ListNode *insert_list_int(int n, ListNode *head);
 
-inline ListNode *insert_list_ptr(void *p, ListNode *head) {
-	ListElement *element = new_list_element_ptr(p);
-	ListNode *new_node = new_list_node(element);
-	new_node->next = head;
-	return(new_node);
-}
+ListNode *insert_list_ptr(void *p, ListNode *head);
 
 void print_linked_list(ListNode* head, void (*print_list_element)(ListElement *e, FILE *file, const char *end), FILE* out_file);
 

@@ -28,6 +28,13 @@ ListNode *insert_list_int(int n, ListNode *head) {
 	return(new_node);
 }
 
+ListNode *insert_list_ptr(void *p, ListNode *head) {
+	ListElement *element = new_list_element_ptr(p);
+	ListNode *new_node = new_list_node(element);
+	new_node->next = head;
+	return(new_node);
+}
+
 ListNode *new_list_node(ListElement *e) {
 	ListNode *node = calloc(1, sizeof(ListNode));
 	assert(node != NULL);
@@ -45,6 +52,13 @@ ListElement *new_list_element_int(int n) {
 	return(element);
 }
 
+inline ListElement *new_list_element_ptr(void *p) {
+	ListElement *element = calloc(1, sizeof(ListElement));
+	assert(element != NULL);
+	element->p = p;
+
+	return(element);
+}
 
 void print_linked_list(ListNode* head, void (*print_list_element)(ListElement *e, FILE *file, const char *end), FILE *out_file) {
 	while (head) {
