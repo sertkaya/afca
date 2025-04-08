@@ -33,8 +33,12 @@ struct state {
 	ArrayList *set;
 	bool *scheduled;
 	bool *conflicts;
+	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
+	// Number of unattacked and unscheduled attackers of an argument
+	// SIZE_TYPE* unscheduled_conflict_free_attackers_count;
 	ArgumentSet *unattacked_attackers;
+	SIZE_TYPE level;
 	bool* victims;
 };
 
@@ -56,10 +60,15 @@ State *create_state(SIZE_TYPE size) {
 	s->unattacked_attackers_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(s->unattacked_attackers_count != NULL);
 
+	// s->unscheduled_conflict_free_attackers_count = calloc(size, sizeof(SIZE_TYPE));
+	// assert(s->unscheduled_conflict_free_attackers_count != NULL);
+
 	s->unattacked_attackers = new_argument_set(size);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
+
+	s->level = 0;
 
 	return(s);
 }
@@ -83,11 +92,17 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	assert(n->unattacked_attackers_count != NULL);
 	memcpy(n->unattacked_attackers_count, s->unattacked_attackers_count, size * sizeof(SIZE_TYPE));
 
+	// n->unscheduled_conflict_free_attackers_count = calloc(size, sizeof(SIZE_TYPE));
+	// assert(n->unscheduled_conflict_free_attackers_count != NULL);
+	// memcpy(n->unscheduled_conflict_free_attackers_count, s->unscheduled_conflict_free_attackers_count, size * sizeof(SIZE_TYPE));
+
 	n->unattacked_attackers = duplicate_argument_set(s->unattacked_attackers);
 
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
+
+	n->level = s->level;
 
 	return(n);
 }
@@ -102,7 +117,9 @@ void delete_state(State *s) {
 	free(s->victims);
 	s->victims = NULL;
 	free(s->unattacked_attackers_count);
+	// free(s->unscheduled_conflict_free_attackers_count);
 	s->unattacked_attackers_count = NULL;
+	// s->unscheduled_conflict_free_attackers_count = NULL;
 	free_argument_set(s->unattacked_attackers);
 	s->unattacked_attackers = NULL;
 	free(s);
@@ -195,9 +212,24 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t, AF *conflicts
 						push(update, new_stack_element_int(victim_victim_a));
 						next->scheduled[victim_victim_a] = true;
 
+						/*
+						for (SIZE_TYPE k = 0; k < af->list_sizes[victim_victim_a]; ++k) {
+							--next->unscheduled_conflict_free_attackers_count[af->lists[victim_victim_a][k]];
+							printf("1: %d\n", next->unscheduled_conflict_free_attackers_count[af->lists[victim_victim_a][k]]);
+						}
+						*/
+
 						for (SIZE_TYPE k = 0; k < conflicts_graph->list_sizes[victim_victim_a]; ++k) {
 							next->conflicts[conflicts_graph->lists[victim_victim_a][k]] = true;
+							/*
+							for (SIZE_TYPE l = 0; l < af->list_sizes[conflicts_graph->lists[victim_victim_a][k]]; ++l)
+								if (!next->scheduled[af->lists[conflicts_graph->lists[victim_victim_a][k]][l]]) {
+									--next->unscheduled_conflict_free_attackers_count[af->lists[conflicts_graph->lists[victim_victim_a][k]][l]];
+									printf("2: %d\n", next->unscheduled_conflict_free_attackers_count[af->lists[conflicts_graph->lists[victim_victim_a][k]][l]]);
+								}
+								*/
 						}
+						// printf("=======\n");
 					}
 				}
 			}
@@ -252,6 +284,8 @@ State *first_closure(AF *af, AF *af_t, AF *conflicts_graph, ArrayList *s) {
 	}
 
 	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+	next->level = 0;
+	// memcpy(next->unscheduled_conflict_free_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack(update, next, af, af_t, conflicts_graph);
 
 	return(next);
@@ -276,8 +310,57 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, AF *conflict
 	return(next);
 }
 
+void jump_back(Stack *s, SIZE_TYPE jump) {
+	Stack tmp;
+	init_stack(&tmp);
+	State *x;
+	for (SIZE_TYPE i = 0; i < jump; ++i) {
+		x = pop_ptr(s);
+		push(&tmp, new_stack_element_ptr(x));
+	}
+	State *top = pop_ptr(s);
+	while ((x = pop_ptr(&tmp)) != NULL) {
+		push(s, new_stack_element_ptr(x));
+	}
+	push(s, new_stack_element_ptr(top));
+}
+ // TODO: Testing ...
+bool are_together_defeatable(ARG_TYPE a1, ARG_TYPE a2, AF *af, AF *af_t, bool **conflict_matrix) {
+	// check if every attacker of a1 is in conflict with every attacker of a2
+	for (SIZE_TYPE i = 0; i < af_t->list_sizes[a1]; ++i) {
+		ARG_TYPE attacker_a1 = af_t->lists[a1][i];
+		for (SIZE_TYPE j = 0; j < af_t->list_sizes[a2]; ++j) {
+			ARG_TYPE attacker_a2 = af_t->lists[a2][j];
+			if (!conflict_matrix[attacker_a1][attacker_a2])
+				return(true);
+		}
+	}
+
+	return(false);
+}
 ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by, AF *conflicts_af) {
 	struct timeval start_time, stop_time;
+
+	/*
+	// <-- TODO: testing ...
+	START_TIMER(start_time);
+	bool **conflict_matrix = calloc(attacks->size, sizeof(bool*));
+	assert(conflict_matrix != NULL);
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		conflict_matrix[i] = calloc(attacks->size, sizeof(bool));
+		assert(conflict_matrix[i] != NULL);
+		for (SIZE_TYPE j = 0; j < conflicts_af->list_sizes[i]; ++j)
+			conflict_matrix[i][conflicts_af->lists[i][j]] = true;
+	}
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
+		for (SIZE_TYPE j = 0; j < attacks->size; ++j)
+			if (!are_together_defeatable(i, j, attacks, attacked_by, conflict_matrix))
+				printf("%d %d\n", i, j);
+	STOP_TIMER(stop_time);
+	printf("Checking defeatable pairs: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	free(conflict_matrix);
+	// TODO: testing ... -->
+	*/
 
 	Stack states;
 	init_stack(&states);
@@ -289,6 +372,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by, AF *confli
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
+		// printf("level:%d\n", current->level);
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
 		int min_attacker_count = attacks->size;
@@ -299,6 +383,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by, AF *confli
 		if (tmp_node == NULL)
 			return(current->set);
 		// otherwise iterate over the unattacked_attackers to find the least_attacked_argument
+
 		while (tmp_node) {
 			ARG_TYPE unattacked_attacker = tmp_node->e->n;
 			int count = 0;
@@ -309,20 +394,37 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by, AF *confli
 					++count;
 				}
 			}
-			if (count <= min_attacker_count) {
+			if (count < min_attacker_count) {
 				min_attacker_count = count;
 				least_attacked_attacker = unattacked_attacker;
 			}
-
 			/*
-			if (current->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
-				min_attacker_count = current->unattacked_attackers_count[unattacked_attacker];
+			if (current->unscheduled_conflict_free_attackers_count[unattacked_attacker] < min_attacker_count) {
 				least_attacked_attacker = unattacked_attacker;
+				min_attacker_count = current->unscheduled_conflict_free_attackers_count[unattacked_attacker];
 			}
 			*/
 
+			// if (current->unattacked_attackers_count[unattacked_attacker] < min_attacker_count) {
+			// 	min_attacker_count = current->unattacked_attackers_count[unattacked_attacker];
+			// 	least_attacked_attacker = unattacked_attacker;
+			// }
+
 			tmp_node = tmp_node->next;
 		}
+
+		/*
+		for (SIZE_TYPE i = 0; i < current->set->size; ++i) {
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[current->set->elements[i]]; ++j) {
+				ARG_TYPE attacker = attacked_by->lists[current->set->elements[i]][j];
+				if (!current->victims[attacker] && current->unscheduled_conflict_free_attackers_count[attacker] < min_attacker_count) {
+					least_attacked_attacker = attacker;
+					min_attacker_count = current->unscheduled_conflict_free_attackers_count[attacker];
+				}
+			}
+		}
+		*/
+
 		// now unattacked attackers of least_attacked_attacker: add them one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		int size;
@@ -333,7 +435,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by, AF *confli
 			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 			// ARG_TYPE attacker_of_least_attacked_attacker = attackers[i];
 			// printf("==>%d\n", attacker_of_least_attacked_attacker);
-			if ( current->conflicts[attacker_of_least_attacked_attacker] ||
+			if (current->conflicts[attacker_of_least_attacked_attacker] ||
 				current->scheduled[attacker_of_least_attacked_attacker]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
 				// so skip it
@@ -346,8 +448,12 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by, AF *confli
 			if (!next) {
 				continue;
 			}
-
+			next->level = current->level + 1;
 			push(&states, new_stack_element_ptr(next));
+			// if (next->level > 30) {
+			// 	printf("jumping back\n");
+			// 	jump_back(&states, 120);
+			// }
 		}
 		delete_state(current);
 		current = NULL;
@@ -371,24 +477,25 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	printf("Argument: %d\n", argument);
 
 	// extract the subgraph induced by the argument
-	START_TIMER(start_time);
-	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
-	printf("Subgraph size:%d\n", subgraph->af->size);
-	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
-	STOP_TIMER(stop_time);
+	// START_TIMER(start_time);
+	// Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
+	// printf("Subgraph size:%d\n", subgraph->af->size);
+	// AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
+	// STOP_TIMER(stop_time);
 
 	START_TIMER(start_time);
-	AF *subgraph_conflicts_af = create_conflicts_graph(subgraph->af, subgraph_t);
+	// AF *subgraph_conflicts_af = create_conflicts_graph(subgraph->af, subgraph_t);
+	AF *conflicts_af = create_conflicts_graph(attacks, attacked_by);
 	// print_conflicts_matrix(subgraph_conflicts_matrix, subgraph->af);
-	STOP_TIMER(stop_time);
-	printf("Creating conflicht graph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	// STOP_TIMER(stop_time);
+	// printf("Creating conflicht graph: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// solve DC-CO in the subgraph
 	ArrayList *current = list_create();
-	list_add(subgraph->mapping_to_subgraph[argument], current);
-	// list_add(argument, current);
-	State *next = first_closure(subgraph->af, subgraph_t, subgraph_conflicts_af, current);
-	// State *next = first_closure(attacks, attacked_by, current);
+	// list_add(subgraph->mapping_to_subgraph[argument], current);
+	list_add(argument, current);
+	// State *next = first_closure(subgraph->af, subgraph_t, subgraph_conflicts_af, current);
+	State *next = first_closure(attacks, attacked_by, conflicts_af, current);
 
 	if (!next) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
@@ -398,16 +505,16 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	// closure is conflict-free. check if it is self-defending
 	ArrayList *extension = NULL;
-	if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
-	// if (is_set_self_defending(attacks, attacked_by, next->set)) {
+	// if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
+	if (is_set_self_defending(attacks, attacked_by, next->set)) {
 		// closure is a complete extension (in the subgraph) containing the argument
 		extension = next->set;
 	}
 	else {
 		// search for a solution by enumerating
 		START_TIMER(start_time);
-		extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t, subgraph_conflicts_af);
-		// extension = dc_co_cbo(attacks, argument, attacked_by);
+		// extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t, subgraph_conflicts_af);
+		extension = dc_co_cbo(attacks, argument, attacked_by, conflicts_af);
 		STOP_TIMER(stop_time);
 		printf("dc_co_cbo: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
@@ -421,6 +528,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 		return(NULL);
 	}
 
+	/*
 	// now close the mapped extension in the whole framework
 	list_free(current);
 	current = list_create();
@@ -435,7 +543,8 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	printf("Closure count: %d\n", closure_count);
 	return(next->set);
+	*/
 
-	// printf("Closure count: %d\n", closure_count);
-	// return(extension);
+	printf("Closure count: %d\n", closure_count);
+	return(extension);
 }
