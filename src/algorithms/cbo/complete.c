@@ -449,7 +449,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	// TODO: experimenting
 	// sort adjacency lists of attacked_by according to number of victims
-	// sort_adjacency_lists(attacks, attacked_by);
+	sort_adjacency_lists(attacks, attacked_by);
 
 	printf("Argument: %d\n", argument);
 
