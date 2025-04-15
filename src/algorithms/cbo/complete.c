@@ -121,6 +121,7 @@ struct state {
 	// SIZE_TYPE* unscheduled_conflict_free_attackers_count;
 	ArgumentSet *unattacked_attackers;
 	bool* victims;
+	int priority;
 };
 
 typedef struct state State;
@@ -180,6 +181,8 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
+
+	n->priority = s->priority;
 
 	return(n);
 }
@@ -263,6 +266,7 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 			}
 		}
 	}
+	next->priority = next->unattacked_attackers->count;
 	return(next);
 }
 
@@ -270,6 +274,7 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	Stack *update = new_stack();
 	State *next = create_state(af->size);
+	next->priority = af->size;
 
 	++closure_count;
 
@@ -348,16 +353,20 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	struct timeval start_time, stop_time;
 
-	Stack states;
-	init_stack(&states);
+	// Stack states;
+	// init_stack(&states);
+	QueueNode *states = NULL;
 
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	current->new_argument = argument;
-	push(&states, new_stack_element_ptr(current));
 
-	while (current =  pop_ptr(&states)) {
+	// push(&states, new_stack_element_ptr(current));
+	states = enqueue_ptr(current, states, current->priority);
+
+	// while (current =  pop_ptr(&states)) {
+	while (current =  dequeue_ptr(&states)) {
 		// print_list(stdout, current->set,"\n");
 		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
 		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
@@ -420,7 +429,8 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			}
 			*/
 
-			push(&states, new_stack_element_ptr(next));
+			// push(&states, new_stack_element_ptr(next));
+			states = enqueue_ptr(next, states, next->priority);
 		}
 		delete_state(current);
 		current = NULL;
