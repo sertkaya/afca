@@ -125,10 +125,7 @@ inline unsigned int pop(Stack* s) {
 }
 */
 
-inline void free_stack(Stack* s) {
-	for (unsigned int i = 0; i < s->size; ++i)
-		free(s->elements[i]);
-	free(s->elements);
-}
+void free_stack(Stack* s);
+
 
 #endif /* STACK_H_ */

@@ -86,12 +86,7 @@ AF* create_conflict_framework(AF* af);	// make it undirected
 
 bool is_set_conflict_free(AF* attacks, ArrayList* s);
 
-inline bool is_set_admissible(AF* af, ArrayList* s) {
-	AF* af_t = transpose_argumentation_framework(af);
-	bool admissible = is_set_conflict_free(af, s) && is_set_self_defending(af, af_t, s);
-	free_argumentation_framework(af_t);
-	return(admissible);
-}
+bool is_set_admissible(AF* af, ArrayList* s);
 
 bool is_set_complete(AF* af, ArrayList* s);
 

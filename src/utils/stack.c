@@ -41,3 +41,8 @@ void init_stack(Stack* s) {
 	s->elements = NULL;
 }
 
+void free_stack(Stack* s) {
+	for (unsigned int i = 0; i < s->size; ++i)
+		free(s->elements[i]);
+	free(s->elements);
+}
