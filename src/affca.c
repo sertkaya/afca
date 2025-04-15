@@ -35,13 +35,14 @@
 */
 #include "algorithms/next-closure/complete.h"
 #include "algorithms/cbo/complete.h"
+#include "algorithms/cbo/admissible.h"
 #include "validator/validator.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
 
-#define EXTENSION_TYPE_COUNT 4
-enum extension_types {ST, PR, CO, ID};
+#define EXTENSION_TYPE_COUNT 5
+enum extension_types {ST, PR, CO, ID, ADM};
 
 #define DECISION_PROBLEM_TYPE_COUNT 2
 enum decision_problem_types {DC, DS};
@@ -68,8 +69,8 @@ int main(int argc, char *argv[]) {
 	char *prob= "", *alg= "", *af_file_name = "", *output_file = "", *extension_file_name = "", *semantic_name;
 	ARG_TYPE argument = 0;
 	static char usage_solver[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph-nc | subgraph-cbo] "
-					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO] -a argument -f input -o output\n";
-	static char usage_validator[] = "Usage: %s  -s [ST, PR, CO] -f input -e extension\n";
+					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO, DC-ADM] -a argument -f input -o output\n";
+	static char usage_validator[] = "Usage: %s  -s [ST, PR, CO, ADM] -f input -e extension\n";
 
 	while ((c = getopt(argc, argv, "vl:p:o:f:e:s:a:")) != -1)
 		switch (c) {
@@ -209,6 +210,8 @@ int main(int argc, char *argv[]) {
 		extension_type = ID;
 	else if (strcmp(ext_type, "CO") == 0)
 		extension_type = CO;
+	else if (strcmp(ext_type, "ADM") == 0)
+		extension_type = ADM;
 	else {
 		fprintf(stderr, "Unknown extension type %s\n", ext_type);
 		fprintf(stderr, usage_solver, argv[0]);
@@ -244,6 +247,7 @@ int main(int argc, char *argv[]) {
 
 	decision_functions[DC][CO][SUBGRAPH_NC] = &dc_co_subgraph_nc;
 	decision_functions[DC][CO][SUBGRAPH_CBO] = &dc_co_subgraph_cbo;
+	decision_functions[DC][ADM][SUBGRAPH_CBO] = &dc_adm_subgraph_cbo;
 	// ...
 	// ...
 

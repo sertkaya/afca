@@ -333,9 +333,9 @@ struct argument_score_pair {
 
 int compare_arguments(const void *v1, const void *v2) {
 	if ((((struct argument_score_pair*) v1)-> victim_count) < (((struct argument_score_pair*) v2)-> victim_count))
-		return(-1);
-	else if ((((struct argument_score_pair*) v1)-> victim_count) > (((struct argument_score_pair*) v2)-> victim_count))
 		return(1);
+	else if ((((struct argument_score_pair*) v1)-> victim_count) > (((struct argument_score_pair*) v2)-> victim_count))
+		return(-1);
 	else
 		return(0);
 }
