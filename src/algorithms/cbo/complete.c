@@ -120,7 +120,6 @@ struct state {
 	// Number of unattacked and unscheduled attackers of an argument
 	// SIZE_TYPE* unscheduled_conflict_free_attackers_count;
 	ArgumentSet *unattacked_attackers;
-	SIZE_TYPE level;
 	bool* victims;
 };
 
@@ -149,8 +148,6 @@ State *create_state(SIZE_TYPE size) {
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
-
-	s->level = 0;
 
 	return(s);
 }
@@ -183,8 +180,6 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
-
-	n->level = s->level;
 
 	return(n);
 }
@@ -238,14 +233,6 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--(next->unattacked_attackers_count[victim_victim_a]);
 					if (!next->scheduled[victim_victim_a] && next->unattacked_attackers_count[victim_victim_a] == 0)  {
-						// check if victim_victim_a breaks canonicity
-						for (SIZE_TYPE k = 0; k < next->set->size; ++k) {
-							if (victim_victim_a == next->set->elements[k]) {
-								printf("xxx\n\n");
-								delete_state(next);
-								return(NULL);
-							}
-						}
 						// check if victim_victim_a causes a conflict
 						if (next->conflicts[victim_victim_a]) {
 							delete_state(next);
@@ -328,7 +315,6 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	}
 
 	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
-	next->level = 0;
 	// memcpy(next->unscheduled_conflict_free_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack(update, next, af, af_t);
 	free_stack(update);
@@ -434,7 +420,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			}
 			*/
 
-			next->level = current->level + 1;
 			push(&states, new_stack_element_ptr(next));
 		}
 		delete_state(current);
