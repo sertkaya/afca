@@ -225,10 +225,6 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 				next->victims[victim_a] = true;
 				// remove victim_a from next->unattacked_attackers
 				delete_from_argument_set(victim_a, next->unattacked_attackers);
-				if (next->unattacked_attackers->count == 0) {
-					printf("%d\n", closure_count);
-					print_list(stdout, next->set, "\n");
-				}
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--(next->unattacked_attackers_count[victim_victim_a]);
@@ -241,23 +237,10 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 						push(update, new_stack_element_int(victim_victim_a));
 						next->scheduled[victim_victim_a] = true;
 
-						/*
-						for (SIZE_TYPE k = 0; k < af->list_sizes[victim_victim_a]; ++k) {
-							--next->unscheduled_conflict_free_attackers_count[af->lists[victim_victim_a][k]];
-							printf("1: %d\n", next->unscheduled_conflict_free_attackers_count[af->lists[victim_victim_a][k]]);
-						}
-						*/
-
 						for (SIZE_TYPE k = 0; k < af->list_sizes[victim_victim_a]; ++k)
 							next->conflicts[af->lists[victim_victim_a][k]] = true;
 						for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_victim_a]; ++k)
 							next->conflicts[af_t->lists[victim_victim_a][k]] = true;
-
-						/*
-						for (SIZE_TYPE k = 0; k < conflicts_graph->list_sizes[victim_victim_a]; ++k) {
-						 	next->conflicts[conflicts_graph->lists[victim_victim_a][k]] = true;
-						}
-						*/
 					}
 				}
 			}
@@ -358,18 +341,14 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
-		// print_list(stdout, current->set,"\n");
-		// find the argument that does not cause a conflict, is not yet scheduled and has the smallest number of unattacked attackers
-		// add unattacked attackers of that argument in the loop. if none of them leads to a solution, abandon that branch
+		print_list(stdout, current->set,"\n");
+		// find the unattacked attacker of current->set that has the smallest number of attackers, which are not
+		// scheduled and are not conflicting with current->set.
 		int min_attacker_count = attacks->size;
 		ARG_TYPE least_attacked_attacker = -1;
-		ListNode *tmp_node = current->unattacked_attackers->list;
-		// if tmp_node is  NULL, then current->set does not have any unattacked attackers
-		// that is, current->set is self-defending. return it.
-		if (tmp_node == NULL)
-			return(current->set);
-		// otherwise iterate over the unattacked_attackers to find the least_attacked_argument
 
+		// Iterate over the unattacked_attackers to find the least_attacked_argument
+		ListNode *tmp_node = current->unattacked_attackers->list;
 		while (tmp_node) {
 			ARG_TYPE unattacked_attacker = tmp_node->e->n;
 			int count = 0;
@@ -388,7 +367,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			tmp_node = tmp_node->next;
 		}
 
-		// now unattacked attackers of least_attacked_attacker: add them one by one and close.
+		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		int size;
 		// ARG_TYPE *attackers;
@@ -407,18 +386,19 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 			// otherwise add it and close
 			State *next = incremental_closure(attacks, attacked_by, attacker_of_least_attacked_attacker, current);
 
-			// if closure has a conflict then abandon that branch
+			// closure has a conflict, try with another attacker
+			// of least_attacked_attacker
 			if (!next) {
+				// state "next" is already deleted in process_stack
+				// upon noticing the conflict. not required here.
 				continue;
 			}
 
-			/*
 			// if next->unattacked_attackers->list is  NULL, then next->set does not have any unattacked attackers
 			// that is, next->set is self-defending. return it.
 			if (next->unattacked_attackers->list == NULL) {
-				return(current->set);
+				return(next->set);
 			}
-			*/
 
 			push(&states, new_stack_element_ptr(next));
 		}

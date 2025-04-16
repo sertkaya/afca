@@ -134,6 +134,13 @@ inline ARG_TYPE list_iterator_next(ListIterator* it) {
 	return(next);
 }
 
+inline bool array_list_contains_arg(ArrayList *l, ARG_TYPE a) {
+	for (SIZE_TYPE i = 0; i < l->size; ++i)
+		if (l->elements[i] == a)
+			return(true);
+	return(false);
+}
+
 void print_list(FILE* fp, ArrayList* l, char* end);
 
 ArrayList* list_duplicate(ArrayList* l);
