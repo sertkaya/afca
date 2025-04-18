@@ -341,7 +341,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
-		print_list(stdout, current->set,"\n");
+		// print_list(stdout, current->set,"\n");
 		// find the unattacked attacker of current->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current->set.
 		int min_attacker_count = attacks->size;

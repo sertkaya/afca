@@ -147,4 +147,12 @@ ArrayList* list_duplicate(ArrayList* l);
 
 void list_copy(ArrayList* l1, ArrayList* l2);
 
+bool check_subset_sorted(ArrayList *l1, ArrayList *l2);
+
+// requires: l is sorted
+bool array_list_contains_arg_sorted(ArrayList *l, ARG_TYPE a);
+
+// requires: l is sorted
+ArrayList *array_list_complement_sorted(ArrayList *l, SIZE_TYPE size);
+
 #endif

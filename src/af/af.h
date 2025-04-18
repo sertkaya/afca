@@ -70,6 +70,8 @@ bool add_attack(AF* af, ARG_TYPE i, ARG_TYPE j);
 
 bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2);
 
+bool check_arg_attacks_arg_sorted(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2);
+
 bool check_arg_attacks_set(AF* af, ARG_TYPE arg, ArrayList* s);
 
 bool check_set_attacks_arg(AF* af, ArrayList* s, ARG_TYPE arg);
@@ -102,6 +104,8 @@ void sort_adjacency_lists(AF *af, AF *af_t);
 void print_conflicts_matrix(bool **conflicts, AF* af);
 
 AF *create_conflicts_graph(AF *af, AF *af_t);
+
+int compare_argument_ids(const void *arg1, const void *arg2);
 
 //PAF* project_argumentation_framework(AF *af, BitSet* mask);
 

@@ -134,3 +134,54 @@ bool list_insert_at_head(ARG_TYPE e, ArrayList* l) {
 
 	return(true);
 }
+
+// true if l1 is a subset of l2
+// l1 and l2 have to be sorted
+bool check_subset_sorted(ArrayList *l1, ArrayList *l2) {
+	SIZE_TYPE index_l1 = 0;
+	for (SIZE_TYPE i = 0; i < l2->size; ++i) {
+		if (l2->elements[i] == l1->elements[index_l1]) {
+			++index_l1;
+			if (index_l1 == l1->size)
+				break;
+		}
+	}
+	if (index_l1 == l1->size)
+		return(true);
+	else
+		return(false);
+}
+
+// requires: l is sorted
+bool array_list_contains_arg_sorted(ArrayList *l, ARG_TYPE a) {
+	SIZE_TYPE i = 0;
+	for (i = 0; i < l->size && l->elements[i] < a; ++i);
+	if (i == l->size || l->elements[i] > a)
+		return(false);
+	return(true);
+}
+
+// requires: l is sorted
+ArrayList *array_list_complement_sorted(ArrayList *l, SIZE_TYPE size) {
+	ArrayList *complement = list_create();
+	SIZE_TYPE from = 0;
+	SIZE_TYPE to;
+	for (SIZE_TYPE i = 0; i < l->size; ++i) {
+		// printf("i:%d\n", i);
+		to = l->elements[i];
+		// if (i == l->size - 1) {
+		// 	from = l->elements[i] ;
+		// 	to = size;
+		// }
+		// printf("to:%d\n", to);
+		for (SIZE_TYPE j = from; j < to; ++j) {
+			list_add(j, complement);
+			// printf("j:%d\n", j);
+		}
+		from = to  + 1;
+		// printf("from:%d\n", from);
+	}
+	for (SIZE_TYPE i = l->elements[l->size - 1] + 1; i < size; ++i)
+		list_add(i, complement);
+	return(complement);
+}

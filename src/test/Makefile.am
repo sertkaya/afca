@@ -1,9 +1,10 @@
 # bin_PROGRAMS     					= test_bitset_map test_map test_set test_af_parser test_af test_bitset test_stable_extension test_stable_extension_norris test_stable_extension_nourine analyze_af
-bin_PROGRAMS     					= test_af_parser test_af test_argument_set
+bin_PROGRAMS     					= test_af_parser test_af test_argument_set test_array_list
 
 # test_bitset_map_LDADD				= ../hashing/lib_hashing.a ../bitset/lib_bitset.a
 # test_set_LDADD						= ../hashing/lib_hashing.a
 test_argument_set_LDADD					= ../utils/libutils.a
+test_array_list_LDADD					= ../utils/libutils.a
 # test_map_LDADD						= ../hashing/lib_hashing.a ../bitset/lib_bitset.a
 # test_bitset_LDADD					= ../bitset/lib_bitset.a
 test_af_parser_LDADD				= ../parser/lib_af_parser.a	../af/lib_af.a

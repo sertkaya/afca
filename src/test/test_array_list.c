@@ -1,5 +1,7 @@
 /*
-* AFCA - argumentation framework using closed sets
+ * The ELepHant Reasoner
+ *
+ * Copyright (C) Baris Sertkaya (sertkaya@fb2.fra-uas.de)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +16,31 @@
  * limitations under the License.
  */
 
-#ifndef IMPLICATION_H
-#define IMPLICATION_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
-#include "../af/af.h"
-#include "array_list.h"
-#include "linked_list.h"
+#include "../utils/array_list.h"
 
-typedef struct implication Implication;
+int main(int argc, char *argv[]) {
 
-struct  implication {
-	ArrayList *lhs;
-	ArrayList *rhs;
-};
+	ArrayList *l = list_create();
 
-ListNode *create_implications_from_af(AF *af, AF *af_t);
+    list_add(0, l);
+    list_add(1, l);
+    list_add(2, l);
+    list_add(3, l);
+    list_add(4, l);
+    list_add(5, l);
+    list_add(8, l);
+    list_add(19, l);
+    list_add(20, l);
+    print_list(stdout, l, "\n");
 
-void print_implication(Implication *imp);
+    ArrayList *c = array_list_complement_sorted(l, 20);
+    print_list(stdout, c, "\n");
 
-void implication_closure(ListNode *imps, ArrayList *s, ArrayList *closure);
+	return 1;
+}
 
-#endif //IMPLICATION_H
+

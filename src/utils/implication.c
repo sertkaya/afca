@@ -20,7 +20,8 @@
 #include "stack.h"
 #include "../af/af.h"
 
-Implication *new_implication(ARG_TYPE *lhs, SIZE_TYPE lhs_size, ARG_TYPE rhs) {
+// requires: lhs is sorted
+Implication *new_implication(ARG_TYPE *lhs, SIZE_TYPE lhs_size, ARG_TYPE *rhs, SIZE_TYPE rhs_size) {
 	Implication *imp = calloc(1, sizeof(Implication));
 	assert(imp != NULL);
 
@@ -29,33 +30,64 @@ Implication *new_implication(ARG_TYPE *lhs, SIZE_TYPE lhs_size, ARG_TYPE rhs) {
 	for (SIZE_TYPE i = 0; i < lhs_size; ++i)
 		list_add(lhs[i], imp->lhs);
 	// list_sort(imp->lhs);
-	imp->rhs = rhs;
+
+	imp->rhs = list_create();
+	for (SIZE_TYPE i = 0; i < rhs_size; ++i)
+		list_add(rhs[i], imp->rhs);
 
 	return (imp);
 }
 
 void print_implication(Implication *imp) {
 	print_list(stdout, imp->lhs, "-> ");
-	printf("%d\n", imp->rhs);
+	print_list(stdout, imp->rhs, "\n");
 }
 
-ListNode *create_implications(AF *af, AF *af_t) {
+ListNode *create_implications_from_af(AF *af, AF *af_t) {
 	ListNode *imps = NULL;
 	int count = 0;
-	for (SIZE_TYPE attacker = 0; attacker < af->size; ++attacker) {
-		for (SIZE_TYPE j = 0; j < af->list_sizes[attacker]; ++j) {
-			Implication *imp = new_implication(af_t->lists[attacker], af_t->list_sizes[attacker],
-			                                   af->lists[attacker][j]);
-			// printf("%d:", imp->lhs->size);
-			// print_implication(imp);
-			imps = insert_list_ptr(imp, imps);
-			++count;
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		ARG_TYPE *tmp = calloc(af->list_sizes[i], sizeof(ARG_TYPE));
+		assert(tmp != NULL);
+		SIZE_TYPE tmp_count = 0;
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			if (!check_arg_attacks_arg_sorted(af, af->lists[i][j], i)) {
+				tmp[tmp_count++] = af->lists[i][j];
+			}
 		}
+
+		Implication *imp = new_implication(af_t->lists[i], af_t->list_sizes[i], tmp, tmp_count);
+		// free(conflict_free_victims);
+		// printf("%d:", imp->lhs->size);
+		// print_implication(imp);
+		imps = insert_list_ptr(imp, imps);
+		++count;
 	}
 	printf("%d implications\n", count);
 	return (imps);
 }
 
+void implication_closure(ListNode *imps, ArrayList *s, ArrayList *closure) {
+	bool update = false;
+	do {
+		update = false;
+		ListNode *current = imps;
+		while (current) {
+			Implication *imp = current->e->p;
+			// if (check_subset_sorted(((Implication*) current->e->p)->lhs, closure)) {
+			if (check_subset_sorted(imp->lhs, closure)) {
+				// TODO: Optimize!
+				for (SIZE_TYPE i = 0; i < imp->rhs->size; ++i) {
+					list_add(imp->rhs->elements[i], closure);
+					update = true;
+				}
+				list_sort(closure);
+			}
+			current = current->next;
+		}
+	} while (update);
+}
+/*
 void close(ARG_TYPE x, ListNode *implications, bool *closure) {
 	Stack update;
 	init_stack(&update);
@@ -75,3 +107,4 @@ void close(ARG_TYPE x, ListNode *implications, bool *closure) {
 		}
 	}
 }
+*/

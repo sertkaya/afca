@@ -70,11 +70,11 @@ void print_argumentation_framework(AF* af) {
 	}
 }
 
-int compare_argument(const void *arg1, const void *arg2) {
+int compare_argument_ids(const void *arg1, const void *arg2) {
 	if (arg1 < arg2)
-		return(1);
-	if (arg1 > arg2)
 		return(-1);
+	if (arg1 > arg2)
+		return(1);
 	return(0);
 }
 
@@ -232,13 +232,22 @@ bool add_attack(AF* af, ARG_TYPE i, ARG_TYPE j) {
 
 }
 // Returns true if arg_1 attacks arg_2
-// Assumes that the adjacency lists are sorted!
 bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
 	for (SIZE_TYPE i = 0; i < af->list_sizes[arg_1]; ++i)
 		if (af->lists[arg_1][i] == arg_2) {
 			return(true);
 		}
 	return(false);
+}
+
+// Returns true if arg_1 attacks arg_2
+// requires: sorted adjacency lists
+bool check_arg_attacks_arg_sorted(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
+	SIZE_TYPE i;
+	for (i = 0;  af->lists[arg_1][i] < arg_2 && i < af->list_sizes[arg_1]; ++i);
+	if (i == af->list_sizes[arg_1] || af->lists[arg_1][i] > arg_2)
+		return(false);
+	return(true);
 }
 
 // Returns true if s attacks arg
