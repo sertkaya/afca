@@ -339,6 +339,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
+	list_free(tmp);
 	current->new_argument = argument;
 	push(&states, new_stack_element_ptr(current));
 
@@ -349,10 +350,16 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		int min_attacker_count = attacks->size;
 		ARG_TYPE least_attacked_attacker = -1;
 
+		bool *attacker_processed = calloc(attacks->size, sizeof(bool));
+		assert(attacker_processed != NULL);
+
 		bool is_current_self_defending = true;
 		for (SIZE_TYPE i = 0; i < current->set->size; ++i) {
 			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[current->set->elements[i]]; ++j) {
 				ARG_TYPE attacker = attacked_by->lists[current->set->elements[i]][j];
+				if (attacker_processed[attacker])
+					continue;
+				attacker_processed[attacker] = true;
 				/// if (!current->victims[attacked_by->lists[current->set->elements[i]][j]]) {
 				if (!current->victims[attacker]) {
 					is_current_self_defending = false;
@@ -372,6 +379,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 				}
 			}
 		}
+		free(attacker_processed);
 
 		if (is_current_self_defending) {
 				return(current->set);
