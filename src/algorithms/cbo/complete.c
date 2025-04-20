@@ -119,7 +119,7 @@ struct state {
 	SIZE_TYPE* unattacked_attackers_count;
 	// Number of unattacked and unscheduled attackers of an argument
 	// SIZE_TYPE* unscheduled_conflict_free_attackers_count;
-	ArgumentSet *unattacked_attackers;
+	// ArgumentSet *unattacked_attackers;
 	bool* victims;
 };
 
@@ -144,7 +144,7 @@ State *create_state(SIZE_TYPE size) {
 	// s->unscheduled_conflict_free_attackers_count = calloc(size, sizeof(SIZE_TYPE));
 	// assert(s->unscheduled_conflict_free_attackers_count != NULL);
 
-	s->unattacked_attackers = new_argument_set(size);
+	// s->unattacked_attackers = new_argument_set(size);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
@@ -175,7 +175,7 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	// assert(n->unscheduled_conflict_free_attackers_count != NULL);
 	// memcpy(n->unscheduled_conflict_free_attackers_count, s->unscheduled_conflict_free_attackers_count, size * sizeof(SIZE_TYPE));
 
-	n->unattacked_attackers = duplicate_argument_set(s->unattacked_attackers);
+	// n->unattacked_attackers = duplicate_argument_set(s->unattacked_attackers);
 
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
@@ -197,8 +197,8 @@ void delete_state(State *s) {
 	// free(s->unscheduled_conflict_free_attackers_count);
 	s->unattacked_attackers_count = NULL;
 	// s->unscheduled_conflict_free_attackers_count = NULL;
-	free_argument_set(s->unattacked_attackers);
-	s->unattacked_attackers = NULL;
+	// free_argument_set(s->unattacked_attackers);
+	// s->unattacked_attackers = NULL;
 	free(s);
 }
 
@@ -214,17 +214,19 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 	while ((a = pop_int(update)) != -1) {
 		list_add(a, next->set);
 		// add unattacked attackers of a to next->unattacked_attackers
+		/*
 		for (SIZE_TYPE j = 0; j < af_t->list_sizes[a]; ++j) {
 			if (!next->victims[af_t->lists[a][j]])
 				add_to_argument_set(af_t->lists[a][j], next->unattacked_attackers);
 		}
+		*/
 
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
 			SIZE_TYPE victim_a = af->lists[a][i];
 			if (!next->victims[victim_a]) {
 				next->victims[victim_a] = true;
 				// remove victim_a from next->unattacked_attackers
-				delete_from_argument_set(victim_a, next->unattacked_attackers);
+				// delete_from_argument_set(victim_a, next->unattacked_attackers);
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--(next->unattacked_attackers_count[victim_victim_a]);
@@ -347,6 +349,34 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		int min_attacker_count = attacks->size;
 		ARG_TYPE least_attacked_attacker = -1;
 
+		bool is_current_self_defending = true;
+		for (SIZE_TYPE i = 0; i < current->set->size; ++i) {
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[current->set->elements[i]]; ++j) {
+				ARG_TYPE attacker = attacked_by->lists[current->set->elements[i]][j];
+				/// if (!current->victims[attacked_by->lists[current->set->elements[i]][j]]) {
+				if (!current->victims[attacker]) {
+					is_current_self_defending = false;
+					int count = 0;
+					// attacker is unattacked
+					for (SIZE_TYPE k = 0; k < attacked_by->list_sizes[attacker]; ++k) {
+						ARG_TYPE unattacked_attacker_attacker = attacked_by->lists[attacker][k];
+						if (!current->scheduled[unattacked_attacker_attacker] &&
+							!current->conflicts[unattacked_attacker_attacker]) {
+							++count;
+						}
+					}
+					if (count < min_attacker_count) {
+						min_attacker_count = count;
+						least_attacked_attacker = attacker;
+					}
+				}
+			}
+		}
+
+		if (is_current_self_defending) {
+				return(current->set);
+		}
+		/*
 		// Iterate over the unattacked_attackers to find the least_attacked_argument
 		ListNode *tmp_node = current->unattacked_attackers->list;
 		while (tmp_node) {
@@ -366,6 +396,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 			tmp_node = tmp_node->next;
 		}
+		*/
 
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
@@ -396,9 +427,11 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 			// if next->unattacked_attackers->list is  NULL, then next->set does not have any unattacked attackers
 			// that is, next->set is self-defending. return it.
+			/*
 			if (next->unattacked_attackers->list == NULL) {
 				return(next->set);
 			}
+			*/
 
 			push(&states, new_stack_element_ptr(next));
 		}
