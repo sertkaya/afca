@@ -85,9 +85,9 @@ ArrayList* dc_adm_cbo(ARG_TYPE argument, AF* attacks,  ListNode *implications) {
 	while (current =  pop_ptr(&states)) {
 		print_list(stdout, current->set, "\n");
 		for (ARG_TYPE new_argument = 0; new_argument < attacks->size; ++new_argument) {
-			if (current->scheduled[new_argument] || new_argument == argument)
+			if (current->scheduled[new_argument] || new_argument == argument) {
 				continue;
-			printf("new_argument:%d\n", new_argument);
+			}
 			// TODO: find the "best" unprocessed argument to add!
 
 			current->scheduled[new_argument] = true;
@@ -103,7 +103,6 @@ ArrayList* dc_adm_cbo(ARG_TYPE argument, AF* attacks,  ListNode *implications) {
 			// does not contain it. Continue.
 			if (array_list_contains_arg_sorted(closure, argument)) {
 				printf("closure contains argument\n");
-				print_list(stdout, closure, "<==\n");
 				continue;
 			}
 
@@ -112,7 +111,6 @@ ArrayList* dc_adm_cbo(ARG_TYPE argument, AF* attacks,  ListNode *implications) {
 			ArrayList *complement = array_list_complement_sorted(closure, attacks->size);
 			if (is_set_conflict_free(attacks, complement)) {
 				printf("admissible extension\n");
-				print_list(stdout, complement, "<==\n");
 				return(complement);
 			}
 
@@ -154,6 +152,11 @@ ArrayList* dc_adm_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	START_TIMER(start_time);
 	ListNode *implications_subgraph = create_implications_from_af(subgraph->af, subgraph_t);
+	ListNode *tmp = implications_subgraph;
+	while (tmp) {
+		print_implication(tmp->e->p);
+		tmp = tmp->next;
+	}
 	STOP_TIMER(stop_time);
 	printf("Creating implications took: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 

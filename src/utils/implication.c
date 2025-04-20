@@ -63,6 +63,20 @@ ListNode *create_implications_from_af(AF *af, AF *af_t) {
 		imps = insert_list_ptr(imp, imps);
 		++count;
 	}
+	/*
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			if (!check_arg_attacks_arg_sorted(af, af->lists[i][j], i)) {
+				ARG_TYPE *tmp = calloc(1, sizeof(ARG_TYPE));
+				assert(tmp != NULL);
+				tmp[0] = af->lists[i][j];
+				Implication *imp = new_implication(af_t->lists[i], af_t->list_sizes[i], tmp, 1);
+				imps = insert_list_ptr(imp, imps);
+				++count;
+			}
+		}
+	}
+	*/
 	printf("%d implications\n", count);
 	return (imps);
 }
@@ -78,8 +92,10 @@ void implication_closure(ListNode *imps, ArrayList *s, ArrayList *closure) {
 			if (check_subset_sorted(imp->lhs, closure)) {
 				// TODO: Optimize!
 				for (SIZE_TYPE i = 0; i < imp->rhs->size; ++i) {
-					list_add(imp->rhs->elements[i], closure);
-					update = true;
+					if (!array_list_contains_arg_sorted(closure, imp->rhs->elements[i])) {
+						list_add(imp->rhs->elements[i], closure);
+						update = true;
+					}
 				}
 				list_sort(closure);
 			}
