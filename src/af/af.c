@@ -291,6 +291,24 @@ void swap_arguments(AF* af, ARG_TYPE a1, ARG_TYPE a2) {
 		}
 }
 
+bool check_set_defends_arg(ArrayList *s, ARG_TYPE a, AF *attacks, AF *attacked_by) {
+	bool* victims = calloc(attacks->size, sizeof(bool));
+	assert(victims != NULL);
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		for (SIZE_TYPE j = 0; j < attacks->list_sizes[s->elements[i]]; ++j) {
+			victims[attacks->lists[s->elements[i]][j]] = true;
+		}
+
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[a]; ++i)
+		if (!victims[attacked_by->lists[a][i]]) {
+			free(victims);
+			return(false);
+		}
+
+	free(victims);
+	return(true);
+}
+
 bool is_set_complete(AF* af, ArrayList* s) {
 	AF* af_t = transpose_argumentation_framework(af);
 	bool admissible = is_set_conflict_free(af, s) && is_set_self_defending(af, af_t, s);
@@ -299,10 +317,30 @@ bool is_set_complete(AF* af, ArrayList* s) {
 		return(0);
 	}
 
+	/*
 	ArrayList* closure = list_create();
 	bool* closure_bv = calloc(af->size, sizeof(bool));
 	assert(closure_bv != NULL);
 	closure_semi_complete(af, af_t, s, closure, closure_bv);
+	*/
+
+	ArrayList* closure = list_duplicate(s);
+	bool* closure_bv = calloc(af->size, sizeof(bool));
+	assert(closure_bv != NULL);
+	for (SIZE_TYPE i = 0; i < closure->size; ++i) {
+		closure_bv[closure->elements[i]] = true;
+	}
+	bool updated = false;
+	do {
+		updated = false;
+		for (SIZE_TYPE i = 0; i < af->size; ++i) {
+			if (!closure_bv[i] && check_set_defends_arg(closure, i, af, af_t)) {
+				list_add(i, closure);
+				closure_bv[i] = true;
+				updated = true;
+			}
+		}
+	} while (updated);
 
 	bool equal = is_list_equal(s, closure);
 
@@ -344,14 +382,14 @@ AF* apply_mapping(AF* af, ARG_TYPE* mapping) {
 
 struct argument_score_pair {
 	ARG_TYPE arg;
-	SIZE_TYPE victim_count;
+	SIZE_TYPE score;
 };
 
 int compare_arguments(const void *v1, const void *v2) {
-	if ((((struct argument_score_pair*) v1)-> victim_count) < (((struct argument_score_pair*) v2)-> victim_count))
-		return(1);
-	else if ((((struct argument_score_pair*) v1)-> victim_count) > (((struct argument_score_pair*) v2)-> victim_count))
+	if ((((struct argument_score_pair*) v1)-> score) < (((struct argument_score_pair*) v2)-> score))
 		return(-1);
+	else if ((((struct argument_score_pair*) v1)-> score) > (((struct argument_score_pair*) v2)-> score))
+		return(1);
 	else
 		return(0);
 }
@@ -362,7 +400,8 @@ void sort_adjacency_lists(AF *af, AF *af_t) {
 		assert(pairs != NULL);
 		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
 			pairs[j].arg = af_t->lists[i][j];
-			pairs[j].victim_count = af->list_sizes[af_t->lists[i][j]];
+			// pairs[j].score = af->list_sizes[af_t->lists[i][j]];
+			pairs[j].score = af_t->list_sizes[af_t->lists[i][j]];
 		}
 		qsort(pairs, af_t->list_sizes[i], sizeof(struct argument_score_pair), compare_arguments);
 		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
