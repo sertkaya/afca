@@ -244,6 +244,8 @@ bool check_arg_attacks_arg(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
 // requires: sorted adjacency lists
 bool check_arg_attacks_arg_sorted(AF* af, ARG_TYPE arg_1, ARG_TYPE arg_2) {
 	SIZE_TYPE i;
+	if (af->list_sizes[arg_1] == 0)
+		return(false);
 	for (i = 0;  af->lists[arg_1][i] < arg_2 && i < af->list_sizes[arg_1]; ++i);
 	if (i == af->list_sizes[arg_1] || af->lists[arg_1][i] > arg_2)
 		return(false);
