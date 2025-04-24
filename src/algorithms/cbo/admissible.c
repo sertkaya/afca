@@ -68,64 +68,137 @@ void delete_state_adm(State *s) {
 	free(s);
 }
 
+// true if l1 is a subset of l2
+// l1 and l2 have to be sorted
+bool check_subset_sorted_array(ARG_TYPE *l1, int l1_size, ArrayList *l2) {
+	if (l1_size > l2->size)
+		return(false);
+	SIZE_TYPE index_l1 = 0;
+	for (SIZE_TYPE i = 0; i < l2->size && index_l1 < l1_size; ++i) {
+		if (l2->elements[i] == l1[index_l1]) {
+			++index_l1;
+			// if (index_l1 == l1_size)
+			// 	break;
+		}
+	}
+	if (index_l1 == l1_size)
+		return(true);
+	else
+		return(false);
+}
+
 static int closure_count = 0;
 
-ArrayList* dc_adm_cbo(ARG_TYPE argument, AF* attacks,  ListNode *implications) {
+State *sd_complement_first_closure(AF *attacks, AF *attacked_by, ARG_TYPE searched_argument) {
+	++closure_count;
+	State *next = create_state_adm(attacks->size);
+	bool updated = false;
+	do {
+		updated = false;
+		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+			printf("i:%d\n",i);
+			if (check_subset_sorted_array(attacked_by->lists[i], attacked_by->list_sizes[i], next->set)) {
+				for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
+					printf("j:%d\n",j);
+					if (!check_arg_attacks_arg_sorted(attacks, attacks->lists[i][j], i)) {
+						if (attacks->lists[i][j] == searched_argument) {
+							delete_state_adm(next);
+							return(NULL);
+						}
+						if (next->scheduled[attacks->lists[i][j]]) {
+							delete_state_adm(next);
+							return(NULL);
+						}
+						list_add(attacks->lists[i][j], next->set);
+						// TODO: optimize!
+						list_sort(next->set);
+						updated = true;
+					}
+				}
+				// TODO: optimize!
+				list_sort(next->set);
+			}
+		}
+	} while (updated);
+	return(next);
+}
+
+State *sd_complement_next_closure(AF *attacks, AF *attacked_by, ARG_TYPE searched_argument, ARG_TYPE new_argument, State *current) {
+	++closure_count;
+	current->scheduled[new_argument] = true;
+	State *next = duplicate_state_adm(current, attacks->size);
+	list_add(new_argument, next->set);
+	list_sort(next->set);
+	bool updated = false;
+	do {
+		updated = false;
+		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+			printf("i:%d\n",i);
+			if (check_subset_sorted_array(attacked_by->lists[i], attacked_by->list_sizes[i], next->set)) {
+				for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
+					printf("j:%d\n",j);
+					if (!check_arg_attacks_arg_sorted(attacks, attacks->lists[i][j], i)) {
+						if (attacks->lists[i][j] == searched_argument) {
+							delete_state_adm(next);
+							return(NULL);
+						}
+						if (current->scheduled[attacks->lists[i][j]]) {
+							delete_state_adm(next);
+							return(NULL);
+						}
+						list_add(attacks->lists[i][j], next->set);
+						// TODO: optimize!
+						list_sort(next->set);
+						updated = true;
+					}
+				}
+			}
+		}
+	} while (updated);
+	return(next);
+}
+
+ArrayList* dc_adm_cbo(ARG_TYPE searched_argument, AF* attacks,  AF *attacked_by) {
 	struct timeval start_time, stop_time;
 
 	Stack states;
 	init_stack(&states);
 
-	State *current = create_state_adm(attacks->size);
-	ArrayList *tmp = list_create();
-	implication_closure(implications, tmp, current->set);
-	++closure_count;
+	State *current = sd_complement_first_closure(attacks, attacked_by, searched_argument);
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
 		print_list(stdout, current->set, "\n");
 		for (ARG_TYPE new_argument = 0; new_argument < attacks->size; ++new_argument) {
-			if (current->scheduled[new_argument] || new_argument == argument) {
+			printf("%d", new_argument);
+			if (current->scheduled[new_argument] || new_argument == searched_argument) {
+				printf(" scheduled\n");
 				continue;
 			}
+			printf("\n");
 			// TODO: find the "best" unprocessed argument to add!
 
-			current->scheduled[new_argument] = true;
-			ArrayList *tmp = list_duplicate(current->set);
-			list_add(new_argument, tmp);
-			list_sort(tmp);
-			ArrayList *closure = list_duplicate(tmp);
-			implication_closure(implications, tmp, closure);
-			list_sort(closure);
-			++closure_count;
-			list_free(tmp);
-			// If closure contains the argument, then the complement
-			// does not contain it. Continue.
-			if (array_list_contains_arg_sorted(closure, argument)) {
-				printf("closure contains argument\n");
+			State *next = sd_complement_next_closure(attacks, attacked_by, searched_argument, new_argument, current);
+
+			if (next == NULL) {
+				printf("closure NULL\n");
 				continue;
 			}
 
 			// if complement of the closure is conflict-free, then
 			// admissible extension is found. Return it.
-			ArrayList *complement = array_list_complement_sorted(closure, attacks->size);
+			ArrayList *complement = array_list_complement_sorted(next->set, attacks->size);
 			if (is_set_conflict_free(attacks, complement)) {
 				printf("admissible extension\n");
 				return(complement);
 			}
 
-			// otherwise create a new node and push it to the stack
-			State *next = create_state_adm(attacks->size);
-			memcpy(next->scheduled, current->scheduled, attacks->size * sizeof(bool));
-			list_copy(closure, next->set);
-			list_free(closure);
-
+			// otherwise push next to the stack
 			push(&states, new_stack_element_ptr(next));
 		}
 		delete_state_adm(current);
 		current = NULL;
 	}
-
 	free_argumentation_framework(attacks);
 
 	return(NULL);
@@ -141,7 +214,9 @@ ArrayList* dc_adm_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	START_TIMER(start_time);
 	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
 	printf("Subgraph size:%d\n", subgraph->af->size);
+	print_argumentation_framework(subgraph->af);
 	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
+	// print_argumentation_framework(subgraph_t);
 	// sort the adjacency lists of subgraph->af and subgraph_t
 	for (SIZE_TYPE i = 0; i < subgraph->af->size; ++i) {
 		qsort(subgraph->af->lists[i], subgraph->af->list_sizes[i], sizeof(ARG_TYPE), compare_argument_ids);
@@ -150,6 +225,7 @@ ArrayList* dc_adm_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	STOP_TIMER(stop_time);
 	printf("Extracting subgraph, transposing and sorting took: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
+	/*
 	START_TIMER(start_time);
 	ListNode *implications_subgraph = create_implications_from_af(subgraph->af, subgraph_t);
 	ListNode *tmp = implications_subgraph;
@@ -159,10 +235,12 @@ ArrayList* dc_adm_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	}
 	STOP_TIMER(stop_time);
 	printf("Creating implications took: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	*/
 
 	// Solve DC-AD in the subgraph:
 	START_TIMER(start_time);
-	ArrayList *extension_subgraph = dc_adm_cbo(subgraph->mapping_to_subgraph[argument], subgraph->af, implications_subgraph);
+	// ArrayList *extension_subgraph = dc_adm_cbo(subgraph->mapping_to_subgraph[argument], subgraph->af, subgraph_t, implications_subgraph);
+	ArrayList *extension_subgraph = dc_adm_cbo(subgraph->mapping_to_subgraph[argument], subgraph->af, subgraph_t);
 	STOP_TIMER(stop_time);
 	printf("dc_adm_cbo: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
