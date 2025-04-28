@@ -26,18 +26,17 @@ int main(int argc, char *argv[]) {
 
 	ArrayList *l = list_create();
 
-    list_add(0, l);
-    list_add(1, l);
-    list_add(2, l);
-    list_add(3, l);
-    list_add(4, l);
-    list_add(5, l);
-    list_add(8, l);
-    list_add(19, l);
-    list_add(20, l);
+    // list_add(0, l);
+    // list_add(1, l);
+    // list_add(2, l);
+    // list_add(3, l);
+    // list_add(4, l);
+    // list_add(5, l);
+    // list_add(8, l);
+    // list_add(9, l);
     print_list(stdout, l, "\n");
 
-    ArrayList *c = array_list_complement_sorted(l, 20);
+    ArrayList *c = array_list_complement_sorted(l, 10);
     print_list(stdout, c, "\n");
 
 	return 1;

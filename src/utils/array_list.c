@@ -138,12 +138,15 @@ bool list_insert_at_head(ARG_TYPE e, ArrayList* l) {
 // true if l1 is a subset of l2
 // l1 and l2 have to be sorted
 bool check_subset_sorted(ArrayList *l1, ArrayList *l2) {
+	if (l1->size > l2->size)
+		return(false);
 	SIZE_TYPE index_l1 = 0;
-	for (SIZE_TYPE i = 0; i < l2->size; ++i) {
+	// for (SIZE_TYPE i = 0; i < l2->size; ++i) {
+	for (SIZE_TYPE i = 0; i < l2->size && index_l1 < l1->size && l1->elements[index_l1] <= l2->elements[i]; ++i) {
 		if (l2->elements[i] == l1->elements[index_l1]) {
 			++index_l1;
-			if (index_l1 == l1->size)
-				break;
+			// if (index_l1 == l1->size)
+			// 	break;
 		}
 	}
 	if (index_l1 == l1->size)
@@ -181,7 +184,8 @@ ArrayList *array_list_complement_sorted(ArrayList *l, SIZE_TYPE size) {
 		from = to  + 1;
 		// printf("from:%d\n", from);
 	}
-	for (SIZE_TYPE i = l->elements[l->size - 1] + 1; i < size; ++i)
+	// for (SIZE_TYPE i = l->elements[l->size - 1] + 1; i < size; ++i)
+	for (SIZE_TYPE i = from; i < size; ++i)
 		list_add(i, complement);
 	return(complement);
 }
