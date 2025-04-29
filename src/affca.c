@@ -65,8 +65,21 @@ void unsupported_feature(char* problem, char* extension, char* algorithm) {
 
 int main(int argc, char *argv[]) {
 	int c;
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
-	char *prob= "", *alg= "", *af_file_name = "", *output_file = "", *extension_file_name = "", *semantic_name;
+	// For ICCMA'25
+	if (argc == 1) {
+		fprintf(stdout, "AFCA v0.1\n");
+		fprintf(stdout, "Sergei Obiedkov, sergei.obiedkov@tu-dresden.de\n");
+		fprintf(stdout, "Baris Sertkaya,  sertkaya@fb2.fra-uas.de\n");
+		return(0);
+	}
+	if (argc == 2 && !strcmp(argv[1], "--problems")) {
+		fprintf(stdout, "[DC-CO]\n");
+		return(0);
+	}
+	// bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
+	bool problem_flag = 0, input_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
+	// char *prob= "", *alg= "", *af_file_name = "", *output_file = "", *extension_file_name = "", *semantic_name;
+	char *prob= "", *alg= "", *af_file_name = "",  *extension_file_name = "", *semantic_name;
 	ARG_TYPE argument = 0;
 	static char usage_solver[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph-nc | subgraph-cbo] "
 					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO, DC-AD] -a argument -f input -o output\n";
@@ -75,7 +88,7 @@ int main(int argc, char *argv[]) {
 	while ((c = getopt(argc, argv, "vl:p:o:f:e:s:a:")) != -1)
 		switch (c) {
 		case 'l':
-			algorithm_flag = 1;
+			// algorithm_flag = 1;
 			alg = optarg;
 			break;
 		case 'p':
@@ -87,8 +100,8 @@ int main(int argc, char *argv[]) {
 			af_file_name = optarg;
 			break;
 		case 'o':
-			output_flag = 1;
-			output_file = optarg;
+			// output_flag = 1;
+			// output_file = optarg;
 			break;
 		case 'a':
 			argument_flag = 1;
@@ -125,8 +138,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-
-	if (wrong_argument_flag || !input_flag || !output_flag || !algorithm_flag || !problem_flag) {
+	// if (wrong_argument_flag || !input_flag || !output_flag || !algorithm_flag || !problem_flag) {
+	if (wrong_argument_flag || !input_flag || !problem_flag) {
 		fprintf(stderr, usage_solver, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -163,9 +176,11 @@ int main(int argc, char *argv[]) {
 	} else if (strcmp(alg, "subgraph-cbo") == 0) {
 		algorithm = SUBGRAPH_CBO;
 	} else {
-		fprintf(stderr, "Unknown algorithm %s\n", alg);
-		fprintf(stderr, usage_solver, argv[0]);
-		exit(EXIT_FAILURE);
+		// take SUBGRAPH_CBO as default
+		algorithm = SUBGRAPH_CBO;
+		// fprintf(stderr, "Unknown algorithm %s\n", alg);
+		// fprintf(stderr, usage_solver, argv[0]);
+		// exit(EXIT_FAILURE);
 	}
 
 	char *prob_type = strtok(prob, "-");
@@ -220,22 +235,22 @@ int main(int argc, char *argv[]) {
 
 	// open the af file
 	FILE* input_fd;
-	FILE* output;
+	// FILE* output;
 	input_fd = fopen(af_file_name, "r");
 	assert(input_fd != NULL);
 
-	struct timeval start_time, stop_time;
+	// struct timeval start_time, stop_time;
 
-	START_TIMER(start_time);
+	// START_TIMER(start_time);
 	// Read the file into an argumentation framework.
 	AF *input_af = read_af(input_fd);
 	fclose(input_fd);
-	STOP_TIMER(stop_time);
-	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	// STOP_TIMER(stop_time);
+	// printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// open the output file
-	output = fopen(output_file, "w");
-	assert(output != NULL);
+	// output = fopen(output_file, "w");
+	// assert(output != NULL);
 
 	// matrix of functions for decision problems.
 	// Function prototype: List* f(AF*, ARG_TYPE)
@@ -260,7 +275,7 @@ int main(int argc, char *argv[]) {
 				enumeration_functions[i][j][k] = NULL;
 	// enumeration_functions[..][..][..] = ..
 
-	START_TIMER(start_time);
+	// START_TIMER(start_time);
 	ArrayList* extension = NULL;
 	if (decision_problem) {
 		// arguments are internally indices
@@ -271,10 +286,13 @@ int main(int argc, char *argv[]) {
 		else
 			extension = decision_functions[problem_type][extension_type][algorithm](input_af, argument);
 		if (extension == NULL)
-			fprintf(output, "NO\n");
+			// fprintf(output, "NO\n");
+			fprintf(stdout, "NO\n");
 		else {
-			fprintf(output, "YES\n");
-			print_list(output, extension,"\n");
+			// fprintf(output, "YES\n");
+			// print_list(output, extension,"\n");
+			fprintf(stdout, "YES\n");
+			print_list(stdout, extension,"\n");
 		}
 	}
 	else {
@@ -284,11 +302,11 @@ int main(int argc, char *argv[]) {
 		else
 			enumeration_functions[DC][CO][SUBGRAPH_NC](input_af);
 	}
-	STOP_TIMER(stop_time);
-	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	// STOP_TIMER(stop_time);
+	// printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
-	fclose(output);
+	// fclose(output);
 
 	return(0);
 }

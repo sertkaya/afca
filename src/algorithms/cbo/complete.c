@@ -90,20 +90,6 @@ void jump_back(Stack *s, SIZE_TYPE jump) {
 	}
 	push(s, new_stack_element_ptr(top));
 }
- // TODO: Testing ...
-bool are_together_defeatable(ARG_TYPE a1, ARG_TYPE a2, AF *af, AF *af_t, bool **conflict_matrix) {
-	// check if every attacker of a1 is in conflict with every attacker of a2
-	for (SIZE_TYPE i = 0; i < af_t->list_sizes[a1]; ++i) {
-		ARG_TYPE attacker_a1 = af_t->lists[a1][i];
-		for (SIZE_TYPE j = 0; j < af_t->list_sizes[a2]; ++j) {
-			ARG_TYPE attacker_a2 = af_t->lists[a2][j];
-			if (!conflict_matrix[attacker_a1][attacker_a2])
-				return(true);
-		}
-	}
-
-	return(false);
-}
 */
 
 struct state {
@@ -429,7 +415,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	// sort adjacency lists of attacked_by according to number of victims
 	// sort_adjacency_lists(attacks, attacked_by);
 
-	printf("Argument: %d\n", argument);
+	// printf("Argument: %d\n", argument);
 
 	// extract the subgraph induced by the argument
 	// START_TIMER(start_time);
@@ -438,7 +424,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	// AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
 	// STOP_TIMER(stop_time);
 
-	START_TIMER(start_time);
+	// START_TIMER(start_time);
 	// AF *subgraph_conflicts_af = create_conflicts_graph(subgraph->af, subgraph_t);
 	// AF *conflicts_af = create_conflicts_graph(attacks, attacked_by);
 	// print_conflicts_matrix(subgraph_conflicts_matrix, subgraph->af);
@@ -454,7 +440,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	if (!next) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
-		printf("Closure count: %d\n", closure_count);
+		// printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 
@@ -467,11 +453,11 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	}
 	else {
 		// search for a solution by enumerating
-		START_TIMER(start_time);
+		// START_TIMER(start_time);
 		// extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t, subgraph_conflicts_af);
 		extension = dc_co_cbo(attacks, argument, attacked_by);
-		STOP_TIMER(stop_time);
-		printf("dc_co_cbo: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+		// STOP_TIMER(stop_time);
+		// printf("dc_co_cbo: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
 
 	// TODO!
@@ -479,7 +465,7 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	// free_argumentation_framework(attacked_by_projection_adj)
 
 	if (!extension) {
-		printf("Closure count: %d\n", closure_count);
+		// printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 
@@ -500,6 +486,6 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	return(next->set);
 	*/
 
-	printf("Closure count: %d\n", closure_count);
+	// printf("Closure count: %d\n", closure_count);
 	return(extension);
 }
