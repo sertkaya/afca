@@ -20,8 +20,8 @@
 #include "../../utils/array_list.h"
 #include "../../af/af.h"
 
-ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument);
+ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument);
 
-void closure_semi_complete(AF* af, AF* af_t, ArrayList* s, ArrayList* r, bool *r_bv);
+ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument);
 
 #endif /* AF_COMPLETE_EXTENSIONS_CBO_H_ */

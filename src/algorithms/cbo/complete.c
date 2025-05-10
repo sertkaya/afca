@@ -98,7 +98,6 @@ struct state {
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
 	bool* victims;
-	int level;
 };
 
 typedef struct state State;
@@ -121,8 +120,6 @@ State *create_state(SIZE_TYPE size) {
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
-
-	s->level = 0;
 
 	return(s);
 }
@@ -149,8 +146,6 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
-
-	n->level = s->level;
 
 	return(n);
 }
@@ -286,8 +281,10 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 	return(next);
 }
 
-ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
+ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
+
+	AF* attacked_by = transpose_argumentation_framework(attacks);
 
 	Stack states;
 	init_stack(&states);
@@ -301,7 +298,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 
 	while (current =  pop_ptr(&states)) {
 		// print_list(stdout, current->set,"\n");
-		// printf("%d\n", current->level);
 		// find the unattacked attacker of current->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current->set.
 		int min_attacker_count = attacks->size;
@@ -337,6 +333,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		}
 		free(attacker_processed);
 		if (is_current_self_defending) {
+			printf("Closure count: %d\n", closure_count);
 			return(current->set);
 		}
 
@@ -344,7 +341,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		// if none of them leads to a solution, abandon that branch
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
-			// printf("==>%d\n", attacker_of_least_attacked_attacker);
 			if (current->conflicts[attacker_of_least_attacked_attacker] ||
 				current->scheduled[attacker_of_least_attacked_attacker]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
@@ -361,7 +357,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 				// upon noticing the conflict. not required here.
 				continue;
 			}
-			next->level = current->level + 1;
 
 			push(&states, new_stack_element_ptr(next));
 		}
@@ -372,6 +367,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 	free_argumentation_framework(attacks);
 	free_argumentation_framework(attacked_by);
 
+	printf("Closure count: %d\n", closure_count);
 	return(NULL);
 }
 
@@ -387,11 +383,11 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	// printf("Argument: %d\n", argument);
 
 	// extract the subgraph induced by the argument
-	// START_TIMER(start_time);
-	// Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
-	// printf("Subgraph size:%d\n", subgraph->af->size);
-	// AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
-	// STOP_TIMER(stop_time);
+	START_TIMER(start_time);
+	Subgraph* subgraph = extract_subgraph_backwards(attacks, attacked_by, argument);
+	printf("Subgraph size:%d\n", subgraph->af->size);
+	AF* subgraph_t = transpose_argumentation_framework(subgraph->af);
+	STOP_TIMER(stop_time);
 
 	// START_TIMER(start_time);
 	// AF *subgraph_conflicts_af = create_conflicts_graph(subgraph->af, subgraph_t);
@@ -402,31 +398,27 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 
 	// solve DC-CO in the subgraph
 	ArrayList *current = list_create();
-	// list_add(subgraph->mapping_to_subgraph[argument], current);
-	list_add(argument, current);
-	// State *next = first_closure(subgraph->af, subgraph_t, subgraph_conflicts_af, current);
-	State *next = first_closure(attacks, attacked_by, current);
+	list_add(subgraph->mapping_to_subgraph[argument], current);
+	State *next = first_closure(subgraph->af, subgraph_t, current);
 
 	if (!next) {
 		// closure in the subgraph has a conflict. complete extension does not exist.
-		// printf("Closure count: %d\n", closure_count);
+		printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 
 	// closure is conflict-free. check if it is self-defending
 	ArrayList *extension = NULL;
-	// if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
-	if (is_set_self_defending(attacks, attacked_by, next->set)) {
+	if (is_set_self_defending(subgraph->af, subgraph_t, next->set)) {
 		// closure is a complete extension (in the subgraph) containing the argument
 		extension = next->set;
 	}
 	else {
 		// search for a solution by enumerating
-		// START_TIMER(start_time);
-		// extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument], subgraph_t, subgraph_conflicts_af);
-		extension = dc_co_cbo(attacks, argument, attacked_by);
-		// STOP_TIMER(stop_time);
-		// printf("dc_co_cbo: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+		START_TIMER(start_time);
+		extension = dc_co_cbo(subgraph->af, subgraph->mapping_to_subgraph[argument]);
+		STOP_TIMER(stop_time);
+		printf("dc_co_cbo: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 	}
 
 	// TODO!
@@ -434,11 +426,10 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	// free_argumentation_framework(attacked_by_projection_adj)
 
 	if (!extension) {
-		// printf("Closure count: %d\n", closure_count);
+		printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 
-	/*
 	// now close the mapped extension in the whole framework
 	list_free(current);
 	current = list_create();
@@ -449,12 +440,8 @@ ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument) {
 	}
 	delete_state(next);
 	AF *conflicts_af = create_conflicts_graph(attacks, attacked_by);
-	next = first_closure(attacks, attacked_by, conflicts_af, current);
+	next = first_closure(attacks, attacked_by, current);
 
 	printf("Closure count: %d\n", closure_count);
 	return(next->set);
-	*/
-
-	// printf("Closure count: %d\n", closure_count);
-	return(extension);
 }
