@@ -111,12 +111,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	// if (wrong_argument_flag || !input_flag || !output_flag || !algorithm_flag || !problem_flag) {
-	if (wrong_argument_flag || !input_flag || !problem_flag) {
-		fprintf(stderr, usage_solver, argv[0]);
-		exit(EXIT_FAILURE);
-	}
-
 	if (validate_flag) {
 		if (!input_flag || !extension_flag || !semantic_flag) {
 			fprintf(stderr, usage_validator, argv[0]);
@@ -130,6 +124,11 @@ int main(int argc, char *argv[]) {
 				printf("NO\n");
 			return (0);
 		}
+	}
+
+	if (wrong_argument_flag || !input_flag || !problem_flag) {
+		fprintf(stderr, usage_solver, argv[0]);
+		exit(EXIT_FAILURE);
 	}
 
 	FILE* output;

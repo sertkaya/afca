@@ -98,6 +98,7 @@ struct state {
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
 	bool* victims;
+	short priority;
 };
 
 typedef struct state State;
@@ -120,6 +121,8 @@ State *create_state(SIZE_TYPE size) {
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
+
+	s->priority = -1;
 
 	return(s);
 }
@@ -146,6 +149,8 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
+
+	n->priority = s->priority;
 
 	return(n);
 }
@@ -200,6 +205,13 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 			}
 		}
 	}
+
+	short priority = 0;
+	for (SIZE_TYPE i = 0; i < next->set->size; ++i) {
+		priority += next->unattacked_attackers_count[next->set->elements[i]];
+	}
+	next->priority = priority;
+
 	return(next);
 }
 
@@ -286,17 +298,16 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 
-	Stack states;
-	init_stack(&states);
+	QueueNode *states = NULL;
 
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	list_free(tmp);
 	current->new_argument = argument;
-	push(&states, new_stack_element_ptr(current));
+	states = enqueue_ptr(current, states, current->priority);
 
-	while (current =  pop_ptr(&states)) {
+	while (current =  dequeue_ptr(&states)) {
 		// print_list(stdout, current->set,"\n");
 		// find the unattacked attacker of current->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current->set.
@@ -357,8 +368,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 				// upon noticing the conflict. not required here.
 				continue;
 			}
-
-			push(&states, new_stack_element_ptr(next));
+			states = enqueue_ptr(next, states, next->priority);
 		}
 		delete_state(current);
 		current = NULL;
