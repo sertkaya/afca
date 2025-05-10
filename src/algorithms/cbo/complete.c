@@ -20,11 +20,9 @@
 #include <time.h>
 
 #include "../../af/af.h"
-#include "../../utils/implication.h"
 #include "complete.h"
 
 #include "../../utils/stack.h"
-#include "../../utils/argument_set.h"
 #include "../../utils/priority_queue.h"
 #include "../../utils/timer.h"
 
@@ -99,9 +97,6 @@ struct state {
 	bool *conflicts;
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
-	// Number of unattacked and unscheduled attackers of an argument
-	// SIZE_TYPE* unscheduled_conflict_free_attackers_count;
-	// ArgumentSet *unattacked_attackers;
 	bool* victims;
 	int level;
 };
@@ -123,11 +118,6 @@ State *create_state(SIZE_TYPE size) {
 
 	s->unattacked_attackers_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(s->unattacked_attackers_count != NULL);
-
-	// s->unscheduled_conflict_free_attackers_count = calloc(size, sizeof(SIZE_TYPE));
-	// assert(s->unscheduled_conflict_free_attackers_count != NULL);
-
-	// s->unattacked_attackers = new_argument_set(size);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
@@ -156,12 +146,6 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	assert(n->unattacked_attackers_count != NULL);
 	memcpy(n->unattacked_attackers_count, s->unattacked_attackers_count, size * sizeof(SIZE_TYPE));
 
-	// n->unscheduled_conflict_free_attackers_count = calloc(size, sizeof(SIZE_TYPE));
-	// assert(n->unscheduled_conflict_free_attackers_count != NULL);
-	// memcpy(n->unscheduled_conflict_free_attackers_count, s->unscheduled_conflict_free_attackers_count, size * sizeof(SIZE_TYPE));
-
-	// n->unattacked_attackers = duplicate_argument_set(s->unattacked_attackers);
-
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
 	memcpy(n->victims, s->victims, size * sizeof(bool));
@@ -181,11 +165,7 @@ void delete_state(State *s) {
 	free(s->victims);
 	s->victims = NULL;
 	free(s->unattacked_attackers_count);
-	// free(s->unscheduled_conflict_free_attackers_count);
 	s->unattacked_attackers_count = NULL;
-	// s->unscheduled_conflict_free_attackers_count = NULL;
-	// free_argument_set(s->unattacked_attackers);
-	// s->unattacked_attackers = NULL;
 	free(s);
 }
 
@@ -204,8 +184,6 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 			SIZE_TYPE victim_a = af->lists[a][i];
 			if (!next->victims[victim_a]) {
 				next->victims[victim_a] = true;
-				// remove victim_a from next->unattacked_attackers
-				// delete_from_argument_set(victim_a, next->unattacked_attackers);
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--(next->unattacked_attackers_count[victim_victim_a]);
@@ -279,7 +257,6 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	}
 
 	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
-	// memcpy(next->unscheduled_conflict_free_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack(update, next, af, af_t);
 	free_stack(update);
 
@@ -296,7 +273,6 @@ State *incremental_closure(AF* af, AF* af_t, ARG_TYPE new_argument, State *curre
 	++closure_count;
 	// Push the current argument to the stack
 	push(update, new_stack_element_int(new_argument));
-	// next->scheduled[new_argument] = true;
 
 	for (SIZE_TYPE j = 0; j < af->list_sizes[new_argument]; ++j)
 		next->conflicts[af->lists[new_argument][j]] = true;
@@ -361,13 +337,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument, AF* attacked_by) {
 		}
 		free(attacker_processed);
 		if (is_current_self_defending) {
-			/*
-			ArrayList* closure = list_duplicate(current->set);
-			bool* closure_bv = calloc(attacks->size, sizeof(bool));
-			assert(closure_bv != NULL);
-			closure_semi_complete(attacks, attacked_by, current->set, closure, closure_bv);
-			return(closure);
-			*/
 			return(current->set);
 		}
 

@@ -22,18 +22,6 @@
 #include <assert.h>
 #include <getopt.h>
 
-/*
-#include "af/sort.h"
-#include "algorithms/cbo/preferred.h"
-#include "algorithms/ideal/ideal.h"
-#include "algorithms/maximal-independent-sets/mis.h"
-#include "algorithms/next-closure/preferred.h"
-#include "algorithms/next-closure/stable.h"
-#include "algorithms/norris/stable.h"
-#include "algorithms/nourine/stable.h"
-#include "algorithms/connected-components/cc.h"
-*/
-#include "algorithms/next-closure/complete.h"
 #include "algorithms/cbo/complete.h"
 #include "algorithms/cbo/admissible.h"
 #include "validator/validator.h"
@@ -260,7 +248,7 @@ int main(int argc, char *argv[]) {
 			for (int k = 0; k < ALGORITHM_COUNT; ++k)
 				decision_functions[i][j][k] = NULL;
 
-	decision_functions[DC][CO][SUBGRAPH_NC] = &dc_co_subgraph_nc;
+	// decision_functions[DC][CO][SUBGRAPH_NC] = &dc_co_subgraph_nc;
 	decision_functions[DC][CO][SUBGRAPH_CBO] = &dc_co_subgraph_cbo;
 	decision_functions[DC][AD][SUBGRAPH_CBO] = &dc_adm_subgraph_cbo;
 	// ...

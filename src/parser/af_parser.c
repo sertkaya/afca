@@ -15,12 +15,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <unistd.h>
-#include <sys/time.h>
 
-#include "../bitset/bitset.h"
 #include "../af/af.h"
 
 AF* read_af(FILE* input_fd) {

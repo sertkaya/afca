@@ -25,10 +25,7 @@
 #include <string.h>
 
 #include "../utils/stack.h"
-#include "../utils/linked_list.h"
 #include "../utils/array_list.h"
-#include "../utils/implication.h"
-#include "../algorithms/next-closure/complete.h"
 
 AF* create_argumentation_framework(SIZE_TYPE size) {
 	AF* af = calloc(1, sizeof(AF));
