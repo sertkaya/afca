@@ -52,13 +52,14 @@ int compare_attackers(const void *v1, const void *v2) {
 		return(0);
 }
 
-ARG_TYPE *sort_attackers(AF *attacked_by, ARG_TYPE least_attacked_attacker, State *state) {
+ARG_TYPE *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attacker, State *state) {
 	struct  attacker_score_pair *pairs = calloc(attacked_by->list_sizes[least_attacked_attacker], sizeof(struct attacker_score_pair));
 	assert(pairs != NULL);
 	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 		ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 		pairs[i].arg = attacker_of_least_attacked_attacker;
-		pairs[i].score = state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+		// pairs[i].score = state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+		pairs[i].score = attacks->list_sizes[attacker_of_least_attacked_attacker];
 		// pairs[index].score =  state->unattacked_attackers->count - count + state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
 	}
 	qsort(pairs, attacked_by->list_sizes[least_attacked_attacker], sizeof(struct attacker_score_pair), compare_attackers);
@@ -186,6 +187,13 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 			}
 		}
 	}
+	int unattacked_count = 0;
+	int attacker_count = 0;
+	for (SIZE_TYPE i = 0; i < next->set->size; ++i) {
+		unattacked_count += next->unattacked_attackers_count[next->set->elements[i]];
+		attacker_count += af_t->list_sizes[next->set->elements[i]];
+	}
+	// printf("%d %d %d\n", next->set->size, attacker_count, unattacked_count);
 	return(next);
 }
 
@@ -333,7 +341,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 			return(test->set);
 		}
 
-		ARG_TYPE *attackers = sort_attackers(attacked_by, least_attacked_attacker, current);
+		ARG_TYPE *attackers = sort_attackers(attacks, attacked_by, least_attacked_attacker, current);
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
