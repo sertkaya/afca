@@ -394,17 +394,16 @@ int compare_arguments(const void *v1, const void *v2) {
 }
 
 void sort_adjacency_lists(AF *af, AF *af_t) {
-	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
-		struct argument_score_pair *pairs = calloc(af_t->list_sizes[i], sizeof(struct argument_score_pair));
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		struct argument_score_pair *pairs = calloc(af->list_sizes[i], sizeof(struct argument_score_pair));
 		assert(pairs != NULL);
-		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
-			pairs[j].arg = af_t->lists[i][j];
-			// pairs[j].score = af->list_sizes[af_t->lists[i][j]];
-			pairs[j].score = af_t->list_sizes[af_t->lists[i][j]];
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			pairs[j].arg = af->lists[i][j];
+			pairs[j].score = af->list_sizes[af->lists[i][j]];
 		}
-		qsort(pairs, af_t->list_sizes[i], sizeof(struct argument_score_pair), compare_arguments);
-		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
-			af_t->lists[i][j] = pairs[j].arg;
+		qsort(pairs, af->list_sizes[i], sizeof(struct argument_score_pair), compare_arguments);
+		for (SIZE_TYPE j = 0; j < af->list_sizes[i]; ++j) {
+			af->lists[i][j] = pairs[j].arg;
 		}
 		free(pairs);
 	}
