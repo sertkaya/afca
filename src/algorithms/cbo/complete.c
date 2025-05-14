@@ -282,6 +282,11 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
 	list_free(tmp);
+	if (!current) {
+		// first closure has a conflict. complete extension does not exist.
+		printf("Closure count: %d\n", closure_count);
+		return(NULL);
+	}
 	current->new_argument = argument;
 	push(&states, new_stack_element_ptr(current));
 
