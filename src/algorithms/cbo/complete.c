@@ -26,19 +26,8 @@
 #include "../../utils/priority_queue.h"
 #include "../../utils/timer.h"
 
-struct state {
-	ARG_TYPE new_argument;
-	ArrayList *set;
-	bool *scheduled;
-	bool *conflicts;
-	// Number of unattacked attackers of an argument
-	SIZE_TYPE* unattacked_attackers_count;
-	bool* victims;
-};
 
-typedef struct state State;
-
-
+/*
 struct attacker_score_pair {
 	ARG_TYPE arg;
 	int score;
@@ -72,7 +61,6 @@ ARG_TYPE *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_a
 	return(attackers);
 }
 
-/*
 void jump_back(Stack *s, SIZE_TYPE jump) {
 	Stack tmp;
 	init_stack(&tmp);
@@ -88,6 +76,18 @@ void jump_back(Stack *s, SIZE_TYPE jump) {
 	push(s, new_stack_element_ptr(top));
 }
 */
+
+struct state {
+	ARG_TYPE new_argument;
+	ArrayList *set;
+	bool *scheduled;
+	bool *conflicts;
+	// Number of unattacked attackers of an argument
+	SIZE_TYPE* unattacked_attackers_count;
+	bool* victims;
+};
+
+typedef struct state State;
 
 State *create_state(SIZE_TYPE size) {
 	State *s = calloc(1, sizeof(State));
@@ -336,17 +336,13 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 		free(attacker_processed);
 		if (is_current_self_defending) {
 			printf("Closure count: %d\n", closure_count);
-			// TODO: current->set is not closed. why?
-			State *test = first_closure(attacks, attacked_by, current->set);
-			return(test->set);
+			return(current->set);
 		}
 
-		ARG_TYPE *attackers = sort_attackers(attacks, attacked_by, least_attacked_attacker, current);
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
-			// ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
-			ARG_TYPE attacker_of_least_attacked_attacker = attackers[i];
+			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 			if (current->conflicts[attacker_of_least_attacked_attacker] ||
 				current->scheduled[attacker_of_least_attacked_attacker]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
@@ -366,8 +362,6 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 
 			push(&states, new_stack_element_ptr(next));
 		}
-		free(attackers);
-		attackers = NULL;
 		delete_state(current);
 		current = NULL;
 	}
