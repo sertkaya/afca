@@ -24,6 +24,7 @@
 
 #include "algorithms/cbo/complete.h"
 #include "algorithms/cbo/admissible.h"
+#include "algorithms/backtracking/admissible.h"
 #include "validator/validator.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
@@ -38,8 +39,8 @@ enum decision_problem_types {DC, DS};
 #define ENUMERATION_PROBLEM_TYPE_COUNT 2
 enum problem_types {EE, SE};
 
-#define ALGORITHM_COUNT 15
-enum algorithms {CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH_NC, SUBGRAPH_CBO};
+#define ALGORITHM_COUNT 16
+enum algorithms {BT, CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH_NC, SUBGRAPH_CBO};
 
 void print_not_supported(char* problem, char* algorithm, FILE* output) {
 	fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
@@ -147,7 +148,9 @@ int main(int argc, char *argv[]) {
 		algorithm = CBO;
 	}
 	else {
-		if (strcmp(alg, "cbo") == 0) {
+		if (strcmp(alg, "bt") == 0) {
+			algorithm = BT;
+		} else if (strcmp(alg, "cbo") == 0) {
 			algorithm = CBO;
 		} else if (strcmp(alg, "mis") == 0) {
 			algorithm = MIS;
@@ -260,6 +263,7 @@ int main(int argc, char *argv[]) {
 	decision_functions[DC][CO][CBO] = &dc_co_cbo;
 	decision_functions[DC][CO][SUBGRAPH_CBO] = &dc_co_subgraph_cbo;
 	decision_functions[DC][AD][SUBGRAPH_CBO] = &dc_adm_subgraph_cbo;
+	decision_functions[DC][AD][BT] = &dc_ad_bt;
 	// ...
 	// ...
 
