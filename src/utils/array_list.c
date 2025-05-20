@@ -78,8 +78,9 @@ int cmp(const void* arg_1, const void* arg_2) {
 void print_list(FILE* fp, ArrayList* l, char* end) {
 	qsort(l->elements, l->size, sizeof(ARG_TYPE), cmp);
 	fprintf(fp, "w ");
-	for (int i = 0; i < l->size; ++i)
+	for (int i = 0; i < l->size - 1; ++i)
 		fprintf(fp,"%d ", l->elements[i] + 1);
+	fprintf(fp,"%d", l->elements[l->size - 1] + 1);
 	fprintf(fp, "%s", end);
 }
 
