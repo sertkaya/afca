@@ -36,7 +36,7 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
 	} while (rc != EOF);
 	fclose(e_fd);
 
-    print_list(stdout, extension, "\n");
+    // print_list(stdout, extension, "\n");
 
 	if (strcmp(semantic, "ST") == 0) {
           // ...
