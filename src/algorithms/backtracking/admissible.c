@@ -20,7 +20,6 @@
 #include <time.h>
 
 #include "../../af/af.h"
-
 #include "../../utils/stack.h"
 #include "../../utils/priority_queue.h"
 #include "../../utils/timer.h"
@@ -38,6 +37,40 @@ struct state {
 };
 
 typedef struct state State;
+struct attacker_score_pair {
+	ARG_TYPE arg;
+	int score;
+};
+
+int compare_attackers(const void *v1, const void *v2) {
+	if ((((struct attacker_score_pair*) v1)->score) < (((struct attacker_score_pair*) v2)->score))
+		return(-1);
+	else if ((((struct attacker_score_pair*) v1)->score) > (((struct attacker_score_pair*) v2)->score))
+		return(1);
+	else
+		return(0);
+}
+
+ARG_TYPE *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_attacker, State *state) {
+	struct  attacker_score_pair *pairs = calloc(attacked_by->list_sizes[least_attacked_attacker], sizeof(struct attacker_score_pair));
+	assert(pairs != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
+		ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
+		pairs[i].arg = attacker_of_least_attacked_attacker;
+		pairs[i].score = state->attackers_not_in_current[attacker_of_least_attacked_attacker];
+		// pairs[i].score = state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+		// pairs[i].score = attacks->list_sizes[attacker_of_least_attacked_attacker];
+		// pairs[index].score =  state->unattacked_attackers->count - count + state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
+	}
+	qsort(pairs, attacked_by->list_sizes[least_attacked_attacker], sizeof(struct attacker_score_pair), compare_attackers);
+	ARG_TYPE *attackers = calloc(attacked_by->list_sizes[least_attacked_attacker], sizeof(ARG_TYPE));
+	assert(attackers != NULL);
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
+		attackers[i] = pairs[i].arg;
+	}
+	free(pairs);
+	return(attackers);
+}
 
 State *create_state_ad_bt(SIZE_TYPE size) {
 	State *s = calloc(1, sizeof(State));
@@ -125,45 +158,11 @@ void delete_state_ad_bt(State *s) {
 
 static int closure_count = 0;
 
-void extend_current(State *current, AF *af, AF *af_t) {
-	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
-		if (current->scheduled[i])
-			continue;
-		bool all_attackers_in_current = true;
-		for (SIZE_TYPE j = 0; j < af_t->list_sizes[i]; ++j) {
-			if (!current->attackers[af_t->lists[i][j]]) {
-				all_attackers_in_current = false;
-				break;
-			}
-		}
-		if (all_attackers_in_current && !current->conflicts[i]) {
-			list_add(i, current->set);
-			current->scheduled[i] = true;
-			for (SIZE_TYPE k = 0; k < af->list_sizes[i]; ++k) {
-				current->conflicts[af->lists[i][k]] = true;
-				current->victims[af->lists[i][k]] = true;
-			}
-			for (SIZE_TYPE k = 0; k < af_t->list_sizes[i]; ++k) {
-				current->conflicts[af_t->lists[i][k]] = true;
-				current->attackers[af_t->lists[i][k]] = true;
-			}
-		}
-	}
-}
-
 State *process_stack_ad_bt(Stack *update, State *next, AF *af, AF* af_t) {
 	SIZE_TYPE a = -1;
 	while ((a = pop_int(update)) != -1) {
 		list_add(a, next->set);
 
-		/*
-		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
-			SIZE_TYPE victim_a = af->lists[a][i];
-			if (!next->victims[victim_a]) {
-				next->victims[victim_a] = true;
-			}
-		}
-		*/
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
 			SIZE_TYPE attacker_a = af_t->lists[a][i];
 			if (!next->attackers[attacker_a]) {
@@ -172,6 +171,7 @@ State *process_stack_ad_bt(Stack *update, State *next, AF *af, AF* af_t) {
 					SIZE_TYPE victim_attacker_a = af->lists[attacker_a][j];
 					--(next->attackers_not_in_current[victim_attacker_a]);
 					if (!next->scheduled[victim_attacker_a] && next->attackers_not_in_current[victim_attacker_a] == 0) {
+					// if (!next->conflicts[victim_attacker_a] && !next->scheduled[victim_attacker_a] && next->attackers_not_in_current[victim_attacker_a] == 0) {
 						if (next->conflicts[victim_attacker_a]) {
 							delete_state_ad_bt(next);
 							return(NULL);
@@ -185,39 +185,13 @@ State *process_stack_ad_bt(Stack *update, State *next, AF *af, AF* af_t) {
 						}
 						for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_attacker_a]; ++k) {
 							next->conflicts[af_t->lists[victim_attacker_a][k]] = true;
-							next->attackers[af_t->lists[victim_attacker_a][k]] = true;
+							// next->attackers[af_t->lists[victim_attacker_a][k]] = true;
 						}
 					}
 				}
 			}
 		}
 
-		/*
-		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
-			SIZE_TYPE victim_a = af->lists[a][i];
-			if (!next->victims[victim_a]) {
-				next->victims[victim_a] = true;
-				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
-					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
-					--(next->unattacked_attackers_count[victim_victim_a]);
-					if (!next->scheduled[victim_victim_a] && next->unattacked_attackers_count[victim_victim_a] == 0)  {
-						// check if victim_victim_a causes a conflict
-						if (next->conflicts[victim_victim_a]) {
-							delete_state_ad_bt(next);
-							return(NULL);
-						}
-						push(update, new_stack_element_int(victim_victim_a));
-						next->scheduled[victim_victim_a] = true;
-
-						for (SIZE_TYPE k = 0; k < af->list_sizes[victim_victim_a]; ++k)
-							next->conflicts[af->lists[victim_victim_a][k]] = true;
-						for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_victim_a]; ++k)
-							next->conflicts[af_t->lists[victim_victim_a][k]] = true;
-					}
-				}
-			}
-		}
-		*/
 	}
 	// printf("%d %d %d\n", next->set->size, attacker_count, unattacked_count);
 	return(next);
@@ -241,7 +215,7 @@ State *first_closure_ad_bt(AF *af, AF *af_t, ArrayList *s) {
 		}
 		for (SIZE_TYPE j = 0; j < af_t->list_sizes[s->elements[i]]; ++j) {
 			next->conflicts[af_t->lists[s->elements[i]][j]] = true;
-			next->attackers[af_t->lists[s->elements[i]][j]] = true;
+			// next->attackers[af_t->lists[s->elements[i]][j]] = true;
 		}
 
 		if (next->conflicts[s->elements[i]]) {
@@ -278,14 +252,6 @@ State *first_closure_ad_bt(AF *af, AF *af_t, ArrayList *s) {
 	memcpy(next->attackers_not_in_current, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack_ad_bt(update, next, af, af_t);
 
-	/*
-	for (SIZE_TYPE i = 0; i < s->size; ++i) {
-		printf("==>%d\n", s->elements[i]);
-		list_add(s->elements[i], next->set);
-	}
-	extend_current(next, af, af_t);
-	*/
-
 	free_stack(update);
 
 	return(next);
@@ -308,15 +274,10 @@ State *incremental_closure_ad_bt(AF* af, AF* af_t, ARG_TYPE new_argument, State 
 	}
 	for (SIZE_TYPE j = 0; j < af_t->list_sizes[new_argument]; ++j) {
 		next->conflicts[af_t->lists[new_argument][j]] = true;
-		next->attackers[af_t->lists[new_argument][j]] = true;
+		// next->attackers[af_t->lists[new_argument][j]] = true;
 	}
 
 	next = process_stack_ad_bt(update, next, af, af_t);
-
-	/*
-	list_add(new_argument, next->set);
-	extend_current(next, af, af_t);
-	*/
 
 	free_stack(update);
 
@@ -328,8 +289,8 @@ ArrayList* dc_ad_bt(AF* attacks, ARG_TYPE argument) {
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	// TODO: experimenting
-	// sort adjacency lists of attacked_by according to number of victims
-	// sort_adjacency_lists(attacked_by, attacks);
+	// sort adjacency lists of attacked_by according to increasing number of attackers
+	sort_adjacency_lists(attacked_by, attacks);
 
 	Stack states;
 	init_stack(&states);
@@ -387,10 +348,13 @@ ArrayList* dc_ad_bt(AF* attacks, ARG_TYPE argument) {
 			return(current->set);
 		}
 
+		// ARG_TYPE *attackers = sort_attackers(attacks, attacked_by, least_attacked_attacker, current);
+
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
+			// ARG_TYPE attacker_of_least_attacked_attacker = attackers[i];
 			if (current->conflicts[attacker_of_least_attacked_attacker] ||
 				current->scheduled[attacker_of_least_attacked_attacker]) {
 				// this attacker is already victim of current->set, or causes a conflict, or is already scheduled
