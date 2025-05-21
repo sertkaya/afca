@@ -84,7 +84,7 @@ struct state {
 	bool *conflicts;
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
-	// SIZE_TYPE* attackers_not_in_current;
+	SIZE_TYPE* attackers_not_in_current;
 	bool* victims;
 	bool* attackers;
 };
@@ -107,8 +107,8 @@ State *create_state(SIZE_TYPE size) {
 	s->unattacked_attackers_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(s->unattacked_attackers_count != NULL);
 
-	// s->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
-	// assert(s->attackers_not_in_current != NULL);
+	s->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
+	assert(s->attackers_not_in_current != NULL);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
@@ -138,9 +138,9 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	assert(n->unattacked_attackers_count != NULL);
 	memcpy(n->unattacked_attackers_count, s->unattacked_attackers_count, size * sizeof(SIZE_TYPE));
 
-	// n->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
-	// assert(n->attackers_not_in_current != NULL);
-	// memcpy(n->attackers_not_in_current, s->attackers_not_in_current, size * sizeof(SIZE_TYPE));
+	n->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
+	assert(n->attackers_not_in_current != NULL);
+	memcpy(n->attackers_not_in_current, s->attackers_not_in_current, size * sizeof(SIZE_TYPE));
 
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
@@ -166,8 +166,8 @@ void delete_state(State *s) {
 	s->attackers = NULL;
 	free(s->unattacked_attackers_count);
 	s->unattacked_attackers_count = NULL;
-	// free(s->attackers_not_in_current);
-	// s->attackers_not_in_current = NULL;
+	free(s->attackers_not_in_current);
+	s->attackers_not_in_current = NULL;
 	free(s);
 }
 
@@ -211,7 +211,6 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 			}
 		}
 
-		/*
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
 			SIZE_TYPE attacker_a = af_t->lists[a][i];
 			if (!next->attackers[attacker_a]) {
@@ -237,7 +236,6 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 				}
 			}
 		}
-		*/
 
 	}
 	// printf("%d %d %d\n", next->set->size, attacker_count, unattacked_count);
@@ -296,7 +294,7 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	}
 
 	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
-	// memcpy(next->attackers_not_in_current, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+	memcpy(next->attackers_not_in_current, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack(update, next, af, af_t);
 	free_stack(update);
 
