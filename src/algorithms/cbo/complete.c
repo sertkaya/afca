@@ -334,7 +334,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	// TODO: experimenting
 	// sort adjacency lists of attacked_by according to number of victims
-	// sort_adjacency_lists(attacked_by, attacks);
+	sort_adjacency_lists(attacked_by, attacks);
 
 	Stack states;
 	init_stack(&states);

@@ -44,6 +44,7 @@ AF* read_af(FILE* input_fd) {
 	printf("Argument count: %d\n", arg_count);
 	printf("Attacks count : %lu\n", att_count);
 	printf("Density : %lf\n", ((double) att_count) / (arg_count * arg_count));
+	// analyze_af(af);
 
 	return(af);
 }

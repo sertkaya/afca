@@ -432,3 +432,38 @@ AF *create_conflicts_graph(AF *af, AF *af_t) {
 	}
 	return(conflicts_af);
 }
+
+bool argument_defends_argument(ARG_TYPE a, ARG_TYPE b, AF *attacks, AF *attacked_by) {
+	bool *victims_a = calloc(attacks->size, sizeof(ARG_TYPE));
+	assert(victims_a != NULL);
+	for (SIZE_TYPE i = 0; i < attacks->list_sizes[a]; ++i) {
+		victims_a[attacks->lists[a][i]] = true;
+	}
+	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[b]; ++i)
+		if (!victims_a[attacked_by->lists[b][i]]) {
+			free(victims_a);
+			return(false);
+		}
+	free(victims_a);
+	return(true);
+}
+
+void analyze_af(AF *attacks) {
+	AF *attacked_by = transpose_argumentation_framework(attacks);
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		if (attacked_by->list_sizes[i] == 0)
+			printf("%d: 0 attackers\n", i+1);
+		else if (attacked_by->list_sizes[i] == 1)
+			printf("%d: 1 attackers\n", i+1);
+		for (SIZE_TYPE j = 0; j < attacks->size; ++j) {
+			if (argument_defends_argument(i, j, attacks, attacked_by) && attacked_by->list_sizes[j] != 0)
+				printf("%d defends %d\n", i+1, j+1);
+			if (argument_defends_argument(j, i, attacks, attacked_by) && attacked_by->list_sizes[i] != 0)
+				printf("%d defends %d\n", j+1, i+1);
+			}
+	}
+
+	free_argumentation_framework(attacked_by);
+	printf("Analyze AF done\n");
+	fflush(stdout);
+}

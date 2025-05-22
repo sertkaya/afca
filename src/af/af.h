@@ -117,4 +117,6 @@ int compare_argument_ids(const void *arg1, const void *arg2);
 // Map indices of bitset s according to the mapping, return the new bitset
 // BitSet *map_indices(BitSet *s, int *mapping);
 
+void analyze_af(AF *attacks);
+
 #endif /* AF_AF_H_ */
