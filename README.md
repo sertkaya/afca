@@ -3,8 +3,6 @@ Argumentation Framework using Formal Concept Analysis
 
 AFFCA is a prototype for computing extensions of Abstract Argumentation 
 Frameworks (AFs) using algorithms from Formal Concept Analysis (FCA). 
-Currently it only supports computation of stable extensions. Support for
-other types of extensions are on the way.
 
 # Compiling
 Download and extract the sources into the folder "affca" and execute the 
@@ -42,10 +40,14 @@ of this format please see: https://iccma2023.github.io/rules.html#input-format
 
 Usage:
 ```
-$ ./affca -l <algorithm> -p <problem> -o <output file> -f <input file>
+$ ./affca -p <problem> -f <input file> -a <argument>
 
-<algorithm>     One of the algorithms "next-closure" or "norris".
-<problem>       Currently supported: "SE-ST" and "EE-ST"
+<problem>       Currently supported: "DC-CO" 
 <output file>   Name of the file for the results.
 <input file>    Input argumentation framework in the format mentioned above.
+
+optionally the algorithm can be specified using: 
+$ ./affca -l <algorithm> -p <problem> -o <output file> -f <input file>
+
+<algorithm>     One of the algorithms "cbo", "subgraph-cbo".
 ```
