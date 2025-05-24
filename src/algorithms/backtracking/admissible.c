@@ -31,7 +31,7 @@ struct state {
 	bool *conflicts;
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
-	SIZE_TYPE* attackers_not_in_current;
+	SIZE_TYPE* not_attacker_of_current_count;
 	bool* victims;
 	bool* attackers;
 };
@@ -57,7 +57,7 @@ ARG_TYPE *sort_attackers(AF *attacks, AF *attacked_by, ARG_TYPE least_attacked_a
 	for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 		ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 		pairs[i].arg = attacker_of_least_attacked_attacker;
-		pairs[i].score = state->attackers_not_in_current[attacker_of_least_attacked_attacker];
+		pairs[i].score = state->not_attacker_of_current_count[attacker_of_least_attacked_attacker];
 		// pairs[i].score = state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
 		// pairs[i].score = attacks->list_sizes[attacker_of_least_attacked_attacker];
 		// pairs[index].score =  state->unattacked_attackers->count - count + state->unattacked_attackers_count[attacker_of_least_attacked_attacker];
@@ -88,8 +88,8 @@ State *create_state_ad_bt(SIZE_TYPE size) {
 	s->unattacked_attackers_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(s->unattacked_attackers_count != NULL);
 
-	s->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
-	assert(s->attackers_not_in_current != NULL);
+	s->not_attacker_of_current_count = calloc(size, sizeof(SIZE_TYPE));
+	assert(s->not_attacker_of_current_count != NULL);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
@@ -119,9 +119,9 @@ State *duplicate_state_ad_bt(State *s, SIZE_TYPE size) {
 	assert(n->unattacked_attackers_count != NULL);
 	memcpy(n->unattacked_attackers_count, s->unattacked_attackers_count, size * sizeof(SIZE_TYPE));
 
-	n->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
-	assert(n->attackers_not_in_current != NULL);
-	memcpy(n->attackers_not_in_current, s->attackers_not_in_current, size * sizeof(SIZE_TYPE));
+	n->not_attacker_of_current_count = calloc(size, sizeof(SIZE_TYPE));
+	assert(n->not_attacker_of_current_count != NULL);
+	memcpy(n->not_attacker_of_current_count, s->not_attacker_of_current_count, size * sizeof(SIZE_TYPE));
 
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
@@ -147,8 +147,8 @@ void delete_state_ad_bt(State *s) {
 	s->attackers = NULL;
 	free(s->unattacked_attackers_count);
 	s->unattacked_attackers_count = NULL;
-	free(s->attackers_not_in_current);
-	s->attackers_not_in_current = NULL;
+	free(s->not_attacker_of_current_count);
+	s->not_attacker_of_current_count = NULL;
 	free(s);
 }
 
@@ -169,8 +169,8 @@ State *process_stack_ad_bt(Stack *update, State *next, AF *af, AF* af_t) {
 				next->attackers[attacker_a] = true;
 				for (SIZE_TYPE j = 0; j < af->list_sizes[attacker_a]; ++j) {
 					SIZE_TYPE victim_attacker_a = af->lists[attacker_a][j];
-					--(next->attackers_not_in_current[victim_attacker_a]);
-					if (!next->scheduled[victim_attacker_a] && next->attackers_not_in_current[victim_attacker_a] == 0) {
+					--(next->not_attacker_of_current_count[victim_attacker_a]);
+					if (!next->scheduled[victim_attacker_a] && next->not_attacker_of_current_count[victim_attacker_a] == 0) {
 					// if (!next->conflicts[victim_attacker_a] && !next->scheduled[victim_attacker_a] && next->attackers_not_in_current[victim_attacker_a] == 0) {
 						if (next->conflicts[victim_attacker_a]) {
 							delete_state_ad_bt(next);
@@ -249,7 +249,7 @@ State *first_closure_ad_bt(AF *af, AF *af_t, ArrayList *s) {
 	}
 
 	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
-	memcpy(next->attackers_not_in_current, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+	memcpy(next->not_attacker_of_current_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack_ad_bt(update, next, af, af_t);
 
 	free_stack(update);
@@ -308,7 +308,7 @@ ArrayList* dc_ad_bt(AF* attacks, ARG_TYPE argument) {
 	push(&states, new_stack_element_ptr(current));
 
 	while (current =  pop_ptr(&states)) {
-		// print_list(stdout, current->set,"\n");
+		print_list(stdout, current->set,"\n");
 		// find the unattacked attacker of current->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current->set.
 		int min_attacker_count = attacks->size;

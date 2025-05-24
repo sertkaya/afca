@@ -304,7 +304,7 @@ int main(int argc, char *argv[]) {
 			enumeration_functions[DC][CO][SUBGRAPH_NC](input_af);
 	}
 	STOP_TIMER(stop_time);
-	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	// printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
 	// fclose(output);

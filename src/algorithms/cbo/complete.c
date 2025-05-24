@@ -84,7 +84,8 @@ struct state {
 	bool *conflicts;
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
-	SIZE_TYPE* attackers_not_in_current;
+	// NUmber of attackers of an argument that do not attack current
+	SIZE_TYPE* not_attacker_of_current_count;
 	bool* victims;
 	bool* attackers;
 };
@@ -107,8 +108,8 @@ State *create_state(SIZE_TYPE size) {
 	s->unattacked_attackers_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(s->unattacked_attackers_count != NULL);
 
-	s->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
-	assert(s->attackers_not_in_current != NULL);
+	s->not_attacker_of_current_count = calloc(size, sizeof(SIZE_TYPE));
+	assert(s->not_attacker_of_current_count != NULL);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
@@ -138,9 +139,9 @@ State *duplicate_state(State *s, SIZE_TYPE size) {
 	assert(n->unattacked_attackers_count != NULL);
 	memcpy(n->unattacked_attackers_count, s->unattacked_attackers_count, size * sizeof(SIZE_TYPE));
 
-	n->attackers_not_in_current = calloc(size, sizeof(SIZE_TYPE));
-	assert(n->attackers_not_in_current != NULL);
-	memcpy(n->attackers_not_in_current, s->attackers_not_in_current, size * sizeof(SIZE_TYPE));
+	n->not_attacker_of_current_count = calloc(size, sizeof(SIZE_TYPE));
+	assert(n->not_attacker_of_current_count != NULL);
+	memcpy(n->not_attacker_of_current_count, s->not_attacker_of_current_count, size * sizeof(SIZE_TYPE));
 
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
@@ -166,8 +167,8 @@ void delete_state(State *s) {
 	s->attackers = NULL;
 	free(s->unattacked_attackers_count);
 	s->unattacked_attackers_count = NULL;
-	free(s->attackers_not_in_current);
-	s->attackers_not_in_current = NULL;
+	free(s->not_attacker_of_current_count);
+	s->not_attacker_of_current_count = NULL;
 	free(s);
 }
 
@@ -217,8 +218,8 @@ State *process_stack(Stack *update, State *next, AF *af, AF* af_t) {
 				next->attackers[attacker_a] = true;
 				for (SIZE_TYPE j = 0; j < af->list_sizes[attacker_a]; ++j) {
 					SIZE_TYPE victim_attacker_a = af->lists[attacker_a][j];
-					--(next->attackers_not_in_current[victim_attacker_a]);
-					if (!next->scheduled[victim_attacker_a] && next->attackers_not_in_current[victim_attacker_a] == 0) {
+					--(next->not_attacker_of_current_count[victim_attacker_a]);
+					if (!next->scheduled[victim_attacker_a] && next->not_attacker_of_current_count[victim_attacker_a] == 0) {
 						// victim_attacker_a cannot cause a conflict in current. Its attackers all contained in current.
 						// If there were was a conflict, we would return NULL above.
 						// printf("%d %d\n", victim_attacker_a, af_t->list_sizes[victim_attacker_a]);
@@ -294,7 +295,7 @@ State *first_closure(AF *af, AF *af_t, ArrayList *s) {
 	}
 
 	memcpy(next->unattacked_attackers_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
-	memcpy(next->attackers_not_in_current, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
+	memcpy(next->not_attacker_of_current_count, af_t->list_sizes, af_t->size * sizeof(SIZE_TYPE));
 	next = process_stack(update, next, af, af_t);
 	free_stack(update);
 
@@ -334,7 +335,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 	AF* attacked_by = transpose_argumentation_framework(attacks);
 	// TODO: experimenting
 	// sort adjacency lists of attacked_by according to number of victims
-	sort_adjacency_lists(attacked_by, attacks);
+	// sort_adjacency_lists(attacked_by, attacks);
 
 	Stack states;
 	init_stack(&states);
@@ -342,10 +343,11 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 	ArrayList *tmp = list_create();
 	list_add(argument, tmp);
 	State *current = first_closure(attacks, attacked_by, tmp);
+
 	list_free(tmp);
 	if (!current) {
 		// first closure has a conflict. complete extension does not exist.
-		printf("Closure count: %d\n", closure_count);
+		// printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 	current->new_argument = argument;
@@ -391,7 +393,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 			// current is self-defending, not necessarily complete.
 			// close it and return.
 			State *result = first_closure(attacks, attacked_by, current->set);
-			printf("Closure count: %d\n", closure_count);
+			// printf("Closure count: %d\n", closure_count);
 			return(result->set);
 		}
 
@@ -425,7 +427,7 @@ ArrayList* dc_co_cbo(AF* attacks, ARG_TYPE argument) {
 	free_argumentation_framework(attacks);
 	free_argumentation_framework(attacked_by);
 
-	printf("Closure count: %d\n", closure_count);
+	// printf("Closure count: %d\n", closure_count);
 	return(NULL);
 }
 
