@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef AF_ADMISSIBLE_EXTENSIONS_BACKTRACKING_H_
-#define AF_ADMISSIBLE_EXTENSIONS_BACKTRACKING_H_
+#ifndef AF_COMPLETE_EXTENSIONS_CBO_H_
+#define AF_COMPLETE_EXTENSIONS_CBO_H_
 
-#include "../../utils/array_list.h"
-#include "../../af/af.h"
+#include "../utils/array_list.h"
+#include "../af/af.h"
 
-ArrayList* dc_ad_bt(AF* attacks, ARG_TYPE argument);
+ArrayList* dc_co(AF* attacks, ARG_TYPE argument);
 
-#endif /* AF_ADMISSIBLE_EXTENSIONS_BACKTRACKING_H_ */
+ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument);
+
+#endif /* AF_COMPLETE_EXTENSIONS_CBO_H_ */

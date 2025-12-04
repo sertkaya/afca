@@ -22,25 +22,20 @@
 #include <assert.h>
 #include <getopt.h>
 
-#include "algorithms/cbo/complete.h"
-#include "algorithms/cbo/admissible.h"
-#include "algorithms/backtracking/admissible.h"
+#include "algorithms/complete.h"
 #include "validator/validator.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
 
 
-#define EXTENSION_TYPE_COUNT 5
-enum extension_types {ST, PR, CO, ID, AD};
+#define EXTENSION_TYPE_COUNT 3
+enum extension_types {ST, PR, CO};
 
-#define DECISION_PROBLEM_TYPE_COUNT 2
-enum decision_problem_types {DC, DS};
+#define DECISION_PROBLEM_TYPE_COUNT 1
+enum decision_problem_types {DC};
 
 #define ENUMERATION_PROBLEM_TYPE_COUNT 2
 enum problem_types {EE, SE};
-
-#define ALGORITHM_COUNT 16
-enum algorithms {BT, CBO, MIS, NEXT_CLOSURE, NORRIS, NORRIS_BU, NOURINE, SCC_MIS, WCC_MIS, SCC_NORRIS, WCC_NORRIS, SCC_NORRIS_BU, SCC_NOURINE, WCC_NOURINE, SUBGRAPH_NC, SUBGRAPH_CBO};
 
 void print_not_supported(char* problem, char* algorithm, FILE* output) {
 	fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
@@ -48,63 +43,48 @@ void print_not_supported(char* problem, char* algorithm, FILE* output) {
 	exit(EXIT_FAILURE);
 }
 
-void unsupported_feature(char* problem, char* extension, char* algorithm) {
-	fprintf(stderr, "Problem %s-%s is not supported with algorithm %s.\n", problem, extension, algorithm);
+void unsupported_feature(char* problem, char* extension) {
+	fprintf(stderr, "Problem %s-%s is not supported\n", problem, extension);
 }
 
 int main(int argc, char *argv[]) {
 	int c;
-	// For ICCMA'25
-	if (argc == 1) {
-		fprintf(stdout, "AFCA v0.1\n");
-		fprintf(stdout, "Sergei Obiedkov, sergei.obiedkov@tu-dresden.de\n");
-		fprintf(stdout, "Baris Sertkaya,  sertkaya@fb2.fra-uas.de\n");
-		return(0);
-	}
-	if (argc == 2 && !strcmp(argv[1], "--problems")) {
-		fprintf(stdout, "[DC-CO]\n");
-		return(0);
-	}
-	bool problem_flag = 0, algorithm_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
-	// bool problem_flag = 0, input_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
-	char *prob= "", *alg= "", *af_file_name = "", *output_file = "", *extension_file_name = "", *semantic_name;
+
+	bool problem_flag = 0, input_flag = 0, output_flag = 0, wrong_argument_flag = 0, argument_flag = 0, validate_flag = 0, extension_flag = 0, semantic_flag = 0;
+	char *prob= "", *af_file_name = "", *output_file = "", *extension_file_name = "", *semantic_name;
 	ARG_TYPE argument = 0;
-	static char usage_solver[] = "Usage: %s -l [cbo | max-independent-sets | next-closure | norris | norris-bu | nourine | scc-max-independent-sets | wcc-max-independent-sets | scc-norris | scc-norris-bu | wcc-norris | scc-nourine | wcc-nourine | subgraph-nc | subgraph-cbo] "
-					      "-p [SE-ST, EE-ST, DC-ST, EE-PR, SE-PR, DC-PR, DS-PR, SE-ID, EE-CO, DC-AD] -a argument -f input -o output\n";
+	static char usage_solver[] = "Usage: %s -p [DC-ST, SE-ST, EE-ST, DC-PR, SE-PR, EE-PR, DC-CO, EE-CO] -a argument -f input -o output\n";
 	static char usage_validator[] = "Usage: %s  -s [ST, PR, CO, AD] -f input -e extension\n";
 
-	while ((c = getopt(argc, argv, "vl:p:o:f:e:s:a:")) != -1) {
+	while ((c = getopt(argc, argv, "v:p:o:f:e:s:a:")) != -1) {
 		switch (c) {
-			case 'l':
-				algorithm_flag = 1;
-				alg = optarg;
-			break;
 			case 'p':
 				problem_flag = 1;
 			prob = optarg;
 			break;
 			case 'f':
 				input_flag = 1;
-			af_file_name = optarg;
+				af_file_name = optarg;
 			break;
 			case 'o':
 				output_flag = 1;
-			output_file = optarg;
+				output_file = optarg;
 			break;
 			case 'a':
 				argument_flag = 1;
-			argument = atoi(optarg);
+				argument = atoi(optarg);
 			break;
+			// for validation
 			case 'v':
 				validate_flag = 1;
 			break;
 			case 'e':
 				extension_flag = 1;
-			extension_file_name = optarg;
+				extension_file_name = optarg;
 			break;
 			case 's':
 				semantic_flag = 1;
-			semantic_name = optarg;
+				semantic_name = optarg;
 			break;
 			case '?':
 				wrong_argument_flag = 1;
@@ -130,7 +110,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	// if (wrong_argument_flag || !input_flag || !output_flag || !algorithm_flag || !problem_flag) {
 	if (wrong_argument_flag || !input_flag || !problem_flag) {
 		fprintf(stderr, usage_solver, argv[0]);
 		exit(EXIT_FAILURE);
@@ -144,51 +123,6 @@ int main(int argc, char *argv[]) {
 	}
 	else
 		output = stdout;
-
-	enum algorithms algorithm;
-	// Use CBO if algorithm is not specified
-	if (!algorithm_flag) {
-		algorithm = CBO;
-	}
-	else {
-		if (strcmp(alg, "bt") == 0) {
-			algorithm = BT;
-		} else if (strcmp(alg, "cbo") == 0) {
-			algorithm = CBO;
-		} else if (strcmp(alg, "mis") == 0) {
-			algorithm = MIS;
-		} else if (strcmp(alg, "next-closure") == 0) {
-			algorithm = NEXT_CLOSURE;
-		} else if (strcmp(alg, "norris") == 0) {
-			algorithm = NORRIS;
-		} else if (strcmp(alg, "nourine") == 0) {
-			algorithm = NOURINE;
-		} else if (strcmp(alg, "scc-mis") == 0) {
-			algorithm = SCC_MIS;
-		} else if (strcmp(alg, "wcc-mis") == 0) {
-			algorithm = WCC_MIS;
-		} else if (strcmp(alg, "scc-norris") == 0) {
-			algorithm = SCC_NORRIS;
-		} else if (strcmp(alg, "wcc-norris") == 0) {
-			algorithm = WCC_NORRIS;
-		} else if (strcmp(alg, "norris-bu") == 0) {
-			algorithm = NORRIS_BU;
-		} else if (strcmp(alg, "scc-norris-bu") == 0) {
-			algorithm = SCC_NORRIS_BU;
-		} else if (strcmp(alg, "scc-nourine") == 0) {
-			algorithm = SCC_NOURINE;
-		} else if (strcmp(alg, "wcc-nourine") == 0) {
-			algorithm = WCC_NOURINE;
-		} else if (strcmp(alg, "subgraph-nc") == 0) {
-			algorithm = SUBGRAPH_NC;
-		} else if (strcmp(alg, "subgraph-cbo") == 0) {
-			algorithm = SUBGRAPH_CBO;
-		} else {
-			fprintf(stderr, "Unknown algorithm %s\n", alg);
-			fprintf(stderr, usage_solver, argv[0]);
-			exit(EXIT_FAILURE);
-		}
-	}
 
 	char *prob_type = strtok(prob, "-");
 	char *ext_type = strtok(NULL, "-");
@@ -209,14 +143,6 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 	}
-	else if (strcmp(prob_type, "DS") == 0) {
-		decision_problem = true;
-		problem_type = DS;
-		if (!argument_flag) {
-			fprintf(stderr, usage_solver, argv[0]);
-			exit(EXIT_FAILURE);
-		}
-	}
 	else {
 		fprintf(stderr, "Unknown problem type %s\n", prob_type);
 		fprintf(stderr, usage_solver, argv[0]);
@@ -228,12 +154,8 @@ int main(int argc, char *argv[]) {
 		extension_type = ST;
 	else if (strcmp(ext_type, "PR") == 0)
 		extension_type = PR;
-	else if (strcmp(ext_type, "ID") == 0)
-		extension_type = ID;
 	else if (strcmp(ext_type, "CO") == 0)
 		extension_type = CO;
-	else if (strcmp(ext_type, "AD") == 0)
-		extension_type = AD;
 	else {
 		fprintf(stderr, "Unknown extension type %s\n", ext_type);
 		fprintf(stderr, usage_solver, argv[0]);
@@ -256,27 +178,21 @@ int main(int argc, char *argv[]) {
 
 	// matrix of functions for decision problems.
 	// Function prototype: List* f(AF*, ARG_TYPE)
-    ArrayList* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*, ARG_TYPE);
+    ArrayList* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*, ARG_TYPE);
 	for (int i = 0; i < DECISION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
-			for (int k = 0; k < ALGORITHM_COUNT; ++k)
-				decision_functions[i][j][k] = NULL;
+			decision_functions[i][j] = NULL;
 
-	// decision_functions[DC][CO][SUBGRAPH_NC] = &dc_co_subgraph_nc;
-	decision_functions[DC][CO][CBO] = &dc_co_cbo;
-	decision_functions[DC][CO][SUBGRAPH_CBO] = &dc_co_subgraph_cbo;
-	decision_functions[DC][AD][SUBGRAPH_CBO] = &dc_adm_subgraph_cbo;
-	decision_functions[DC][AD][BT] = &dc_ad_bt;
+	decision_functions[DC][CO] = &dc_co;
 	// ...
 	// ...
 
 	// matrix of functions for enumeration problems.
 	// Function prototype: List* f(AF*)
-    ArrayList* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT][ALGORITHM_COUNT]) (AF*);
+    ArrayList* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*);
 	for (int i = 0; i < ENUMERATION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
-			for (int k = 0; k < ALGORITHM_COUNT; ++k)
-				enumeration_functions[i][j][k] = NULL;
+				enumeration_functions[i][j] = NULL;
 	// enumeration_functions[..][..][..] = ..
 
 	START_TIMER(start_time);
@@ -285,10 +201,10 @@ int main(int argc, char *argv[]) {
 		// arguments are internally indices
 		--argument;
 		// decision problem
-		if (decision_functions[problem_type][extension_type][algorithm] == NULL)
-			unsupported_feature(prob_type,ext_type,alg);
+		if (decision_functions[problem_type][extension_type] == NULL)
+			unsupported_feature(prob_type,ext_type);
 		else
-			extension = decision_functions[problem_type][extension_type][algorithm](input_af, argument);
+			extension = decision_functions[problem_type][extension_type](input_af, argument);
 		if (extension == NULL)
 			fprintf(output, "NO\n");
 		else {
@@ -298,16 +214,16 @@ int main(int argc, char *argv[]) {
 	}
 	else {
 		// enumeration problem
-		if (enumeration_functions[problem_type][extension_type][algorithm] == NULL)
-			unsupported_feature(prob_type,ext_type,alg);
+		if (enumeration_functions[problem_type][extension_type] == NULL)
+			unsupported_feature(prob_type,ext_type);
 		else
-			enumeration_functions[DC][CO][SUBGRAPH_NC](input_af);
+			enumeration_functions[DC][CO](input_af);
 	}
 	STOP_TIMER(stop_time);
 	// printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
-	// fclose(output);
+	fclose(output);
 
 	return(0);
 }

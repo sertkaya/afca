@@ -41,8 +41,6 @@ int main(int argc, char *argv[]) {
 		// mapping[i] = af->size - 1 - i;
 		mapping[i] = i;
 
-	AF *mapped_af = apply_mapping(af, mapping);
-	print_argumentation_framework(mapped_af);
 	// AF* af_t = transpose_argumentation_framework(af);
 
 	// Subgraph* subgraph = extract_subgraph_backwards(af_t, a);
