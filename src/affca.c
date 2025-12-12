@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 	static char usage_solver[] = "Usage: %s -p [DC-ST, SE-ST, EE-ST, DC-PR, SE-PR, EE-PR, DC-CO, EE-CO] -a argument -f input -o output\n";
 	static char usage_validator[] = "Usage: %s  -s [ST, PR, CO, AD] -f input -e extension\n";
 
-	while ((c = getopt(argc, argv, "v:p:o:f:e:s:a:")) != -1) {
+	while ((c = getopt(argc, argv, "vp:o:f:e:s:a:")) != -1) {
 		switch (c) {
 			case 'p':
 				problem_flag = 1;
