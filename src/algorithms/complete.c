@@ -203,9 +203,13 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 	// First closure.
 	current_node = pseudo_complete(update, current_node, attacks, attacked_by);
 	free_stack(update);
+	if (!current_node) {
+		// first closure has a conflict. complete extension does not exist
+		return(NULL);
+	}
 	push(&nodes, new_stack_element_ptr(current_node));
 
-	while ((current_node =  pop_ptr(&nodes)) != NULL) {
+	while (current_node =  pop_ptr(&nodes)) {
 		// print_list(stdout, current_node->set,"\n");
 		// find the unattacked attacker of current_node->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current_node->set.
@@ -269,7 +273,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 			free_stack(update);
 
-			// closure has a conflict, try with another attacker
+			// closure has a conflict. stop this branch, try with another attacker
 			// of least_attacked_attacker
 			if (!child_node) {
 				// node "child_node" is already deleted in process_stack
