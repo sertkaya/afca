@@ -85,22 +85,14 @@ bool is_set_self_defending(AF* attacks, AF* attacked_by, ArrayList* s) {
 			victims[attacks->lists[s->elements[i]][j]] = true;
 		}
 
-	bool* attackers = calloc(attacks->size, sizeof(bool));
-	assert(attackers != NULL);
 	for (SIZE_TYPE i = 0; i < s->size; ++i)
 		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[s->elements[i]]; ++j) {
-			attackers[attacked_by->lists[s->elements[i]][j]] = true;
+			if (!victims[attacked_by->lists[s->elements[i]][j]]) {
+				free(victims);
+				return(false);
+			}
 		}
-
-	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
-		if (attackers[i] && !victims[i]) {
-			free(victims);
-			free(attackers);
-			return(false);
-		}
-
 	free(victims);
-	free(attackers);
 	return(true);
 }
 

@@ -207,6 +207,13 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		// first closure has a conflict. complete extension does not exist
 		return(NULL);
 	}
+	// closure is self-defending, complete set found.
+	if (is_set_self_defending(attacks, attacked_by, current_node->set)) {
+		free_stack(&nodes);
+		free_argumentation_framework(attacks);
+		free_argumentation_framework(attacked_by);
+		return(current_node->set);
+	}
 	push(&nodes, new_stack_element_ptr(current_node));
 
 	while (current_node =  pop_ptr(&nodes)) {
@@ -219,7 +226,6 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		bool *attacker_processed = calloc(attacks->size, sizeof(bool));
 		assert(attacker_processed != NULL);
 
-		bool is_current_self_defending = true;
 		for (SIZE_TYPE i = 0; i < current_node->set->size; ++i) {
 			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[current_node->set->elements[i]]; ++j) {
 				ARG_TYPE attacker = attacked_by->lists[current_node->set->elements[i]][j];
@@ -227,7 +233,6 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 					continue;
 				attacker_processed[attacker] = true;
 				if (!current_node->victims[attacker]) {
-					is_current_self_defending = false;
 					int count = 0;
 					// attacker is unattacked
 					for (SIZE_TYPE k = 0; k < attacked_by->list_sizes[attacker]; ++k) {
@@ -245,15 +250,6 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 			}
 		}
 		free(attacker_processed);
-		if (is_current_self_defending) {
-			// current_node->set is self-defending, not necessarily complete.
-			// close it and return.
-			// TODO: Check why this closure is needed. current_node->set should actually be closed
-			// Node *result = first_closure(attacks, attacked_by, current_node->set);
-			// printf("Closure count: %d\n", closure_count);
-			// return(result->set);
-			return(current_node->set);
-		}
 
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
@@ -266,19 +262,24 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 				continue;
 			}
 			// otherwise add it and close
-			// Node *child_node = incremental_closure(attacks, attacked_by, attacker_of_least_attacked_attacker, current_node);
 			Node *child_node = duplicate_node(current_node, attacks->size);
 			Stack *update = new_stack();
 			push(update, new_stack_element_int(attacker_of_least_attacked_attacker));
 			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 			free_stack(update);
-
 			// closure has a conflict. stop this branch, try with another attacker
 			// of least_attacked_attacker
 			if (!child_node) {
 				// node "child_node" is already deleted in process_stack
 				// upon noticing the conflict. not required here.
 				continue;
+			}
+			// closure is self-defending, complete set found.
+			if (is_set_self_defending(attacks, attacked_by, child_node->set)) {
+				free_stack(&nodes);
+				free_argumentation_framework(attacks);
+				free_argumentation_framework(attacked_by);
+				return(child_node->set);
 			}
 
 			push(&nodes, new_stack_element_ptr(child_node));
