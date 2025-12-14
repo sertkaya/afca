@@ -169,12 +169,12 @@ int main(int argc, char *argv[]) {
 
 	struct timeval start_time, stop_time;
 
-	// START_TIMER(start_time);
+	START_TIMER(start_time);
 	// Read the file into an argumentation framework.
 	AF *input_af = read_af(input_fd);
 	fclose(input_fd);
-	// STOP_TIMER(stop_time);
-	// printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	STOP_TIMER(stop_time);
+	printf("Parsing time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// matrix of functions for decision problems.
 	// Function prototype: List* f(AF*, ARG_TYPE)
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
 			enumeration_functions[DC][CO](input_af);
 	}
 	STOP_TIMER(stop_time);
-	// printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
+	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
 	// close the output file
 	fclose(output);
