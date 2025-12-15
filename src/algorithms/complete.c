@@ -152,8 +152,23 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--(node->unattacked_attackers_count[victim_victim_a]);
 					if (!node->scheduled[victim_victim_a] && node->unattacked_attackers_count[victim_victim_a] == 0)  {
+						// check if victim_victim_a causes a conflict
+						if (node->conflicts[victim_victim_a]) {
+							delete_node(node);
+							return(NULL);
+						}
 						// victim_victim_a is defended, push to the stack
 						push(update, new_stack_element_int(victim_victim_a));
+						node->scheduled[victim_victim_a] = true;
+
+						for (SIZE_TYPE k = 0; k < af->list_sizes[victim_victim_a]; ++k) {
+							node->conflicts[af->lists[victim_victim_a][k]] = true;
+							// next->victims[af->lists[victim_victim_a][k]] = true;
+						}
+						for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_victim_a]; ++k) {
+							node->conflicts[af_t->lists[victim_victim_a][k]] = true;
+							// next->attackers[af_t->lists[victim_victim_a][k]] = true;
+						}
 					}
 				}
 			}
@@ -169,6 +184,15 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					if (!node->scheduled[victim_attacker_a] && node->not_attacker_of_current_count[victim_attacker_a] == 0) {
 						// attackers of victim_attacker_a are all attackers of node->set, push it to the stack
 						push(update, new_stack_element_int(victim_attacker_a));
+						node->scheduled[victim_attacker_a] = true;
+						for (SIZE_TYPE k = 0; k < af->list_sizes[victim_attacker_a]; ++k) {
+							node->conflicts[af->lists[victim_attacker_a][k]] = true;
+							// next->victims[af->lists[victim_attacker_a][k]] = true;
+						}
+						for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_attacker_a]; ++k) {
+							node->conflicts[af_t->lists[victim_attacker_a][k]] = true;
+							// next->attackers[af_t->lists[victim_attacker_a][k]] = true;
+						}
 					}
 				}
 			}
@@ -187,19 +211,31 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 	Stack nodes;
 	init_stack(&nodes);
 
-	Stack *update = new_stack();
-	// Push the given argument to the stack
-	push(update, new_stack_element_int(argument));
-	// Push the unattacked arguments to the stack. They are defended by every set.
-	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
-		if (attacked_by->list_sizes[i] == 0) {
-			push(update, new_stack_element_int(i));
-		}
-	}
 	// The root node
 	Node *current_node = create_node(attacks->size);
 	memcpy(current_node->unattacked_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
 	memcpy(current_node->not_attacker_of_current_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+
+	Stack *update = new_stack();
+	// Push the given argument to the stack
+	push(update, new_stack_element_int(argument));
+	for (SIZE_TYPE j = 0; j < attacks->list_sizes[argument]; ++j) {
+		current_node->conflicts[attacks->lists[argument][j]] = true;
+	}
+	for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[argument]; ++j) {
+		current_node->conflicts[attacked_by->lists[argument][j]] = true;
+	}
+	// Push the unattacked arguments to the stack. They are defended by every set.
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
+		if (attacked_by->list_sizes[i] == 0) {
+			push(update, new_stack_element_int(i));
+			current_node->scheduled[i] = true;
+
+			for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
+				current_node->conflicts[attacks->lists[i][j]] = true;
+			}
+		}
+	}
 	// First closure.
 	current_node = pseudo_complete(update, current_node, attacks, attacked_by);
 	free_stack(update);
@@ -218,7 +254,9 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 
 	push(&nodes, new_stack_element_ptr(current_node));
 
+	int node_count = 0;
 	while (current_node =  pop_ptr(&nodes)) {
+		++node_count;
 		// print_list(stdout, current_node->set,"\n");
 		// find the unattacked attacker of current_node->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current_node->set.
@@ -228,7 +266,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		bool *attacker_processed = calloc(attacks->size, sizeof(bool));
 		assert(attacker_processed != NULL);
 
-		// bool is_current_self_defending = true;
+		bool is_current_self_defending = true;
 		for (SIZE_TYPE i = 0; i < current_node->set->size; ++i) {
 			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[current_node->set->elements[i]]; ++j) {
 				ARG_TYPE attacker = attacked_by->lists[current_node->set->elements[i]][j];
@@ -236,7 +274,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 					continue;
 				attacker_processed[attacker] = true;
 				if (!current_node->victims[attacker]) {
-					// is_current_self_defending = false;
+					is_current_self_defending = false;
 					int count = 0;
 					// attacker is unattacked
 					for (SIZE_TYPE k = 0; k < attacked_by->list_sizes[attacker]; ++k) {
@@ -254,9 +292,10 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 			}
 		}
 		free(attacker_processed);
-		// if (is_current_self_defending) {
-		// 	return(current_node->set);
-		// }
+		if (is_current_self_defending) {
+			printf("node count: %d\n", node_count);
+			return(current_node->set);
+		}
 
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
@@ -272,6 +311,14 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 			Node *child_node = duplicate_node(current_node, attacks->size);
 			Stack *update = new_stack();
 			push(update, new_stack_element_int(attacker_of_least_attacked_attacker));
+
+			for (SIZE_TYPE j = 0; j < attacks->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
+				child_node->conflicts[attacks->lists[attacker_of_least_attacked_attacker][j]] = true;
+			}
+			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
+				child_node->conflicts[attacked_by->lists[attacker_of_least_attacked_attacker][j]] = true;
+			}
+
 			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 			free_stack(update);
 			// closure has a conflict. stop this branch, try with another attacker
@@ -282,12 +329,14 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 				continue;
 			}
 			// closure is self-defending, complete set found.
+			/*
 			if (is_set_self_defending(attacks, attacked_by, child_node->set)) {
 				free_stack(&nodes);
 				free_argumentation_framework(attacks);
 				free_argumentation_framework(attacked_by);
 				return(child_node->set);
 			}
+			*/
 
 			push(&nodes, new_stack_element_ptr(child_node));
 		}
@@ -299,5 +348,6 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 	free_argumentation_framework(attacked_by);
 
 	// printf("Closure count: %d\n", closure_count);
+	printf("node count: %d\n", node_count);
 	return(NULL);
 }
