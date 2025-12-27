@@ -29,11 +29,13 @@
 struct node {
 	ArrayList *set;
 	bool *scheduled;
-	bool *conflicts;
+	// bool *conflicts;
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
 	// Number of attackers of an argument that do not attack this node
 	SIZE_TYPE* not_attacker_of_current_count;
+	// Number of allowed attackers of an argument
+	SIZE_TYPE* allowed_attackers_count;
 	bool* victims;
 	bool* attackers;
 	// depth of this node
@@ -48,8 +50,8 @@ Node *create_node(SIZE_TYPE size) {
 
 	s->set = list_create();
 
-	s->conflicts = calloc(size, sizeof(bool));
-	assert(s->conflicts != NULL);
+	// s->conflicts = calloc(size, sizeof(bool));
+	// assert(s->conflicts != NULL);
 
 	s->scheduled = calloc(size, sizeof(bool));
 	assert(s->scheduled != NULL);
@@ -59,6 +61,9 @@ Node *create_node(SIZE_TYPE size) {
 
 	s->not_attacker_of_current_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(s->not_attacker_of_current_count != NULL);
+
+	s->allowed_attackers_count = calloc(size, sizeof(SIZE_TYPE));
+	assert(s->allowed_attackers_count != NULL);
 
 	s->victims = calloc(size, sizeof(bool));
 	assert(s->victims != NULL);
@@ -77,9 +82,9 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 
 	n->set = list_duplicate(s->set);
 
-	n->conflicts = calloc(size, sizeof(bool));
-	assert(n->conflicts != NULL);
-	memcpy(n->conflicts, s->conflicts, size * sizeof(bool));
+	// n->conflicts = calloc(size, sizeof(bool));
+	// assert(n->conflicts != NULL);
+	// memcpy(n->conflicts, s->conflicts, size * sizeof(bool));
 
 	n->scheduled = calloc(size, sizeof(bool));
 	assert(n->scheduled != NULL);
@@ -92,6 +97,10 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 	n->not_attacker_of_current_count = calloc(size, sizeof(SIZE_TYPE));
 	assert(n->not_attacker_of_current_count != NULL);
 	memcpy(n->not_attacker_of_current_count, s->not_attacker_of_current_count, size * sizeof(SIZE_TYPE));
+
+	n->allowed_attackers_count = calloc(size, sizeof(SIZE_TYPE));
+	assert(n->allowed_attackers_count != NULL);
+	memcpy(n->allowed_attackers_count, s->allowed_attackers_count, size * sizeof(SIZE_TYPE));
 
 	n->victims = calloc(size, sizeof(bool));
 	assert(n->victims != NULL);
@@ -109,8 +118,8 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 void delete_node(Node *s) {
 	list_free(s->set);
 	s->set = NULL;
-	free(s->conflicts);
-	s->conflicts = NULL;
+	// free(s->conflicts);
+	// s->conflicts = NULL;
 	free(s->scheduled);
 	s->scheduled = NULL;
 	free(s->victims);
@@ -121,6 +130,8 @@ void delete_node(Node *s) {
 	s->unattacked_attackers_count = NULL;
 	free(s->not_attacker_of_current_count);
 	s->not_attacker_of_current_count = NULL;
+	free(s->allowed_attackers_count);
+	s->allowed_attackers_count = NULL;
 	free(s);
 }
 
@@ -130,25 +141,32 @@ void delete_node(Node *s) {
 
 static int closure_count = 0;
 
+// is arg in conflict with node->set
+#define IS_IN_CONFLICT_WITH(arg,node) (node->victims[arg]||node->attackers[arg])
+
 Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 	SIZE_TYPE a = -1;
 	++closure_count;
 	while ((a = pop_int(update)) != -1) {
 
-		if (node->conflicts[a]) {
+		// if (node->conflicts[a]) {
+		if (IS_IN_CONFLICT_WITH(a, node)) {
 			delete_node(node);
 			return(NULL);
 		}
 
 		node->scheduled[a] = true;
 		list_add(a, node->set);
+		node->allowed_attackers_count[a] = 0;
 
+		/*
 		for (SIZE_TYPE k = 0; k < af->list_sizes[a]; ++k) {
 			node->conflicts[af->lists[a][k]] = true;
 		}
 		for (SIZE_TYPE k = 0; k < af_t->list_sizes[a]; ++k) {
 			node->conflicts[af_t->lists[a][k]] = true;
 		}
+		*/
 
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
 			SIZE_TYPE victim_a = af->lists[a][i];
@@ -199,6 +217,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 	Node *current_node = create_node(attacks->size);
 	memcpy(current_node->unattacked_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
 	memcpy(current_node->not_attacker_of_current_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+	memcpy(current_node->allowed_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
 
 	Stack *update = new_stack();
 	// Push the given argument to the stack
@@ -257,7 +276,8 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 					for (SIZE_TYPE k = 0; k < attacked_by->list_sizes[attacker]; ++k) {
 						ARG_TYPE unattacked_attacker_attacker = attacked_by->lists[attacker][k];
 						if (!current_node->scheduled[unattacked_attacker_attacker] &&
-							!current_node->conflicts[unattacked_attacker_attacker]) {
+							!IS_IN_CONFLICT_WITH(unattacked_attacker_attacker, current_node)) {
+							// !current_node->conflicts[unattacked_attacker_attacker]) {
 							++count;
 						}
 					}
@@ -285,7 +305,8 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		printf("%d: ", least_attacked_attacker+1);
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
-			if (current_node->conflicts[attacker_of_least_attacked_attacker] ||
+			// if (current_node->conflicts[attacker_of_least_attacked_attacker] ||
+			if (IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, current_node) ||
 				current_node->scheduled[attacker_of_least_attacked_attacker]) {
 				// this attacker is already victim of current->set->set, or causes a conflict, or is already scheduled
 				// so skip it
