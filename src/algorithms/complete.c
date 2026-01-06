@@ -29,7 +29,6 @@
 struct node {
 	ArrayList *set;
 	bool *processed;
-	// bool *conflicts;
 	// Number of unattacked attackers of an argument
 	SIZE_TYPE* unattacked_attackers_count;
 	// Number of attackers of an argument that do not attack this node
@@ -49,9 +48,6 @@ Node *create_node(SIZE_TYPE size) {
 	assert(s != NULL);
 
 	s->set = list_create();
-
-	// s->conflicts = calloc(size, sizeof(bool));
-	// assert(s->conflicts != NULL);
 
 	s->processed = calloc(size, sizeof(bool));
 	assert(s->processed != NULL);
@@ -81,10 +77,6 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 	assert(n != NULL);
 
 	n->set = list_duplicate(s->set);
-
-	// n->conflicts = calloc(size, sizeof(bool));
-	// assert(n->conflicts != NULL);
-	// memcpy(n->conflicts, s->conflicts, size * sizeof(bool));
 
 	n->processed = calloc(size, sizeof(bool));
 	assert(n->processed != NULL);
@@ -118,8 +110,6 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 void delete_node(Node *s) {
 	list_free(s->set);
 	s->set = NULL;
-	// free(s->conflicts);
-	// s->conflicts = NULL;
 	free(s->processed);
 	s->processed = NULL;
 	free(s->victims);
@@ -164,8 +154,9 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
 					SIZE_TYPE victim_victim_a = af->lists[victim_a][j];
 					--(node->unattacked_attackers_count[victim_victim_a]);
-					if (!node->attackers[victim_a]  && !node->processed[victim_a])
+					if (!node->attackers[victim_a]  && !node->processed[victim_a]) {
 						--(node->allowed_attackers_count[victim_victim_a]);
+					}
 					if (!node->processed[victim_victim_a] && node->unattacked_attackers_count[victim_victim_a] == 0)  {
 						// victim_victim_a is defended, push to the stack
 						push(update, new_stack_element_int(victim_victim_a));
@@ -182,8 +173,9 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 				for (SIZE_TYPE j = 0; j < af->list_sizes[attacker_a]; ++j) {
 					SIZE_TYPE victim_attacker_a = af->lists[attacker_a][j];
 					--(node->not_attacker_of_current_count[victim_attacker_a]);
-					if (!node->victims[attacker_a] && !node->processed[attacker_a])
+					if (!node->victims[attacker_a] && !node->processed[attacker_a]) {
 						--(node->allowed_attackers_count[victim_attacker_a]);
+					}
 					if (!node->processed[victim_attacker_a] && node->not_attacker_of_current_count[victim_attacker_a] == 0) {
 						// attackers of victim_attacker_a are all attackers of node->set, push it to the stack
 						push(update, new_stack_element_int(victim_attacker_a));
@@ -259,24 +251,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 					continue;
 				attacker_processed[attacker] = true;
 				if (!current_node->victims[attacker]) {
-					/*
-					int count = 0;
 					// attacker is unattacked
-					for (SIZE_TYPE k = 0; k < attacked_by->list_sizes[attacker]; ++k) {
-						ARG_TYPE unattacked_attacker_attacker = attacked_by->lists[attacker][k];
-						if (!current_node->processed[unattacked_attacker_attacker] &&
-							!IS_IN_CONFLICT_WITH(unattacked_attacker_attacker, current_node)) {
-							++count;
-						}
-					}
-					if (current_node->allowed_attackers_count[attacker] != count)
-						printf("-->%d, %d %d, %d %d\n", count, current_node->allowed_attackers_count[attacker], current_node->unattacked_attackers_count[attacker],
-							current_node->not_attacker_of_current_count[attacker], attacked_by->list_sizes[attacker]);
-					if (count < min_attacker_count) {
-						min_attacker_count = count;
-						least_attacked_attacker = attacker;
-					}
-					*/
 					if (current_node->allowed_attackers_count[attacker] < min_attacker_count) {
 						min_attacker_count = current_node->allowed_attackers_count[attacker];
 						least_attacked_attacker = attacker;
@@ -285,6 +260,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 			}
 		}
 		free(attacker_processed);
+
 
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
@@ -301,11 +277,15 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 
 			defendable = true;
 
+			if (current_node->allowed_attackers_count[attacker_of_least_attacked_attacker] == 1) {
+				printf("\n==>%d\n", attacker_of_least_attacked_attacker);
+			}
 			current_node->processed[attacker_of_least_attacked_attacker] = true;
 			// attacker-of-least-attacked-attacker is processed,
 			// decrement the allowed-attackers-counts of its victims
 			for (SIZE_TYPE j = 0; j < attacks->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
 				--(current_node->allowed_attackers_count[attacks->lists[attacker_of_least_attacked_attacker][j]]);
+
 			}
 			Node *child_node = duplicate_node(current_node, attacks->size);
 			++child_node->depth;
