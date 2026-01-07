@@ -156,6 +156,19 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					--(node->unattacked_attackers_count[victim_victim_a]);
 					if (!node->attackers[victim_a]  && !node->processed[victim_a]) {
 						--(node->allowed_attackers_count[victim_victim_a]);
+
+						// TODO: experimental
+						if (node->allowed_attackers_count[victim_victim_a] == 1) {
+							// victim_victim_a has a single allowed attacker.
+							// push it immediately to the stack
+							for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_victim_a]; ++k) {
+								if (node->attackers[victim_victim_a] && !node->victims[victim_victim_a] && !IS_IN_CONFLICT_WITH(af_t->lists[victim_victim_a][k], node) && !node->processed[af_t->lists[victim_victim_a][k]]) {
+									push(update, new_stack_element_int(af_t->lists[victim_victim_a][k]));
+									node->processed[af_t->lists[victim_victim_a][k]] = true;
+								}
+							}
+						}
+
 					}
 					if (!node->processed[victim_victim_a] && node->unattacked_attackers_count[victim_victim_a] == 0)  {
 						// victim_victim_a is defended, push to the stack
@@ -175,6 +188,19 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					--(node->not_attacker_of_current_count[victim_attacker_a]);
 					if (!node->victims[attacker_a] && !node->processed[attacker_a]) {
 						--(node->allowed_attackers_count[victim_attacker_a]);
+
+						// TODO: experimental
+						if (node->allowed_attackers_count[victim_attacker_a] == 1) {
+							// victim_attacker_a has a single allowed attacker.
+							// push it immediately to the stack
+							for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_attacker_a]; ++k) {
+								if (node->attackers[victim_attacker_a] && !node->victims[victim_attacker_a] && !IS_IN_CONFLICT_WITH(af_t->lists[victim_attacker_a][k], node) && !node->processed[af_t->lists[victim_attacker_a][k]]) {
+									push(update, new_stack_element_int(af_t->lists[victim_attacker_a][k]));
+									node->processed[af_t->lists[victim_attacker_a][k]] = true;
+								}
+							}
+						}
+
 					}
 					if (!node->processed[victim_attacker_a] && node->not_attacker_of_current_count[victim_attacker_a] == 0) {
 						// attackers of victim_attacker_a are all attackers of node->set, push it to the stack
@@ -244,19 +270,14 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		bool *attacker_processed = calloc(attacks->size, sizeof(bool));
 		assert(attacker_processed != NULL);
 
-		for (SIZE_TYPE i = 0; i < current_node->set->size; ++i) {
-			for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[current_node->set->elements[i]]; ++j) {
-				ARG_TYPE attacker = attacked_by->lists[current_node->set->elements[i]][j];
-				if (attacker_processed[attacker])
-					continue;
-				attacker_processed[attacker] = true;
-				if (!current_node->victims[attacker]) {
-					// attacker is unattacked
-					if (current_node->allowed_attackers_count[attacker] < min_attacker_count) {
-						min_attacker_count = current_node->allowed_attackers_count[attacker];
-						least_attacked_attacker = attacker;
-					}
+		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+			if (current_node->attackers[i] && !current_node->victims[i] && ! attacker_processed[i]) {
+				attacker_processed[i] = true;
+				if (current_node->allowed_attackers_count[i] < min_attacker_count) {
+					min_attacker_count = current_node->allowed_attackers_count[i];
+					least_attacked_attacker = i;
 				}
+
 			}
 		}
 		free(attacker_processed);
@@ -277,15 +298,11 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 
 			defendable = true;
 
-			if (current_node->allowed_attackers_count[attacker_of_least_attacked_attacker] == 1) {
-				printf("\n==>%d\n", attacker_of_least_attacked_attacker);
-			}
 			current_node->processed[attacker_of_least_attacked_attacker] = true;
 			// attacker-of-least-attacked-attacker is processed,
 			// decrement the allowed-attackers-counts of its victims
 			for (SIZE_TYPE j = 0; j < attacks->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
 				--(current_node->allowed_attackers_count[attacks->lists[attacker_of_least_attacked_attacker][j]]);
-
 			}
 			Node *child_node = duplicate_node(current_node, attacks->size);
 			++child_node->depth;
