@@ -147,6 +147,7 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 		node->processed[a] = true;
 		list_add(a, node->set);
 
+		// semi-closure
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
 			SIZE_TYPE victim_a = af->lists[a][i];
 			if (!node->victims[victim_a]) {
@@ -157,28 +158,31 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					if (!node->attackers[victim_a]  && !node->processed[victim_a]) {
 						--(node->allowed_attackers_count[victim_victim_a]);
 
-						// TODO: experimental
-						if (node->allowed_attackers_count[victim_victim_a] == 1) {
-							// victim_victim_a has a single allowed attacker.
-							// push it immediately to the stack
+						// Optimization for single attackers begins
+						if (node->attackers[victim_victim_a] && !node->victims[victim_victim_a] && node->allowed_attackers_count[victim_victim_a] == 1) {
+							// victim_victim_a is an unattacked attacker and has a single allowed attacker.
+							// Push it immediately to the stack. It will anyway have to be
+							// added later to make the set self-defending.
 							for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_victim_a]; ++k) {
-								if (node->attackers[victim_victim_a] && !node->victims[victim_victim_a] && !IS_IN_CONFLICT_WITH(af_t->lists[victim_victim_a][k], node) && !node->processed[af_t->lists[victim_victim_a][k]]) {
+								if (!IS_IN_CONFLICT_WITH(af_t->lists[victim_victim_a][k], node) && !node->processed[af_t->lists[victim_victim_a][k]]) {
 									push(update, new_stack_element_int(af_t->lists[victim_victim_a][k]));
-									node->processed[af_t->lists[victim_victim_a][k]] = true;
+									// node->processed[af_t->lists[victim_victim_a][k]] = true;
 								}
 							}
 						}
+						// Optimization for single attackers ends
 
 					}
 					if (!node->processed[victim_victim_a] && node->unattacked_attackers_count[victim_victim_a] == 0)  {
-						// victim_victim_a is defended, push to the stack
+						// victim_victim_a is defended, push it to the stack
 						push(update, new_stack_element_int(victim_victim_a));
-						node->processed[victim_victim_a] = true;
+						// node->processed[victim_victim_a] = true;
 					}
 				}
 			}
 		}
 
+		// quasi-closure
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
 			SIZE_TYPE attacker_a = af_t->lists[a][i];
 			if (!node->attackers[attacker_a]) {
@@ -189,23 +193,25 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					if (!node->victims[attacker_a] && !node->processed[attacker_a]) {
 						--(node->allowed_attackers_count[victim_attacker_a]);
 
-						// TODO: experimental
-						if (node->allowed_attackers_count[victim_attacker_a] == 1) {
-							// victim_attacker_a has a single allowed attacker.
-							// push it immediately to the stack
+						// Optimization for single attackers begins
+						if (node->attackers[victim_attacker_a] && !node->victims[victim_attacker_a] && node->allowed_attackers_count[victim_attacker_a] == 1) {
+							// victim_attacker_a is an unattacked attacker and has a single allowed attacker.
+							// Push it immediately to the stack. It will anyway have to be
+							// added later to make the set self-defending.
 							for (SIZE_TYPE k = 0; k < af_t->list_sizes[victim_attacker_a]; ++k) {
-								if (node->attackers[victim_attacker_a] && !node->victims[victim_attacker_a] && !IS_IN_CONFLICT_WITH(af_t->lists[victim_attacker_a][k], node) && !node->processed[af_t->lists[victim_attacker_a][k]]) {
+								if (!IS_IN_CONFLICT_WITH(af_t->lists[victim_attacker_a][k], node) && !node->processed[af_t->lists[victim_attacker_a][k]]) {
 									push(update, new_stack_element_int(af_t->lists[victim_attacker_a][k]));
-									node->processed[af_t->lists[victim_attacker_a][k]] = true;
+									// node->processed[af_t->lists[victim_attacker_a][k]] = true;
 								}
 							}
 						}
+						// Optimization for single attackers ends
 
 					}
 					if (!node->processed[victim_attacker_a] && node->not_attacker_of_current_count[victim_attacker_a] == 0) {
 						// attackers of victim_attacker_a are all attackers of node->set, push it to the stack
 						push(update, new_stack_element_int(victim_attacker_a));
-						node->processed[victim_attacker_a] = true;
+						// node->processed[victim_attacker_a] = true;
 					}
 				}
 			}
@@ -235,7 +241,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 
 	// Push the unattacked arguments to the stack. They are defended by every set.
 	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
-		if (attacked_by->list_sizes[i] == 0) {
+		if ((attacked_by->list_sizes[i] == 0) && (i != argument)) {
 			push(update, new_stack_element_int(i));
 		}
 	}
@@ -261,7 +267,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 	int node_count = 0;
 	while (current_node =  pop_ptr(&nodes)) {
 		++node_count;
-		print_list(stdout, current_node->set,"\n");
+		// print_list(stdout, current_node->set,"\n");
 		// find the unattacked attacker of current_node->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current_node->set.
 		int min_attacker_count = attacks->size;
@@ -286,7 +292,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
 		bool defendable = false;
-		printf("%d: ", least_attacked_attacker+1);
+		// printf("%d: ", least_attacked_attacker+1);
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 			if (IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, current_node) || current_node->processed[attacker_of_least_attacked_attacker]) {
@@ -311,13 +317,13 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 			push(update, new_stack_element_int(attacker_of_least_attacked_attacker));
 			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 			free_stack(update);
-			printf("%d ", attacker_of_least_attacked_attacker+1);
+			// printf("%d ", attacker_of_least_attacked_attacker+1);
 			// closure has a conflict. stop this branch, try with another attacker
 			// of least_attacked_attacker
 			if (!child_node) {
 				// node "child_node" is already deleted in process_stack
 				// upon noticing the conflict. not required here.
-				printf("closure has conflict\n");
+				// printf("closure has conflict\n");
 				continue;
 			}
 			// closure is self-defending, complete set found.
@@ -333,9 +339,9 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 
 			push(&nodes, new_stack_element_ptr(child_node));
 		}
-		printf("\n");
-		if (!defendable)
-			printf("set not defendable\n");
+		// printf("\n");
+		// if (!defendable)
+		// 	printf("set not defendable\n");
 		delete_node(current_node);
 		current_node = NULL;
 	}
