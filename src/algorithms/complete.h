@@ -22,6 +22,4 @@
 
 ArrayList* dc_co(AF* attacks, ARG_TYPE argument);
 
-ArrayList* dc_co_subgraph_cbo(AF* attacks, ARG_TYPE argument);
-
 #endif /* AF_COMPLETE_EXTENSIONS_CBO_H_ */
