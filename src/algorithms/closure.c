@@ -1,11 +1,24 @@
-//
-// Created by bs on 12.01.26.
-//
+/*
+ * AFCA - argumentation framework using closed sets
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "../utils/stack.h"
 #include "../af/af.h"
 #include "node.h"
 
-extern int closure_count;
+int closure_count = 0;
 
 Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 	SIZE_TYPE a = -1;
@@ -18,9 +31,10 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 		}
 
 		node->processed[a] = true;
-		list_add(a, node->set);
+		// list_add(a, node->set);
+		node->set[a] = true;
 
-		// semi-closure
+		// semi-completion
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
 			SIZE_TYPE victim_a = af->lists[a][i];
 			if (!node->victims[victim_a]) {
@@ -55,7 +69,7 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 			}
 		}
 
-		// quasi-closure
+		// quasi-completion
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
 			SIZE_TYPE attacker_a = af_t->lists[a][i];
 			if (!node->attackers[attacker_a]) {

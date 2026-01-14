@@ -28,13 +28,17 @@
 
 
 // A complete extension is an admissible extension that contains every argument that it defends.
-// I suggest to use the name semi-complete extension for an extension that contains every argument that it defends.
-// Semi-complete extensions form a closure system.
+// A complete extension is a pseudo-complete set. A set is pseudo-complete if it is semi-complete and quasi-complete.
+// A set is semi-complete if it is conflict-free and contains every argument that it defends.
+// A set S is quasi-complete if it is conflict-free and contains every argument that is attacked
+// by only attackers of S.
+// Pseudo-complete sets form a closure system.
 
-int closure_count = 0;
+extern int closure_count;
 
 
-ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
+// ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
+bool* dc_co(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -67,31 +71,31 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		return(NULL);
 	}
 
-	// closure is self-defending, complete set found.
-	if (is_set_self_defending(attacks, attacked_by, current_node->set)) {
+	if (is_node_self_defending(current_node, attacks)) {
+		// closure is self-defending, complete set found.
 		free_stack(&nodes);
-		free_argumentation_framework(attacks);
+		// free_argumentation_framework(attacks);
 		free_argumentation_framework(attacked_by);
 		return(current_node->set);
 	}
 
 	push(&nodes, new_stack_element_ptr(current_node));
 
-	int node_count = 0;
+	int node_count_complete = 0;
 	while (current_node =  pop_ptr(&nodes)) {
-		++node_count;
+		++node_count_complete;
 		// print_list(stdout, current_node->set,"\n");
 		// find the unattacked attacker of current_node->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current_node->set.
 		int min_attacker_count = attacks->size;
 		ARG_TYPE least_attacked_attacker = -1;
 
-		bool *attacker_processed = calloc(attacks->size, sizeof(bool));
-		assert(attacker_processed != NULL);
+		// bool *attacker_processed = calloc(attacks->size, sizeof(bool));
+		// assert(attacker_processed != NULL);
 
 		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
-			if (current_node->attackers[i] && !current_node->victims[i] && ! attacker_processed[i]) {
-				attacker_processed[i] = true;
+			if (current_node->attackers[i] && !current_node->victims[i]) { // && ! attacker_processed[i]) {
+				// attacker_processed[i] = true;
 				if (current_node->allowed_attackers_count[i] < min_attacker_count) {
 					min_attacker_count = current_node->allowed_attackers_count[i];
 					least_attacked_attacker = i;
@@ -99,7 +103,7 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 
 			}
 		}
-		free(attacker_processed);
+		// free(attacker_processed);
 
 
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
@@ -139,12 +143,12 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 				// printf("closure has conflict\n");
 				continue;
 			}
-			// closure is self-defending, complete set found.
-			if (is_set_self_defending(attacks, attacked_by, child_node->set)) {
+			if (is_node_self_defending(child_node, attacks)) {
+				// closure is self-defending, complete set found.
 				free_stack(&nodes);
-				free_argumentation_framework(attacks);
+				// free_argumentation_framework(attacks);
 				free_argumentation_framework(attacked_by);
-				printf("node count: %d\n", node_count);
+				printf("node count: %d\n", node_count_complete);
 				printf("node depth: %d\n", child_node->depth);
 				printf("closure count: %d\n", closure_count);
 				return(child_node->set);
@@ -159,10 +163,10 @@ ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 		current_node = NULL;
 	}
 
-	free_argumentation_framework(attacks);
+	// free_argumentation_framework(attacks);
 	free_argumentation_framework(attacked_by);
 
 	printf("Closure count: %d\n", closure_count);
-	printf("node count: %d\n", node_count);
+	printf("node count: %d\n", node_count_complete);
 	return(NULL);
 }

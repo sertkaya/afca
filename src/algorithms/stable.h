@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef AF_COMPLETE_EXTENSIONS_CBO_H_
-#define AF_COMPLETE_EXTENSIONS_CBO_H_
+#ifndef AF_STABLE_EXTENSIONS_CBO_H_
+#define AF_STABLE_EXTENSIONS_CBO_H_
 
-#include "../utils/array_list.h"
 #include "../af/af.h"
 
-// ArrayList* dc_co(AF* attacks, ARG_TYPE argument);
-bool* dc_co(AF* attacks, ARG_TYPE argument);
+bool* dc_st(AF* attacks, ARG_TYPE argument);
 
-#endif /* AF_COMPLETE_EXTENSIONS_CBO_H_ */
+#endif /* AF_STABLE_EXTENSIONS_CBO_H_ */

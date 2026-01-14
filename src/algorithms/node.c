@@ -1,6 +1,19 @@
-//
-// Created by bs on 12.01.26.
-//
+/*
+ * AFCA - argumentation framework using closed sets
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include "../af/af.h"
@@ -10,7 +23,9 @@ Node *create_node(SIZE_TYPE size) {
 	Node *s = calloc(1, sizeof(Node));
 	assert(s != NULL);
 
-	s->set = list_create();
+	// s->set = list_create();
+	s->set = calloc(size, sizeof(bool));
+	assert(s->set != NULL);
 
 	s->processed = calloc(size, sizeof(bool));
 	assert(s->processed != NULL);
@@ -39,7 +54,10 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 	Node *n = calloc(1, sizeof(Node));
 	assert(n != NULL);
 
-	n->set = list_duplicate(s->set);
+	// n->set = list_duplicate(s->set);
+	n->set = calloc(size, sizeof(bool));
+	assert(n->set != NULL);
+	memcpy(n->set, s->set, size * sizeof(bool));
 
 	n->processed = calloc(size, sizeof(bool));
 	assert(n->processed != NULL);
@@ -71,7 +89,9 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 }
 
 void delete_node(Node *s) {
-	list_free(s->set);
+	// list_free(s->set);
+	// s->set = NULL;
+	free(s->set);
 	s->set = NULL;
 	free(s->processed);
 	s->processed = NULL;
@@ -86,4 +106,25 @@ void delete_node(Node *s) {
 	free(s->allowed_attackers_count);
 	s->allowed_attackers_count = NULL;
 	free(s);
+}
+
+inline bool is_node_self_defending(Node* n, AF* af) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (n->attackers[i] && !n->victims[i]) {
+			// argument i is an attacker but not a victim, node
+			// is not self-defending
+			return(false);
+		}
+	}
+	return(true);
+}
+
+inline bool node_attacks_everything_outside(Node* n, AF* af) {
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (!n->set[i] && !n->victims[i]) {
+			// argument i not in the set and it is not a victim.
+			return(false);
+		}
+	}
+	return(true);
 }

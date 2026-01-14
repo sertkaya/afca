@@ -23,6 +23,7 @@
 #include <getopt.h>
 
 #include "algorithms/complete.h"
+#include "algorithms/stable.h"
 #include "validator/validator.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
@@ -178,12 +179,14 @@ int main(int argc, char *argv[]) {
 
 	// matrix of functions for decision problems.
 	// Function prototype: List* f(AF*, ARG_TYPE)
-    ArrayList* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*, ARG_TYPE);
+    // ArrayList* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*, ARG_TYPE);
+    bool* (*decision_functions[DECISION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*, ARG_TYPE);
 	for (int i = 0; i < DECISION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
 			decision_functions[i][j] = NULL;
 
 	decision_functions[DC][CO] = &dc_co;
+	decision_functions[DC][ST] = &dc_st;
 	// ...
 	// ...
 
@@ -196,7 +199,8 @@ int main(int argc, char *argv[]) {
 	// enumeration_functions[..][..][..] = ..
 
 	START_TIMER(start_time);
-	ArrayList* extension = NULL;
+	// ArrayList* extension = NULL;
+	bool* extension = NULL;
 	if (decision_problem) {
 		// arguments are internally indices
 		--argument;
@@ -208,8 +212,13 @@ int main(int argc, char *argv[]) {
 		if (extension == NULL)
 			fprintf(output, "NO\n");
 		else {
-			fprintf(output, "YES\n");
-			print_list(output, extension,"\n");
+			fprintf(output, "YES\nw ");
+			// print_list(output, extension,"\n");
+			for (int i = 0; i < input_af->size; ++i) {
+				if (extension[i])
+					fprintf(output, "%d ", i+1);
+			}
+			fprintf(output, "\n");
 		}
 	}
 	else {
@@ -222,6 +231,7 @@ int main(int argc, char *argv[]) {
 	STOP_TIMER(stop_time);
 	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
 
+	free_argumentation_framework(input_af);
 	// close the output file
 	fclose(output);
 
