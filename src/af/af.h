@@ -54,4 +54,5 @@ bool is_set_admissible(AF* af, ArrayList* s);
 
 bool is_set_complete(AF* af, ArrayList* s);
 
+AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count);
 #endif /* AF_AF_H_ */
