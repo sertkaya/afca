@@ -75,14 +75,14 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 
 	// the candidate arguments to add to the node before closing it
 	// The set "C" in the algorithm
-	bool* candidate_arguments = calloc(attacks->size, sizeof(bool));
-	assert(candidate_arguments != NULL);
+	// bool* candidate_arguments = calloc(attacks->size, sizeof(bool));
+	// assert(candidate_arguments != NULL);
 
 	int node_count_stable = 0;
 	while (current_node =  pop_ptr(&nodes)) {
 		++node_count_stable;
 		// reset the candidate arguments
-		memset(candidate_arguments, 0, attacks->size * sizeof(bool));
+		// memset(candidate_arguments, 0, attacks->size * sizeof(bool));
 
 		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
 			if (current_node->set[i])
@@ -113,9 +113,11 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 					}
 				}
 				if (!current_node->set[i] && !IS_IN_CONFLICT_WITH(i, current_node) && !current_node->processed[i] && !argument_self_attacking) {
-					candidate_arguments[i] = true;
-					printf("c1: %d\n", i);
+					current_node->candidates[i] = true;
 				}
+				// else {
+				//  	current_node->candidates[i] = false;
+				// }
 			}
 		}
 		else {
@@ -139,26 +141,31 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 				ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 				if (!IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, current_node) && !current_node->processed[attacker_of_least_attacked_attacker]) {
 					// attacker is allowed, add to candidates
-					candidate_arguments[attacker_of_least_attacked_attacker] = true;
+					current_node->candidates[attacker_of_least_attacked_attacker] = true;
 				}
+				// else {
+				//  	current_node->candidates[attacker_of_least_attacked_attacker] = false;
+				// }
 			}
 		}
 
-		// now add the candidates one by one and close
-		for (SIZE_TYPE candidate = 0; candidate < attacks->size; ++candidate) {
-			if (candidate_arguments[candidate] == true) {
-				current_node->processed[candidate] = true;
-				printf("cand: %d\n", candidate);
+		// now add the first candidate and close
+		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+			if (current_node->candidates[i] == true) {
+				// remove it from the candidates
+				current_node->candidates[i] = false;
+				current_node->processed[i] = true;
+				printf("cand: %d\n", i);
 				// candidate is processed,
 				// decrement the allowed-attackers-counts of its victims
-				for (SIZE_TYPE j = 0; j < attacks->list_sizes[candidate]; ++j) {
-					--(current_node->allowed_attackers_count[attacks->lists[candidate][j]]);
+				for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
+					--(current_node->allowed_attackers_count[attacks->lists[i][j]]);
 				}
 				Node *child_node = duplicate_node(current_node, attacks->size);
 				++child_node->depth;
 
 				Stack *update = new_stack();
-				push(update, new_stack_element_int(candidate));
+				push(update, new_stack_element_int(i));
 				child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 				free_stack(update);
 				// closure has a conflict. stop this branch, try with another candidate
@@ -179,6 +186,8 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 					return(child_node->set);
 				}
 				push(&nodes, new_stack_element_ptr(child_node));
+				// stop after processing the first candidate
+				break;
 			}
 		}
 		delete_node(current_node);

@@ -31,6 +31,8 @@ struct node {
     SIZE_TYPE* allowed_attackers_count;
     bool* victims;
     bool* attackers;
+    // Candidate arguments that can be added to this node
+    bool* candidates;
     // depth of this node
     int depth;
 };
