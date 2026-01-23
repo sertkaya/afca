@@ -235,3 +235,66 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 
 	return(rf);
 }
+
+int *extract_sccs(AF *af, AF *af_t) {
+	bool *visited = calloc(af->size, sizeof(bool));
+	assert(visited != NULL);
+
+	// stack for the dfs
+	Stack *s = new_stack();
+	push(s, new_stack_element_int(0));
+
+	// stack for the order of vertices
+	Stack *l = new_stack();
+
+	// dfs forwards
+	SIZE_TYPE a = -1;
+	while ((a = pop_int(s)) != -1) {
+		visited[a] = true;
+		push(l, new_stack_element_int(a));
+		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
+			if (!visited[af->lists[a][i]]) {
+				push(s, new_stack_element_int(af->lists[a][i]));
+			}
+		}
+	}
+
+	// the reverse order
+	Stack *l_rev = new_stack();
+	while ((a = pop_int(l)) != -1) {
+		push(l_rev, new_stack_element_int(a));
+	}
+
+	// reset visited for the backwards dfs
+	memset(visited, 0, af->size * sizeof(bool));
+
+	int *components = calloc(af->size, sizeof(int));
+	assert(components != NULL);
+	memset(components, -1, af->size * sizeof(int));
+
+	// dfs backwards
+	// int component_count = 0;
+	while ((a = pop_int(l_rev)) != -1) {
+		visited[a] = true;
+		// if a has not yet been assigned to a component
+		if (components[a] == -1) {
+			components[a] = a;
+			// ++component_count;
+		}
+		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
+			if (!visited[af_t->lists[a][i]]) {
+				push(l_rev, new_stack_element_int(af_t->lists[a][i]));
+				components[af_t->lists[a][i]] = components[a];
+			}
+		}
+	}
+	free(visited);
+
+	/*
+	printf("%d components: ", component_count);
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		printf("%d ", components[i]);
+	printf("\n\n");
+	*/
+	return(components);
+}
