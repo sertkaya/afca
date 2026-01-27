@@ -25,6 +25,7 @@
 #include "../af/af.h"
 #include "node.h"
 #include "closure.h"
+#include "complete.h"
 
 // A stable extension is an admissible extension that attacks every argument outside itself.
 // A stable extension is a complete extension, which is a pseudo-complete set.
@@ -39,6 +40,63 @@ extern int closure_count;
 
 // ArrayList* dc_st(AF* attacks, ARG_TYPE argument) {
 bool* dc_st(AF* attacks, ARG_TYPE argument) {
+	struct timeval start_time, stop_time;
+
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+
+	// check for a complete extension containing the argument
+	bool *ce = dc_co(attacks, argument);
+	if (!ce) {
+		// complete extension and hence stable extension does not exist
+		return(NULL);
+	}
+
+	// ce is a complete extension containing the argument
+
+	AF *rf = attacks;
+	SIZE_TYPE rf_size = attacks->size;
+	do {
+		// TODO: reconsider the data type for extensions. currently bool*
+		SIZE_TYPE ce_size = 0;
+		for (SIZE_TYPE i = 0; i < rf_size; ++i)
+			if (ce[i])
+				++ce_size;
+		ARG_TYPE *tmp = calloc(ce_size, sizeof(ARG_TYPE));
+		assert(tmp != NULL);
+		SIZE_TYPE j = 0;
+		for (SIZE_TYPE i = 0; i < rf_size; ++i) {
+			if (ce[i]) {
+				tmp[j] = i;
+				++j;
+			}
+		}
+		// TODO: improve until here
+
+		// extract the residual framework
+		rf = extract_residual_framework(rf, tmp, ce_size);
+		rf_size = rf->size;
+		// printf("%d %d\n", ce_size, rf_size);
+		printf("ce:");
+		for (SIZE_TYPE i = 0; i < rf_size; ++i) {
+			if (ce[i])
+				printf("%d ", i + rf->offsets[i]);
+		}
+		printf("\n");
+		/*
+		printf("\nAF:\n");
+		print_argumentation_framework(rf);
+		*/
+		if (rf_size == 0)
+			break;
+		ce = dc_co(rf, 0);
+		free(tmp);
+		printf("-------------\n");
+	} while (rf_size != 0);
+
+	return(NULL);
+}
+
+bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);

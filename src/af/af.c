@@ -192,19 +192,48 @@ bool is_set_admissible(AF* af, ArrayList* s) {
 	return(admissible);
 }
 
+int comp(const void *a, const void *b) {
+	return (*(int *)a - *(int *)b);
+}
+
+// remove the arguments args and their victims from the framework af
+// return a new framework
 AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 	int *offsets = calloc(af->size, sizeof(int));
 	assert(offsets != NULL);
-	// mark the deleted arguments
+
+	// number of removed arguments
+	int removed_count = arg_count;
+	// array of the removed arguments
+	ARG_TYPE *removed = calloc(arg_count, sizeof(ARG_TYPE));
+	assert(removed != NULL);
+	memcpy(removed, args, arg_count * sizeof(ARG_TYPE));
+
 	for (SIZE_TYPE i = 0; i < arg_count; ++i) {
+		// mark the removed arguments with -1
 		offsets[args[i]] = -1;
+		// and also their victims
+		for (SIZE_TYPE j = 0; j < af->list_sizes[args[i]]; ++j) {
+			// if not already marked as removed
+			if (offsets[af->lists[args[i]][j]] != -1) {
+				offsets[af->lists[args[i]][j]] = -1;
+				ARG_TYPE *tmp = realloc(removed, sizeof(ARG_TYPE) * (removed_count+1));
+				assert(tmp != NULL);
+				removed = tmp;
+				// add the victim to the removed
+				removed[removed_count] = af->lists[args[i]][j];
+				++removed_count;
+			}
+		}
 	}
+	// sort the removed arguments and their victims
+	qsort(removed, removed_count, sizeof(ARG_TYPE), comp);
 
 	// update the offsets except for the last one
-	SIZE_TYPE start, end = args[0], offset = 0;
-	for (int i = 0; i < arg_count - 1; ++i) {
-		start = args[i] + 1;
-		end = args[i+1];
+	SIZE_TYPE start, end = removed[0], offset = 0;
+	for (int i = 0; i < removed_count - 1; ++i) {
+		start = removed[i] + 1;
+		end = removed[i+1];
 		offset = i + 1;
 		for (SIZE_TYPE j = start; j < end; ++j)
 			offsets[j] = offset;
@@ -216,9 +245,13 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 	for (SIZE_TYPE j = start; j < end; ++j)
 		offsets[j] = offset;
 
-	AF *rf = create_argumentation_framework(af->size - arg_count);
-	rf->offsets = calloc(af->size - arg_count, sizeof(int));
+	// free the removed. not used below here
+	free(removed);
+
+	AF *rf = create_argumentation_framework(af->size - removed_count);
+	rf->offsets = calloc(af->size - removed_count, sizeof(int));
 	assert(rf->offsets != NULL);
+
 	SIZE_TYPE index = 0;
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		// if argument is not removed from the framework
@@ -229,7 +262,14 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 					add_attack(rf, i - offsets[i], af->lists[i][j] - offsets[af->lists[i][j]]);
 				}
 			// update rf->offsets
-			rf->offsets[index] = offsets[i];
+			if (af->offsets == NULL) {
+				// if af->offsets is null, then af is the original framework
+				rf->offsets[index] = offsets[i];
+			}
+			else {
+				// otherwise af is a residual framework, from a previous step
+				rf->offsets[index] = offsets[i] + af->offsets[i];
+			}
 			++index;
 		}
 	}
