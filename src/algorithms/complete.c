@@ -84,18 +84,13 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 	int node_count_complete = 0;
 	while (current_node =  pop_ptr(&nodes)) {
 		++node_count_complete;
-		// print_list(stdout, current_node->set,"\n");
 		// find the unattacked attacker of current_node->set that has the smallest number of attackers, which are not
 		// scheduled and are not conflicting with current_node->set.
 		int min_attacker_count = attacks->size;
 		ARG_TYPE least_attacked_attacker = -1;
 
-		// bool *attacker_processed = calloc(attacks->size, sizeof(bool));
-		// assert(attacker_processed != NULL);
-
 		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
-			if (current_node->attackers[i] && !current_node->victims[i]) { // && ! attacker_processed[i]) {
-				// attacker_processed[i] = true;
+			if (current_node->attackers[i] && !current_node->victims[i]) {
 				if (current_node->allowed_attackers_count[i] < min_attacker_count) {
 					min_attacker_count = current_node->allowed_attackers_count[i];
 					least_attacked_attacker = i;
@@ -103,13 +98,9 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 
 			}
 		}
-		// free(attacker_processed);
-
 
 		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
 		// if none of them leads to a solution, abandon that branch
-		bool defendable = false;
-		// printf("%d: ", least_attacked_attacker+1);
 		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 			if (IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, current_node) || current_node->processed[attacker_of_least_attacked_attacker]) {
@@ -118,8 +109,6 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 				continue;
 			}
 			// otherwise add it and close
-
-			defendable = true;
 
 			current_node->processed[attacker_of_least_attacked_attacker] = true;
 			// attacker-of-least-attacked-attacker is processed,
@@ -134,13 +123,11 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 			push(update, new_stack_element_int(attacker_of_least_attacked_attacker));
 			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 			free_stack(update);
-			// printf("%d ", attacker_of_least_attacked_attacker+1);
 			// closure has a conflict. stop this branch, try with another attacker
 			// of least_attacked_attacker
 			if (!child_node) {
 				// node "child_node" is already deleted in process_stack
 				// upon noticing the conflict. not required here.
-				// printf("closure has conflict\n");
 				continue;
 			}
 			if (is_node_self_defending(child_node, attacks)) {
@@ -156,9 +143,6 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 
 			push(&nodes, new_stack_element_ptr(child_node));
 		}
-		// printf("\n");
-		// if (!defendable)
-		// 	printf("set not defendable\n");
 		delete_node(current_node);
 		current_node = NULL;
 	}
