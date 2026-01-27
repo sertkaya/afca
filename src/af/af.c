@@ -35,6 +35,8 @@ AF* create_argumentation_framework(SIZE_TYPE size) {
 	af->list_sizes = calloc(af->size, sizeof(SIZE_TYPE));
 	assert(af->list_sizes != NULL);
 
+	af->offsets = NULL;
+
 	return(af);
 }
 
@@ -50,6 +52,8 @@ int free_argumentation_framework(AF* af) {
 	// freed_bytes += af->size * sizeof(List*);
 	free(af->list_sizes);
 	freed_bytes += af->size * sizeof(SIZE_TYPE);
+	free(af->offsets);
+	freed_bytes += af->size * sizeof(int);
 	free(af);
 	freed_bytes += sizeof(AF);
 	return(freed_bytes);
@@ -189,14 +193,6 @@ bool is_set_admissible(AF* af, ArrayList* s) {
 }
 
 AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
-	/*
-	bool *args_vector = calloc(af->size, sizeof(ARG_TYPE));
-	assert(args_vector != NULL);
-	for (SIZE_TYPE i = 0; i < arg_count; ++i) {
-		args_vector[args[i]] = true;
-	}
-	*/
-
 	int *offsets = calloc(af->size, sizeof(int));
 	assert(offsets != NULL);
 	// mark the deleted arguments
@@ -206,7 +202,7 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 
 	// update the offsets except for the last one
 	SIZE_TYPE start, end = args[0], offset = 0;
-	for (SIZE_TYPE i = 0; i < arg_count - 1; ++i) {
+	for (int i = 0; i < arg_count - 1; ++i) {
 		start = args[i] + 1;
 		end = args[i+1];
 		offset = i + 1;
@@ -221,6 +217,9 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 		offsets[j] = offset;
 
 	AF *rf = create_argumentation_framework(af->size - arg_count);
+	rf->offsets = calloc(af->size - arg_count, sizeof(int));
+	assert(rf->offsets != NULL);
+	SIZE_TYPE index = 0;
 	for (SIZE_TYPE i = 0; i < af->size; ++i) {
 		// if argument is not removed from the framework
 		if (offsets[i] != -1) {
@@ -229,9 +228,12 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 				if (offsets[af->lists[i][j]] != -1) {
 					add_attack(rf, i - offsets[i], af->lists[i][j] - offsets[af->lists[i][j]]);
 				}
-
+			// update rf->offsets
+			rf->offsets[index] = offsets[i];
+			++index;
 		}
 	}
+	free(offsets);
 
 	return(rf);
 }
@@ -258,12 +260,14 @@ int *extract_sccs(AF *af, AF *af_t) {
 			}
 		}
 	}
+	free_stack(s);
 
 	// the reverse order
 	Stack *l_rev = new_stack();
 	while ((a = pop_int(l)) != -1) {
 		push(l_rev, new_stack_element_int(a));
 	}
+	free_stack(l);
 
 	// reset visited for the backwards dfs
 	memset(visited, 0, af->size * sizeof(bool));
@@ -289,6 +293,7 @@ int *extract_sccs(AF *af, AF *af_t) {
 		}
 	}
 	free(visited);
+	free_stack(l_rev);
 
 	/*
 	printf("%d components: ", component_count);

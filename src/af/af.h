@@ -29,6 +29,11 @@ struct argumentation_framework {
     ARG_TYPE **lists;
     // Number of elements in each adjacency list
     SIZE_TYPE *list_sizes;
+	// Offsets required for residual frameworks. Describes how often
+	// the argument was shifted left for obtaining the residual framework.
+	// Add the offset at index i to index i to obtain the index
+	// in the original framework. NULL if the framework is not a residual framework.
+	int *offsets;
 };
 
 typedef struct argumentation_framework AF;
