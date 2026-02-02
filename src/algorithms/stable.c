@@ -216,50 +216,42 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 
 		// now add the candidates one by one and close
 		// if none of them leads to a solution, abandon that branch
-		// for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		// printf("%d\n", candidate_count);
 		for (SIZE_TYPE i = 0; i < candidate_count; ++i) {
-			// if (candidate_arguments[i]) {
-				// printf("*%d ", i+1);
-				// current_node->processed[i] = true;
-				current_node->processed[candidate_arguments[i]] = true;
-				// printf("cand: %d\n", i);
-				// candidate is processed,
-				// decrement the allowed-attackers-counts of its victims
-				for (SIZE_TYPE j = 0; j < attacks->list_sizes[candidate_arguments[i]]; ++j) {
-					--(current_node->allowed_attackers_count[attacks->lists[candidate_arguments[i]][j]]);
-				}
-				Node *child_node = duplicate_node(current_node, attacks->size);
-				++child_node->depth;
+			current_node->processed[candidate_arguments[i]] = true;
+			// candidate is processed,
+			// decrement the allowed-attackers-counts of its victims
+			for (SIZE_TYPE j = 0; j < attacks->list_sizes[candidate_arguments[i]]; ++j) {
+				--(current_node->allowed_attackers_count[attacks->lists[candidate_arguments[i]][j]]);
+			}
+			Node *child_node = duplicate_node(current_node, attacks->size);
+			++child_node->depth;
 
-				Stack *update = new_stack();
-				push(update, new_stack_element_int(candidate_arguments[i]));
-				child_node = pseudo_complete(update, child_node, attacks, attacked_by);
-				free_stack(update);
+			Stack *update = new_stack();
+			push(update, new_stack_element_int(candidate_arguments[i]));
+			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
+			free_stack(update);
 
-				// closure has a conflict. stop this branch, try with another candidate
-				if (!child_node) {
-					// node "child_node" is already deleted in process_stack
-					// upon noticing the conflict. not required to delete here.
-					continue;
-				}
-				// if (is_node_conflict_free(child_node, attacks) && is_node_self_defending(child_node, attacks) && node_attacks_everything_outside(child_node, attacks)) {
-				if (is_node_self_defending(child_node, attacks) && node_attacks_everything_outside(child_node, attacks)) {
-					// closure is self-defending and attacks everything outside it
-					// stable extension is found
-					free_stack(&nodes);
-					// free(candidates_tmp);
-					free(candidate_arguments);
-					// free_argumentation_framework(attacks);
-					free_argumentation_framework(attacked_by);
-					printf("node count: %d\n", node_count_stable);
-					printf("node depth: %d\n", child_node->depth);
-					printf("closure count: %d\n", closure_count);
-					return(child_node->set);
-				}
-				push(&nodes, new_stack_element_ptr(child_node));
-			// }
+			// closure has a conflict. stop this branch, try with another candidate
+			if (!child_node) {
+				// node "child_node" is already deleted in process_stack
+				// upon noticing the conflict. not required to delete here.
+				continue;
+			}
+			if (is_node_self_defending(child_node, attacks) && node_attacks_everything_outside(child_node, attacks)) {
+				// closure is self-defending and attacks everything outside it
+				// stable extension is found
+				free_stack(&nodes);
+				free(candidate_arguments);
+				// free_argumentation_framework(attacks);
+				free_argumentation_framework(attacked_by);
+				printf("node count: %d\n", node_count_stable);
+				printf("node depth: %d\n", child_node->depth);
+				printf("closure count: %d\n", closure_count);
+				return(child_node->set);
+			}
+			push(&nodes, new_stack_element_ptr(child_node));
 		}
-		// printf("\n");
 		delete_node(current_node);
 		current_node = NULL;
 	}
