@@ -37,6 +37,9 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 		// semi-completion
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
 			SIZE_TYPE victim_a = af->lists[a][i];
+			// is a self-attacking?
+			if (node->set[victim_a])
+				return(NULL);
 			if (!node->victims[victim_a]) {
 				node->victims[victim_a] = true;
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {

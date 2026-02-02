@@ -31,8 +31,6 @@ struct node {
     SIZE_TYPE* allowed_attackers_count;
     bool* victims;
     bool* attackers;
-    // Candidate arguments that can be added to this node
-    bool* candidates;
     // depth of this node
     int depth;
 };
@@ -49,6 +47,7 @@ bool is_node_self_defending(Node* n, AF* af);
 
 bool node_attacks_everything_outside(Node* n, AF* af);
 
+bool is_node_conflict_free(Node* n, AF* af);
 // is arg in conflict with node->set
 #define IS_IN_CONFLICT_WITH(arg,node) (node->victims[arg]||node->attackers[arg])
 

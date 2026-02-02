@@ -39,7 +39,7 @@ extern int closure_count;
 
 
 // ArrayList* dc_st(AF* attacks, ARG_TYPE argument) {
-bool* dc_st(AF* attacks, ARG_TYPE argument) {
+bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -96,7 +96,7 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 	return(NULL);
 }
 
-bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
+bool* dc_st(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -125,7 +125,7 @@ bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 	free_stack(update);
 
 	if (!current_node) {
-		// first closure has a conflict. complete extension does not exist
+		// first closure has a conflict. stable extension does not exist
 		return(NULL);
 	}
 
@@ -133,54 +133,111 @@ bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 
 	// the candidate arguments to add to the node before closing it
 	// The set "C" in the algorithm
-	// bool* candidate_arguments = calloc(attacks->size, sizeof(bool));
-	// assert(candidate_arguments != NULL);
+	/*
+	bool* candidate_arguments = calloc(attacks->size, sizeof(bool));
+	assert(candidate_arguments != NULL);
+	// temporary candidates for finding the best candidates
+	bool* candidates_tmp = calloc(attacks->size, sizeof(bool));
+	assert(candidates_tmp != NULL);
+	*/
+	ARG_TYPE *candidate_arguments = calloc(attacks->size, sizeof(ARG_TYPE));
+	assert(candidate_arguments != NULL);
 
 	int node_count_stable = 0;
 	while (current_node =  pop_ptr(&nodes)) {
 		++node_count_stable;
-		// reset the candidate arguments
-		// memset(candidate_arguments, 0, attacks->size * sizeof(bool));
+		// print the current_node->set
 
+		/*
 		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
 			if (current_node->set[i])
 				printf("%d ", i+1);
 		}
 		printf("\n");
+		*/
+
+		// reset the candidate arguments
+		// memset(candidates_tmp, 0, attacks->size * sizeof(bool));
+		// memset(candidate_arguments, 0, attacks->size * sizeof(bool));
+		SIZE_TYPE candidate_count = 0;
 		if (is_node_self_defending(current_node, attacks)) {
 			if (node_attacks_everything_outside(current_node, attacks)) {
-				printf("stable\n");
+				// printf("stable\n");
 				// set is self-defending and attacks everything outside it:
 				// stable extension found, return
 				free_stack(&nodes);
+				// free(candidates_tmp);
+				free(candidate_arguments);
 				// free_argumentation_framework(attacks);
 				free_argumentation_framework(attacked_by);
 				return(current_node->set);
 			}
-			printf("self-defending\n");
+			// printf("self-defending\n");
 			// self-defending but does not attack everything outside it:
 			// add an allowed argument not contained in the set
+
+			SIZE_TYPE min_candidate_count = attacks->size;
+			ARG_TYPE candidate_argument = -1;
 			// TODO: heuristic to choose this argument?
 			for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+				/*
 				// TODO: improve this self-attacking-check
-				bool argument_self_attacking = false;
+				bool candidate_self_attacking = false;
 				for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
 					if (i == attacks->lists[i][j]) {
 						// argument self-attacking
-						argument_self_attacking = true;
+						candidate_self_attacking = true;
 					}
 				}
-				if (!current_node->set[i] && !IS_IN_CONFLICT_WITH(i, current_node) && !current_node->processed[i] && !argument_self_attacking) {
-					current_node->candidates[i] = true;
+				if (!current_node->set[i] && !IS_IN_CONFLICT_WITH(i, current_node) && !current_node->processed[i] && !candidate_self_attacking) {
+				*/
+				// reset the temporary candidate arguments
+				// memset(candidates_tmp, 0, attacks->size * sizeof(bool));
+				if (!current_node->set[i] && !current_node->victims[i]) {
+					// printf("-->");
+					// add the argument itself
+					// printf("!%d ", i+1);
+					// candidates_tmp[i] = true;
+					// add its attackers that are not processed, are not attacked by the current set and that do not
+					// attack the current set.
+					/*
+					for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[i]; ++j) {
+						if (!current_node->processed[attacked_by->lists[i][j]] && !current_node->victims[attacked_by->lists[i][j]] && !current_node->attackers[attacked_by->lists[i][j]]) {
+							candidates_tmp[attacked_by->lists[i][j]] = true;
+							// printf("%d ", attacked_by->lists[i][j]+1);
+							++candidate_count;
+						}
+					}
+					if (candidate_count < min_candidate_count) {
+						memcpy(candidate_arguments, candidates_tmp, attacks->size * sizeof(bool));
+						min_candidate_count = candidate_count;
+						// printf("min_candidate_count: %d\n", min_candidate_count);
+					}
+					// printf("<--\n");
+					*/
+					// the argument with the minimum number of allowed attackers
+					if (current_node->allowed_attackers_count[i] <= min_candidate_count) {
+						min_candidate_count = current_node->allowed_attackers_count[i];
+						candidate_argument = i;
+					}
 				}
-				// else {
-				//  	current_node->candidates[i] = false;
-				// }
+			}
+			// add this argument to the candidates
+			// candidate_count = 0;
+			candidate_arguments[candidate_count] = candidate_argument;
+			++candidate_count;
+			// add its allowed attackers to the candidates
+			for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[candidate_argument]; ++i) {
+				if (!current_node->processed[attacked_by->lists[candidate_argument][i]] && !IS_IN_CONFLICT_WITH(attacked_by->lists[candidate_argument][i], current_node)) {
+					candidate_arguments[candidate_count] = attacked_by->lists[candidate_argument][i];
+					++candidate_count;
+				}
 			}
 		}
 		else {
 			// current_node is not self-defending. find the unattacked attacker with the smallest
 			// number of allowed attackers.
+			// printf("not self-defending\n");
 			int min_attacker_count = attacks->size;
 			ARG_TYPE least_attacked_attacker = -1;
 
@@ -193,49 +250,56 @@ bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 
 				}
 			}
+			// reset the candidate arguments
+			// memset(candidate_arguments, 0, attacks->size * sizeof(bool));
+			// candidate_count = 0;
 			// add the allowed attackers of least_attacked_attacker one by one and close.
 			// if none of them leads to a solution, abandon that branch
 			for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
 				ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
 				if (!IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, current_node) && !current_node->processed[attacker_of_least_attacked_attacker]) {
 					// attacker is allowed, add to candidates
-					current_node->candidates[attacker_of_least_attacked_attacker] = true;
+					// candidate_arguments[attacker_of_least_attacked_attacker] = true;
+					candidate_arguments[candidate_count] = attacker_of_least_attacked_attacker;
+					++candidate_count;
 				}
-				// else {
-				//  	current_node->candidates[attacker_of_least_attacked_attacker] = false;
-				// }
 			}
 		}
 
 		// now add the first candidate and close
-		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
-			if (current_node->candidates[i] == true) {
-				// remove it from the candidates
-				current_node->candidates[i] = false;
-				current_node->processed[i] = true;
-				printf("cand: %d\n", i);
+		// for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		for (SIZE_TYPE i = 0; i < candidate_count; ++i) {
+			// if (candidate_arguments[i]) {
+				// printf("*%d ", i+1);
+				// current_node->processed[i] = true;
+				current_node->processed[candidate_arguments[i]] = true;
+				// printf("cand: %d\n", i);
 				// candidate is processed,
 				// decrement the allowed-attackers-counts of its victims
-				for (SIZE_TYPE j = 0; j < attacks->list_sizes[i]; ++j) {
-					--(current_node->allowed_attackers_count[attacks->lists[i][j]]);
+				for (SIZE_TYPE j = 0; j < attacks->list_sizes[candidate_arguments[i]]; ++j) {
+					--(current_node->allowed_attackers_count[attacks->lists[candidate_arguments[i]][j]]);
 				}
 				Node *child_node = duplicate_node(current_node, attacks->size);
 				++child_node->depth;
 
 				Stack *update = new_stack();
-				push(update, new_stack_element_int(i));
+				push(update, new_stack_element_int(candidate_arguments[i]));
 				child_node = pseudo_complete(update, child_node, attacks, attacked_by);
 				free_stack(update);
+
 				// closure has a conflict. stop this branch, try with another candidate
 				if (!child_node) {
 					// node "child_node" is already deleted in process_stack
 					// upon noticing the conflict. not required to delete here.
 					continue;
 				}
+				// if (is_node_conflict_free(child_node, attacks) && is_node_self_defending(child_node, attacks) && node_attacks_everything_outside(child_node, attacks)) {
 				if (is_node_self_defending(child_node, attacks) && node_attacks_everything_outside(child_node, attacks)) {
 					// closure is self-defending and attacks everything outside it
 					// stable extension is found
 					free_stack(&nodes);
+					// free(candidates_tmp);
+					free(candidate_arguments);
 					// free_argumentation_framework(attacks);
 					free_argumentation_framework(attacked_by);
 					printf("node count: %d\n", node_count_stable);
@@ -244,10 +308,9 @@ bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 					return(child_node->set);
 				}
 				push(&nodes, new_stack_element_ptr(child_node));
-				// stop after processing the first candidate
-				break;
-			}
+			// }
 		}
+		// printf("\n");
 		delete_node(current_node);
 		current_node = NULL;
 	}
