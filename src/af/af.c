@@ -150,6 +150,52 @@ bool check_set_defends_arg(ArrayList *s, ARG_TYPE a, AF *attacks, AF *attacked_b
 	return(true);
 }
 
+bool is_set_stable(AF *attacks, ArrayList *s) {
+	bool* victims = calloc(attacks->size, sizeof(bool));
+	assert(victims != NULL);
+
+	bool* s_bv = calloc(attacks->size, sizeof(bool));
+	assert(s_bv != NULL);
+
+	for (SIZE_TYPE i = 0; i < s->size; ++i) {
+		s_bv[s->elements[i]] = true;
+		for (SIZE_TYPE j = 0; j < attacks->list_sizes[s->elements[i]]; ++j) {
+			victims[attacks->lists[s->elements[i]][j]] = true;
+		}
+	}
+
+	// is set conflict-free?
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		if (victims[s->elements[i]]) {
+			free(victims);
+			free(s_bv);
+			return(false);
+		}
+
+	// is set self-defending?
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+	for (SIZE_TYPE i = 0; i < s->size; ++i)
+		for (SIZE_TYPE j = 0; j < attacked_by->list_sizes[s->elements[i]]; ++j) {
+			if (!victims[attacked_by->lists[s->elements[i]][j]]) {
+				free(victims);
+				free(s_bv);
+				return(false);
+			}
+		}
+
+	// check if s attacks everything outside
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i)
+		if (!s_bv[i] && !victims[i]) {
+			free(victims);
+			free(s_bv);
+			return(false);
+		}
+
+	free(victims);
+	free(s_bv);
+	return(true);
+}
+
 bool is_set_complete(AF* af, ArrayList* s) {
 	AF* af_t = transpose_argumentation_framework(af);
 	bool admissible = is_set_conflict_free(af, s) && is_set_self_defending(af, af_t, s);

@@ -39,7 +39,7 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
     // print_list(stdout, extension, "\n");
 
 	if (strcmp(semantic, "ST") == 0) {
-          // ...
+      return(is_set_stable(input_af, extension));
     }
 	else if (strcmp(semantic, "PR") == 0) {
       // ...
