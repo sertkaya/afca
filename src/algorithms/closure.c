@@ -38,8 +38,9 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
 			SIZE_TYPE victim_a = af->lists[a][i];
 			// is a self-attacking?
-			if (node->set[victim_a])
+			if (node->set[victim_a]) {
 				return(NULL);
+			}
 			if (!node->victims[victim_a]) {
 				node->victims[victim_a] = true;
 				for (SIZE_TYPE j = 0; j < af->list_sizes[victim_a]; ++j) {
@@ -47,7 +48,6 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 					--(node->unattacked_attackers_count[victim_victim_a]);
 					if (!node->attackers[victim_a]  && !node->processed[victim_a]) {
 						--(node->allowed_attackers_count[victim_victim_a]);
-
 						// Optimization for single attackers begins
 						if (node->attackers[victim_victim_a] && !node->victims[victim_victim_a] && node->allowed_attackers_count[victim_victim_a] == 1) {
 							// victim_victim_a is an unattacked attacker and has a single allowed attacker.
@@ -63,7 +63,8 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 						// Optimization for single attackers ends
 
 					}
-					if (!node->processed[victim_victim_a] && node->unattacked_attackers_count[victim_victim_a] == 0)  {
+					// if (!node->processed[victim_victim_a] && node->unattacked_attackers_count[victim_victim_a] == 0)  {
+					if (node->unattacked_attackers_count[victim_victim_a] == 0)  {
 						// victim_victim_a is defended, push it to the stack
 						push(update, new_stack_element_int(victim_victim_a));
 						node->processed[victim_victim_a] = true;
@@ -98,7 +99,8 @@ Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t) {
 						// Optimization for single attackers ends
 
 					}
-					if (!node->processed[victim_attacker_a] && node->not_attacker_of_current_count[victim_attacker_a] == 0) {
+					// if (!node->processed[victim_attacker_a] && node->not_attacker_of_current_count[victim_attacker_a] == 0) {
+					if (node->not_attacker_of_current_count[victim_attacker_a] == 0) {
 						// attackers of victim_attacker_a are all attackers of node->set, push it to the stack
 						push(update, new_stack_element_int(victim_attacker_a));
 						node->processed[victim_attacker_a] = true;
