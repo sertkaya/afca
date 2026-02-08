@@ -37,6 +37,12 @@ AF* create_argumentation_framework(SIZE_TYPE size) {
 
 	af->offsets = NULL;
 
+	af->mapping = calloc(af->size, sizeof(ARG_TYPE));
+	assert(af->mapping != NULL);
+	// initially every index is mapped to itself
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		af->mapping[i] = i;
+
 	return(af);
 }
 
@@ -242,9 +248,39 @@ int comp(const void *a, const void *b) {
 	return (*(int *)a - *(int *)b);
 }
 
+// remove the arguments args from the framework af
+// return a new framework
+AF* extract_residual_framework(AF* af, bool *args, SIZE_TYPE arg_count) {
+	AF *rf = create_argumentation_framework(af->size - arg_count);
+	SIZE_TYPE index_rf = 0;
+	ARG_TYPE *backward_mapping = calloc(af->size, sizeof(ARG_TYPE));
+	assert(backward_mapping != NULL);
+
+	// create the mapping and the backwards mapping
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (!args[i]) {
+			// rf->mapping[index_rf] = af->mapping[i];
+			rf->mapping[index_rf] = i;
+			backward_mapping[i] = index_rf;
+			++index_rf;
+		}
+	}
+
+	// now add the attacks
+	for (SIZE_TYPE i = 0; i < rf->size; ++i) {
+		for (SIZE_TYPE j = 0; j < af->list_sizes[rf->mapping[i]]; ++j) {
+			if (!args[af->lists[rf->mapping[i]][j]])
+				add_attack(rf, i, backward_mapping[af->lists[rf->mapping[i]][j]]);
+		}
+	}
+	free(backward_mapping);
+
+	return(rf);
+}
+
 // remove the arguments args and their victims from the framework af
 // return a new framework
-AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
+AF* extract_residual_framework_2(AF* af, ARG_TYPE *args, int arg_count) {
 	int *offsets = calloc(af->size, sizeof(int));
 	assert(offsets != NULL);
 
@@ -324,6 +360,75 @@ AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count) {
 	return(rf);
 }
 
+// dfs starting at argument a
+// sets the visited arguments
+void dfs(AF *af, ARG_TYPE a, bool *visited) {
+	Stack *s = new_stack();
+	push(s, new_stack_element_int(a));
+
+	while ((a = pop_int(s)) != -1) {
+		visited[a] = true;
+		for (SIZE_TYPE i = 0; i < af->list_sizes[a]; ++i) {
+			if (!visited[af->lists[a][i]]) {
+				push(s, new_stack_element_int(af->lists[a][i]));
+			}
+		}
+	}
+	free_stack(s);
+}
+
+AF *extract_source_component(AF *af) {
+	bool *visited = calloc(af->size, sizeof(bool));
+	assert(visited != NULL);
+
+	ARG_TYPE source = -1;
+	// start dfs from each argument
+	for (SIZE_TYPE i = 0; i < af->size; ++i) {
+		if (!visited[i]) {
+			source = i;
+			dfs(af, i, visited);
+		}
+	}
+	printf("source: %d\n", source);
+	AF *af_t = transpose_argumentation_framework(af);
+	// reset visited for the backwards dfs
+	memset(visited, 0, af->size * sizeof(bool));
+	// start backwards dfs from the last source
+	dfs(af_t, source, visited);
+	int component_size = 0;
+	for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
+		if (visited[i])
+			++component_size;
+	}
+	free_argumentation_framework(af_t);
+
+	// visited now contains a source component. create an AF out of it
+	AF *source_component = create_argumentation_framework(component_size);
+	SIZE_TYPE index_source_component = 0;
+	// create the mapping and the backwards mapping
+	ARG_TYPE *backward_mapping = calloc(af->size, sizeof(ARG_TYPE));
+	assert(backward_mapping != NULL);
+	for (SIZE_TYPE i = 0; i < af->size; ++i)
+		if (visited[i]) {
+			// source_component->mapping[index_source_component] = af->mapping[i];
+			source_component->mapping[index_source_component] = i;
+			backward_mapping[i] = index_source_component;
+			++index_source_component;
+		}
+
+	// now add the attacks
+	for (SIZE_TYPE i = 0; i < source_component->size; ++i) {
+		for (SIZE_TYPE j = 0; j < af->list_sizes[source_component->mapping[i]]; ++j) {
+			if (visited[af->lists[source_component->mapping[i]][j]])
+				add_attack(source_component, i, backward_mapping[af->lists[source_component->mapping[i]][j]]);
+		}
+	}
+	free(visited);
+	free(backward_mapping);
+	return(source_component);
+}
+
+
 int *extract_sccs(AF *af, AF *af_t) {
 	bool *visited = calloc(af->size, sizeof(bool));
 	assert(visited != NULL);
@@ -363,13 +468,13 @@ int *extract_sccs(AF *af, AF *af_t) {
 	memset(components, -1, af->size * sizeof(int));
 
 	// dfs backwards
-	// int component_count = 0;
+	int component_count = 0;
 	while ((a = pop_int(l_rev)) != -1) {
 		visited[a] = true;
 		// if a has not yet been assigned to a component
 		if (components[a] == -1) {
 			components[a] = a;
-			// ++component_count;
+			++component_count;
 		}
 		for (SIZE_TYPE i = 0; i < af_t->list_sizes[a]; ++i) {
 			if (!visited[af_t->lists[a][i]]) {
@@ -381,11 +486,9 @@ int *extract_sccs(AF *af, AF *af_t) {
 	free(visited);
 	free_stack(l_rev);
 
-	/*
 	printf("%d components: ", component_count);
 	for (SIZE_TYPE i = 0; i < af->size; ++i)
 		printf("%d ", components[i]);
 	printf("\n\n");
-	*/
 	return(components);
 }

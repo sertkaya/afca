@@ -34,6 +34,8 @@ struct argumentation_framework {
 	// Add the offset at index i to index i to obtain the index
 	// in the original framework. NULL if the framework is not a residual framework.
 	int *offsets;
+	// mapping[i] is the corresponding argument in the original framework
+	int *mapping;
 };
 
 typedef struct argumentation_framework AF;
@@ -61,7 +63,11 @@ bool is_set_complete(AF* af, ArrayList* s);
 
 bool is_set_stable(AF *attacks, ArrayList *s);
 
-AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count);
+// AF* extract_residual_framework(AF* af, ARG_TYPE *args, int arg_count);
+AF* extract_residual_framework(AF* af, bool *args, SIZE_TYPE arg_count);
 
 int *extract_sccs(AF *af, AF *af_t);
+
+AF *extract_source_component(AF *af);
+
 #endif /* AF_AF_H_ */

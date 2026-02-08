@@ -24,6 +24,7 @@
 
 #include "algorithms/complete.h"
 #include "algorithms/stable.h"
+#include "algorithms/preferred.h"
 #include "validator/validator.h"
 #include "parser/af_parser.h"
 #include "utils/timer.h"
@@ -192,11 +193,12 @@ int main(int argc, char *argv[]) {
 
 	// matrix of functions for enumeration problems.
 	// Function prototype: List* f(AF*)
-    ArrayList* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*);
+    // ArrayList* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*);
+    bool* (*enumeration_functions[ENUMERATION_PROBLEM_TYPE_COUNT][EXTENSION_TYPE_COUNT]) (AF*);
 	for (int i = 0; i < ENUMERATION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
 				enumeration_functions[i][j] = NULL;
-	// enumeration_functions[..][..][..] = ..
+	enumeration_functions[SE][PR] = &se_pr;
 
 	START_TIMER(start_time);
 	// ArrayList* extension = NULL;
@@ -226,7 +228,7 @@ int main(int argc, char *argv[]) {
 		if (enumeration_functions[problem_type][extension_type] == NULL)
 			unsupported_feature(prob_type,ext_type);
 		else
-			enumeration_functions[DC][CO](input_af);
+			extension = enumeration_functions[problem_type][extension_type](input_af);
 	}
 	STOP_TIMER(stop_time);
 	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);

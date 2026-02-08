@@ -37,7 +37,6 @@
 extern int closure_count;
 
 
-// ArrayList* dc_co(AF* attacks, ARG_TYPE argument) {
 bool* dc_co(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 

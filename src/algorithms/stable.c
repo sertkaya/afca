@@ -37,7 +37,7 @@
 
 extern int closure_count;
 
-
+/*
 // ArrayList* dc_st(AF* attacks, ARG_TYPE argument) {
 bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
@@ -82,10 +82,6 @@ bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 				printf("%d ", i + rf->offsets[i]);
 		}
 		printf("\n");
-		/*
-		printf("\nAF:\n");
-		print_argumentation_framework(rf);
-		*/
 		if (rf_size == 0)
 			break;
 		ce = dc_co(rf, 0);
@@ -95,6 +91,7 @@ bool* dc_st_2(AF* attacks, ARG_TYPE argument) {
 
 	return(NULL);
 }
+*/
 
 bool* dc_st(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
