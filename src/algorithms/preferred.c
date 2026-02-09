@@ -93,13 +93,6 @@ bool* se_pr(AF* af) {
 			// TODO: update P
 		}
 		else {
-			SIZE_TYPE size_ce = 0;
-			// determine size of the ce
-			for (SIZE_TYPE i = 0; i < sc->size; ++i)
-				if (ce[i]) {
-					++size_ce;
-				}
-
 			Stack *update = new_stack();
 			// Push the arguments in ce to the stack.
 			for (SIZE_TYPE i = 0; i < sc->size; ++i)
@@ -111,7 +104,7 @@ bool* se_pr(AF* af) {
 			AF *af_t = transpose_argumentation_framework(afs[af_count - 1]);
 			for (SIZE_TYPE i = 0; i < af_t->size; ++i) {
 				if (af_t->list_sizes[i] == 0) {
-					push(update, new_stack_element_int(sc->mapping[i]));
+					push(update, new_stack_element_int(i));
 				}
 			}
 			// Compute closure in afs[af_count], not in the sc
