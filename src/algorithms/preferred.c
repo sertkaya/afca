@@ -134,6 +134,7 @@ bool* se_pr(AF* af) {
 					for (int j = af_count - 1; j > 0; --j) {
 						back_mapped = afs[j]->mapping[back_mapped];
 					}
+					// printf("%d ", back_mapped + 1);
 					pe[back_mapped] = true;
 				}
 				// also the victims will be removed
@@ -153,7 +154,9 @@ bool* se_pr(AF* af) {
 		}
 		free_argumentation_framework(sc);
 	}
-	for (SIZE_TYPE i = 0; i < af_count; ++i)
+	// free the generated afs.
+	// the original one will be freed later in main.
+	for (SIZE_TYPE i = 1; i < af_count; ++i)
 		free_argumentation_framework(afs[i]);
 
 	return(pe);
