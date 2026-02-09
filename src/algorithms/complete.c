@@ -134,9 +134,9 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 				free_stack(&nodes);
 				// free_argumentation_framework(attacks);
 				free_argumentation_framework(attacked_by);
-				printf("node count: %d\n", node_count_complete);
-				printf("node depth: %d\n", child_node->depth);
-				printf("closure count: %d\n", closure_count);
+				// printf("node count: %d\n", node_count_complete);
+				// printf("node depth: %d\n", child_node->depth);
+				// printf("closure count: %d\n", closure_count);
 				return(child_node->set);
 			}
 
@@ -149,7 +149,7 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 	// free_argumentation_framework(attacks);
 	free_argumentation_framework(attacked_by);
 
-	printf("Closure count: %d\n", closure_count);
-	printf("node count: %d\n", node_count_complete);
+	// printf("Closure count: %d\n", closure_count);
+	// printf("node count: %d\n", node_count_complete);
 	return(NULL);
 }

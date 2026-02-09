@@ -389,7 +389,7 @@ AF *extract_source_component(AF *af) {
 			dfs(af, i, visited);
 		}
 	}
-	printf("source: %d\n", source);
+	// printf("source: %d\n", source);
 	AF *af_t = transpose_argumentation_framework(af);
 	// reset visited for the backwards dfs
 	memset(visited, 0, af->size * sizeof(bool));

@@ -54,15 +54,10 @@ bool* se_pr(AF* af) {
 	assert(pe != NULL);
 
 	while (afs[af_count - 1]->size > 0) {
-		// printf("----af----:%d\n", afs[af_count]->size);
-		// print_argumentation_framework(afs[af_count]);
-
 		AF *sc = extract_source_component(afs[af_count - 1]);
-		printf("source component size:%d\n", sc->size);
-		// print_argumentation_framework(sc);
+		// printf("source component size:%d\n", sc->size);
 
 		bool *ce = NULL;
-		// ce = dc_co(sc, -1);
 
 		// look for a non-empty complete extension
 		for (SIZE_TYPE i = 0; i < sc->size; ++i) {
@@ -71,21 +66,18 @@ bool* se_pr(AF* af) {
 				break;
 			}
 		}
-		if (ce == NULL)
-			return(NULL);
+		if (ce == NULL) {
+			return(pe);
+		}
 
-		// printf("ce: ");
 		SIZE_TYPE size_ce = 0;
 		// determine size of the ce
 		for (SIZE_TYPE i = 0; i < sc->size; ++i)
 			if (ce[i]) {
-				// printf("%d ", i);
 				++size_ce;
 			}
-		// printf("\n");
-		printf("size_ce: %d\n", size_ce);
+		// printf("size_ce: %d\n", size_ce);
 		if (size_ce == 0) {
-		// if (ce == NULL) {
 			bool *remove = calloc(afs[af_count - 1]->size, sizeof(bool));
 			assert(remove != NULL);
 			for (SIZE_TYPE i = 0; i < sc->size; ++i) {
@@ -96,31 +88,24 @@ bool* se_pr(AF* af) {
 			assert(tmp != NULL);
 			afs = tmp;
 			afs[af_count - 1] = extract_residual_framework(afs[af_count - 2], remove, sc->size);
-			printf("residual size: %d\n", afs[af_count - 1]->size);
+			// printf("residual size: %d\n", afs[af_count - 1]->size);
 			free(remove);
 			// TODO: update P
 		}
 		else {
-			// printf("ce: ");
 			SIZE_TYPE size_ce = 0;
 			// determine size of the ce
 			for (SIZE_TYPE i = 0; i < sc->size; ++i)
 				if (ce[i]) {
-					// printf("%d ", i);
 					++size_ce;
 				}
-			// printf("\n");
-			// printf("size_ce: %d\n", size_ce);
 
 			Stack *update = new_stack();
 			// Push the arguments in ce to the stack.
-			// printf("stack: ");
 			for (SIZE_TYPE i = 0; i < sc->size; ++i)
 				if (ce[i]) {
 					push(update, new_stack_element_int(sc->mapping[i]));
-					// printf("%d ", sc->mapping[i]);
 				}
-			// printf("\n");
 
 			// Push the unattacked arguments to the stack. They are defended by every set.
 			AF *af_t = transpose_argumentation_framework(afs[af_count - 1]);
@@ -138,18 +123,10 @@ bool* se_pr(AF* af) {
 			free_stack(update);
 			// prepare arguments to be removed
 			SIZE_TYPE size_remove = 0;
-			// printf("n->set: ");
 			bool *remove = calloc(afs[af_count - 1]->size, sizeof(bool));
 			assert(remove != NULL);
-			// arguments in the closure will be removed from afs[af_count]
 			for (SIZE_TYPE i = 0; i < afs[af_count - 1]->size; ++i) {
-				/*
-				if (n->set[i] || n->victims[i]) {
-					++size_remove;
-					remove[i] = true;
-					printf("%d ", i);
-				}
-				*/
+				// arguments in the closure will be removed from afs[af_count]
 				if (n->set[i]) {
 					++size_remove;
 					remove[i] = true;
@@ -157,16 +134,15 @@ bool* se_pr(AF* af) {
 					for (int j = af_count - 1; j > 0; --j) {
 						back_mapped = afs[j]->mapping[back_mapped];
 					}
-					printf("**%d**", back_mapped + 1);
+					pe[back_mapped] = true;
 				}
+				// also the victims will be removed
 				if (n->victims[i]) {
 					++size_remove;
 					remove[i] = true;
 				}
 			}
-			// also the victims will be removed
 
-			printf("\nsize_s:%d\n", size_remove);
 			delete_node(n);
 			++af_count;
 			AF **tmp = realloc(afs, af_count  * sizeof(AF*));
@@ -177,31 +153,8 @@ bool* se_pr(AF* af) {
 		}
 		free_argumentation_framework(sc);
 	}
-	/*
-	Stack *update = new_stack();
-	// Push the unattacked arguments to the stack. They are defended by every set.
-	for (SIZE_TYPE i = 0; i < sc_t->size; ++i) {
-		if (sc_t->list_sizes[i] == 0) {
-			push(update, new_stack_element_int(i));
-		}
-	}
-	// First closure.
-	Node *n = create_node(sc->size);
-	n = pseudo_complete(update, n, sc, sc_t);
-	*/
+	for (SIZE_TYPE i = 0; i < af_count; ++i)
+		free_argumentation_framework(afs[i]);
 
-	/*
-	bool *args = calloc(sc->size, sizeof(bool));
-	assert(args != NULL);
-	args[0] = 1;
-	AF *rf = extract_residual_framework(sc, args, 1);
-
-	print_argumentation_framework(rf);
-	printf("**\n");
-	for (SIZE_TYPE i = 0; i < rf->size; ++i) {
-		printf("%d -> %d\n", i+1, sc->mapping[rf->mapping[i]]+1);
-	}
-	*/
-
-	return(NULL);
+	return(pe);
 }

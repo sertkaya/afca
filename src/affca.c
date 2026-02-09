@@ -227,8 +227,15 @@ int main(int argc, char *argv[]) {
 		// enumeration problem
 		if (enumeration_functions[problem_type][extension_type] == NULL)
 			unsupported_feature(prob_type,ext_type);
-		else
+		else {
 			extension = enumeration_functions[problem_type][extension_type](input_af);
+			fprintf(output, "w ");
+			for (int i = 0; i < input_af->size; ++i) {
+				if (extension[i])
+					fprintf(output, "%d ", i+1);
+			}
+			fprintf(output, "\n");
+		}
 	}
 	STOP_TIMER(stop_time);
 	printf("Computation time: %.3f milisecs\n", TIME_DIFF(start_time, stop_time) / 1000);
