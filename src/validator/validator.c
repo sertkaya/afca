@@ -24,7 +24,11 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
 	fclose(af_fd);
 
 	char tmp[10];
-	fscanf(e_fd, "YES\nw ", tmp);
+	if (strcmp(semantic, "PR") == 0)
+		fscanf(e_fd, "w ", tmp);
+	else
+		fscanf(e_fd, "YES\nw ", tmp);
+
     int rc = 0;
     int arg;
     ArrayList* extension = list_create();
@@ -41,17 +45,31 @@ bool validate(char *af_file_name, char *extension_file_name, char *semantic) {
 	if (strcmp(semantic, "ST") == 0) {
       return(is_set_stable(input_af, extension));
     }
-	else if (strcmp(semantic, "PR") == 0) {
-      // ...
+	if (strcmp(semantic, "PR") == 0) {
+		if (!is_set_complete(input_af, extension))
+			return(false);
+		bool *tmp = calloc(input_af->size,sizeof(bool));
+		assert(tmp != NULL);
+		for (SIZE_TYPE i = 0; i < extension->size; ++i)
+			tmp[extension->elements[i]] = true;
+		for (SIZE_TYPE i = 0; i < input_af->size; ++i) {
+			if (!tmp[i]) {
+				ArrayList *x = list_duplicate(extension);
+				list_add(i, x);
+				if (is_set_complete(input_af, x))
+					return(false);
+				list_free(x);
+			}
+		}
+	  // TODO
+	  return(true);
     }
-	else if (strcmp(semantic, "CO") == 0) {
+	if (strcmp(semantic, "CO") == 0) {
       return(is_set_complete(input_af, extension));
     }
-	else if (strcmp(semantic, "AD") == 0) {
+	if (strcmp(semantic, "AD") == 0) {
       return(is_set_admissible(input_af, extension));
     }
-	else {
-		printf("Unknown semantic\n");
-	}
+	printf("Unknown semantic\n");
 
  }
