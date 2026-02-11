@@ -62,12 +62,15 @@ bool* se_pr(AF* af) {
 		bool *ce = NULL;
 
 		// look for a non-empty complete extension
+		/*
 		for (SIZE_TYPE i = 0; i < sc->size; ++i) {
 			ce = dc_co(sc, i);
 			if (ce != NULL) {
 				break;
 			}
 		}
+		*/
+		ce = ne_co(sc);
 
 		if (ce == NULL) {
 			// bitvector for arguments in the source component

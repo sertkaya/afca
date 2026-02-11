@@ -22,7 +22,8 @@
 #include "node.h"
 
 // ArrayList* dc_co(AF* attacks, ARG_TYPE argument);
-Node *dc_co_aux(AF* attacks, ARG_TYPE argument);
+// Node *dc_co_aux(AF* attacks, ARG_TYPE argument, Node *n);
+bool *ne_co(AF* attacks);
 
 bool *dc_co(AF* attacks, ARG_TYPE argument);
 

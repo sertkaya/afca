@@ -36,7 +36,7 @@
 
 extern int closure_count;
 
-Node *dc_co_aux(AF* attacks, ARG_TYPE argument) {
+bool *dc_co(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -74,8 +74,7 @@ Node *dc_co_aux(AF* attacks, ARG_TYPE argument) {
 		free_stack(&nodes);
 		// free_argumentation_framework(attacks);
 		free_argumentation_framework(attacked_by);
-		// return(current_node->set);
-		return(current_node);
+		return(current_node->set);
 	}
 
 	push(&nodes, new_stack_element_ptr(current_node));
@@ -137,8 +136,7 @@ Node *dc_co_aux(AF* attacks, ARG_TYPE argument) {
 				// printf("node count: %d\n", node_count_complete);
 				// printf("node depth: %d\n", child_node->depth);
 				// printf("closure count: %d\n", closure_count);
-				// return(child_node->set);
-				return(child_node);
+				return(child_node->set);
 			}
 
 			push(&nodes, new_stack_element_ptr(child_node));
@@ -155,9 +153,143 @@ Node *dc_co_aux(AF* attacks, ARG_TYPE argument) {
 	return(NULL);
 }
 
-bool* dc_co(AF* attacks, ARG_TYPE argument) {
-	Node *n = dc_co_aux(attacks, argument);
-	if (n)
-		return(n->set);
+bool *ne_co(AF* attacks) {
+	struct timeval start_time, stop_time;
+
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+
+	Stack nodes;
+	init_stack(&nodes);
+
+	// The root node
+	Node *current_node = create_node(attacks->size);
+	memcpy(current_node->unattacked_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+	memcpy(current_node->not_attacker_of_current_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+	memcpy(current_node->allowed_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+
+	Stack *update = new_stack();
+	// Push the given argument to the stack
+
+	// Push the unattacked arguments to the stack. They are defended by every set.
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
+		// if ((attacked_by->list_sizes[i] == 0) && (i != argument)) {
+		if (attacked_by->list_sizes[i] == 0) {
+			push(update, new_stack_element_int(i));
+		}
+	}
+	// First closure.
+	current_node = pseudo_complete(update, current_node, attacks, attacked_by);
+	free_stack(update);
+	if (!current_node) {
+		// first closure has a conflict. complete extension does not exist
+		return(NULL);
+	}
+
+	for (SIZE_TYPE argument = 0; argument < attacks->size; ++argument ) {
+
+		current_node->processed[argument] = true;
+		// argument is processed,
+		// decrement the allowed-attackers-counts of its victims
+		for (SIZE_TYPE j = 0; j < attacks->list_sizes[argument]; ++j) {
+			--(current_node->allowed_attackers_count[attacks->lists[argument][j]]);
+		}
+		Node *child_node = duplicate_node(current_node, attacks->size);
+
+		Stack *update = new_stack();
+		push(update, new_stack_element_int(argument));
+		child_node = pseudo_complete(update, child_node, attacks, attacked_by);
+		free_stack(update);
+
+		if (!child_node) {
+			// node "child_node" is already deleted in process_stack
+			// upon noticing the conflict. not required here.
+			continue;
+		}
+		if (is_node_self_defending(child_node, attacks)) {
+			// closure is self-defending, complete set found.
+			free_stack(&nodes);
+			// free_argumentation_framework(attacks);
+			free_argumentation_framework(attacked_by);
+			// printf("node count: %d\n", node_count_complete);
+			// printf("node depth: %d\n", child_node->depth);
+			// printf("closure count: %d\n", closure_count);
+			return(child_node->set);
+		}
+
+		push(&nodes, new_stack_element_ptr(child_node));
+	}
+
+	int node_count_complete = 0;
+	while (current_node =  pop_ptr(&nodes)) {
+		++node_count_complete;
+		// find the unattacked attacker of current_node->set that has the smallest number of attackers, which are not
+		// scheduled and are not conflicting with current_node->set.
+		int min_attacker_count = attacks->size;
+		ARG_TYPE least_attacked_attacker = -1;
+
+		for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+			if (current_node->attackers[i] && !current_node->victims[i]) {
+				if (current_node->allowed_attackers_count[i] < min_attacker_count) {
+					min_attacker_count = current_node->allowed_attackers_count[i];
+					least_attacked_attacker = i;
+				}
+
+			}
+		}
+
+		// add unscheduled and non-conflicting attackers of least_attacked_attacker one by one and close.
+		// if none of them leads to a solution, abandon that branch
+		for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
+			ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
+			if (IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, current_node) || current_node->processed[attacker_of_least_attacked_attacker]) {
+				// this attacker is already victim of current->set->set, or causes a conflict, or is already scheduled
+				// so skip it
+				continue;
+			}
+			// otherwise add it and close
+
+			current_node->processed[attacker_of_least_attacked_attacker] = true;
+			// attacker-of-least-attacked-attacker is processed,
+			// decrement the allowed-attackers-counts of its victims
+			for (SIZE_TYPE j = 0; j < attacks->list_sizes[attacker_of_least_attacked_attacker]; ++j) {
+				--(current_node->allowed_attackers_count[attacks->lists[attacker_of_least_attacked_attacker][j]]);
+			}
+			Node *child_node = duplicate_node(current_node, attacks->size);
+			++child_node->depth;
+
+			Stack *update = new_stack();
+			push(update, new_stack_element_int(attacker_of_least_attacked_attacker));
+			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
+			free_stack(update);
+			// closure has a conflict. stop this branch, try with another attacker
+			// of least_attacked_attacker
+			if (!child_node) {
+				// node "child_node" is already deleted in process_stack
+				// upon noticing the conflict. not required here.
+				continue;
+			}
+			if (is_node_self_defending(child_node, attacks)) {
+				// closure is self-defending, complete set found.
+				free_stack(&nodes);
+				// free_argumentation_framework(attacks);
+				free_argumentation_framework(attacked_by);
+				// printf("node count: %d\n", node_count_complete);
+				// printf("node depth: %d\n", child_node->depth);
+				// printf("closure count: %d\n", closure_count);
+				return(child_node->set);
+			}
+
+			push(&nodes, new_stack_element_ptr(child_node));
+		}
+		delete_node(current_node);
+		current_node = NULL;
+	}
+
+	// free_argumentation_framework(attacks);
+	free_argumentation_framework(attacked_by);
+
+	// printf("Closure count: %d\n", closure_count);
+	// printf("node count: %d\n", node_count_complete);
 	return(NULL);
 }
+
