@@ -56,6 +56,8 @@ bool* se_pr(AF* af) {
 	while (afs[af_count - 1]->size > 0) {
 		AF *sc = extract_source_component(afs[af_count - 1]);
 		// printf("source component size:%d\n", sc->size);
+		// print_argumentation_framework(sc);
+		// printf("****\n");
 
 		bool *ce = NULL;
 
@@ -66,18 +68,32 @@ bool* se_pr(AF* af) {
 				break;
 			}
 		}
-		if (ce == NULL) {
-			return(pe);
-		}
 
-		SIZE_TYPE size_ce = 0;
-		// determine size of the ce
-		for (SIZE_TYPE i = 0; i < sc->size; ++i)
-			if (ce[i]) {
-				++size_ce;
+		if (ce == NULL) {
+			// bitvector for arguments in the source component
+			bool *sc_v = calloc(afs[af_count - 1]->size, sizeof(bool));
+			for (SIZE_TYPE i = 0; i < sc->size; ++i) {
+				sc_v[sc->mapping[i]] = true;
 			}
-		// printf("size_ce: %d\n", size_ce);
-		if (size_ce == 0) {
+			// bitvector for victims of the source component
+			bool *v = calloc(afs[af_count-1]->size, sizeof(bool));
+			assert(v != NULL);
+			// mark the victims of the source component that are outside the source component
+			for (SIZE_TYPE i = 0; i < sc->size; ++i) {
+				for (SIZE_TYPE j = 0; j < afs[af_count-1]->list_sizes[sc->mapping[i]]; ++j)
+					// if the victim is not in the source component, mark it.
+					if (!sc_v[afs[af_count-1]->lists[sc->mapping[i]][j]])
+						v[afs[af_count-1]->lists[sc->mapping[i]][j]] = true;
+			}
+			// add loops to the marked victims
+			for (SIZE_TYPE i = 0; i < afs[af_count-1]->size; ++i) {
+				if (v[i]) {
+					add_attack(afs[af_count - 1], i, i);
+				}
+			}
+			free(v);
+			free(sc_v);
+
 			bool *remove = calloc(afs[af_count - 1]->size, sizeof(bool));
 			assert(remove != NULL);
 			for (SIZE_TYPE i = 0; i < sc->size; ++i) {
@@ -143,10 +159,12 @@ bool* se_pr(AF* af) {
 			assert(tmp != NULL);
 			afs = tmp;
 			afs[af_count - 1] = extract_residual_framework(afs[af_count - 2], remove, size_remove);
+			// printf("residual size: %d\n", afs[af_count - 1]->size);
 			free(remove);
 		}
 		free_argumentation_framework(sc);
 	}
+	// printf("number of residual frameworks: %d\n", af_count);
 	// free the generated afs.
 	// the original one will be freed later in main.
 	for (SIZE_TYPE i = 1; i < af_count; ++i)

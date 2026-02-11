@@ -36,8 +36,7 @@
 
 extern int closure_count;
 
-
-bool* dc_co(AF* attacks, ARG_TYPE argument) {
+Node *dc_co_aux(AF* attacks, ARG_TYPE argument) {
 	struct timeval start_time, stop_time;
 
 	AF* attacked_by = transpose_argumentation_framework(attacks);
@@ -75,7 +74,8 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 		free_stack(&nodes);
 		// free_argumentation_framework(attacks);
 		free_argumentation_framework(attacked_by);
-		return(current_node->set);
+		// return(current_node->set);
+		return(current_node);
 	}
 
 	push(&nodes, new_stack_element_ptr(current_node));
@@ -137,7 +137,8 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 				// printf("node count: %d\n", node_count_complete);
 				// printf("node depth: %d\n", child_node->depth);
 				// printf("closure count: %d\n", closure_count);
-				return(child_node->set);
+				// return(child_node->set);
+				return(child_node);
 			}
 
 			push(&nodes, new_stack_element_ptr(child_node));
@@ -151,5 +152,12 @@ bool* dc_co(AF* attacks, ARG_TYPE argument) {
 
 	// printf("Closure count: %d\n", closure_count);
 	// printf("node count: %d\n", node_count_complete);
+	return(NULL);
+}
+
+bool* dc_co(AF* attacks, ARG_TYPE argument) {
+	Node *n = dc_co_aux(attacks, argument);
+	if (n)
+		return(n->set);
 	return(NULL);
 }

@@ -19,8 +19,11 @@
 
 #include "../utils/array_list.h"
 #include "../af/af.h"
+#include "node.h"
 
 // ArrayList* dc_co(AF* attacks, ARG_TYPE argument);
-bool* dc_co(AF* attacks, ARG_TYPE argument);
+Node *dc_co_aux(AF* attacks, ARG_TYPE argument);
+
+bool *dc_co(AF* attacks, ARG_TYPE argument);
 
 #endif /* AF_COMPLETE_EXTENSIONS_CBO_H_ */
