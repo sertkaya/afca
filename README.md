@@ -1,16 +1,16 @@
-# affca
-Argumentation Framework using Formal Concept Analysis
+# CLAS
+Closure-based Argumentation Solver
 
-AFFCA is a prototype for computing extensions of Abstract Argumentation 
-Frameworks (AFs) using algorithms from Formal Concept Analysis (FCA). 
+CLAS is a prototype for computing extensions of Abstract Argumentation 
+Frameworks (AFs) using algorithms for enumerating closed sets.
 
 # Compiling
-Download and extract the sources into the folder "affca" and execute the 
+Download and extract the sources into the folder "CLAS" and execute the 
 following commands on a UNIX-like operating system. You will need the automake
 and the autoconf packages.
 
 ```
-$ cd affca
+$ cd CLAS
 $ aclocal 
 $ autoconf
 $ automake --add-missing
@@ -28,7 +28,7 @@ execute:
 ```
 $ make
 ```
-Now affca should be compiled and available under the folder "src".
+Now CLAS should be compiled and available under the folder "src".
 
 A statically compiled binary for Linux is provided under under the  "Releases"
 section on GitHub.
@@ -40,14 +40,10 @@ of this format please see: https://iccma2023.github.io/rules.html#input-format
 
 Usage:
 ```
-$ ./affca -p <problem> -f <input file> -a <argument>
+$ ./clas -p <problem> -f <input file> -a <argument>
 
-<problem>       Currently supported: "DC-CO" 
-<output file>   Name of the file for the results.
+<problem>       Currently supported: "DC-CO", "DC-ST" and "SE-PR" 
 <input file>    Input argumentation framework in the format mentioned above.
+<argument>      The argument required in the extension
 
-optionally the algorithm can be specified using: 
-$ ./affca -l <algorithm> -p <problem> -o <output file> -f <input file>
-
-<algorithm>     One of the algorithms "cbo", "subgraph-cbo".
 ```
