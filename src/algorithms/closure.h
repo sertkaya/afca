@@ -1,5 +1,5 @@
 /*
-* AFCA - argumentation framework using closed sets
+* CLAS - Closure based Argumentation Solver
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 
 
-#ifndef AFCA_CLOSURE_H
-#define AFCA_CLOSURE_H
+#ifndef CLAS_CLOSURE_H
+#define CLAS_CLOSURE_H
 
 Node *pseudo_complete(Stack *update, Node *node, AF *af, AF* af_t);
 
-#endif //AFCA_CLOSURE_H
+#endif //CLAS_CLOSURE_H

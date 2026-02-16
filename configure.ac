@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([FCA-AF], [0.0.1])
+AC_INIT([CLAS], [0.0.1])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/clas.c])
 AC_CONFIG_HEADERS([config.h])

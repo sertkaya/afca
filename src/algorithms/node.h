@@ -1,5 +1,5 @@
 /*
- * AFCA - argumentation framework using closed sets
+ * CLAS - Closure based Argumentation Solver
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef AFCA_NODE_H
-#define AFCA_NODE_H
+#ifndef CLAS_NODE_H
+#define CLAS_NODE_H
 
 #include "../af/af.h"
 
@@ -51,4 +51,4 @@ bool is_node_conflict_free(Node* n, AF* af);
 // is arg in conflict with node->set
 #define IS_IN_CONFLICT_WITH(arg,node) (node->victims[arg]||node->attackers[arg])
 
-#endif //AFCA_NODE_H
+#endif //CLAS_NODE_H
