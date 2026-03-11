@@ -24,6 +24,7 @@
 #include "cc.h"
 #include "scc.h"
 #include "wcc.h"
+#include "next-closure/stable.h"
 
 
 void print_extension(BitSet* ext, FILE* outfile) {
@@ -62,6 +63,10 @@ void run_cc_mis(AF* af, FILE* output, bool scc) {
 
 void run_cc_norris(AF* af, FILE* output, bool scc) {
 	run_cc(af, ee_st_norris, output, scc);
+}
+
+void run_cc_next_closure_st(AF* af, FILE* output, bool scc) {
+	run_cc(af, ee_st_next_closure, output, scc);
 }
 
 
