@@ -78,7 +78,8 @@ void log_set(BitSet* bs) {
 
 BitSet* extract_residual_arguments(AF* af, BitSet* arguments, BitSet* source_component, BitSet* component_extension) {
     BitSet* r = create_bitset(af->size);
-    get_victims(af, source_component, r);
+    // get_victims(af, source_component, r);
+    get_victims(af, component_extension, r);
     bitset_union(r, source_component, r);
     bitset_set_minus(arguments, r, r);
 
