@@ -31,6 +31,8 @@ void run_cc_norris_bu(AF* af, FILE* output, bool scc);
 
 void run_cc_nourine(AF* af, FILE* output, bool scc);
 
+void run_cc_next_closure_st(AF* af, FILE* output, bool scc);
+
 // preferred extensions
 void run_cc_preferred(AF* af, ListNode* (*preferred_extensions)(AF* af), FILE* output);
 void run_scc_next_closure(AF* af, FILE* output);

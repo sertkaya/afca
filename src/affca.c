@@ -268,7 +268,10 @@ int main(int argc, char *argv[]) {
 				case WCC_NOURINE:
 					run_cc_nourine(af, output, false);
 					break;
-				default:
+				case SCC_NEXT_CLOSURE:
+					run_cc_next_closure_st(af, output, true);
+					break;
+			default:
 					fprintf(stderr, "Problem %s is not supported with algorithm %s.\n", problem, algorithm);
 					fclose(output);
 					exit(EXIT_FAILURE);			}
