@@ -20,5 +20,6 @@
 #include "../af/af.h"
 
 bool* dc_st(AF* attacks, ARG_TYPE argument);
+bool* se_st(AF* attacks);
 
 #endif /* AF_STABLE_EXTENSIONS_CBO_H_ */

@@ -109,7 +109,9 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 
 	Stack *update = new_stack();
 	// Push the given argument to the stack
-	push(update, new_stack_element_int(argument));
+	if (argument < attacks->size) {
+		push(update, new_stack_element_int(argument));
+	}
 
 	// Push the unattacked arguments to the stack. They are defended by every set.
 	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
@@ -259,4 +261,10 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 	printf("Closure count: %d\n", closure_count);
 	printf("node count: %d\n", node_count_stable);
 	return(NULL);
+}
+
+
+bool* se_st(AF* attacks) {
+	bool* res = dc_st(attacks, attacks->size);
+	return res;
 }
