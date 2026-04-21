@@ -199,6 +199,7 @@ int main(int argc, char *argv[]) {
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
 				enumeration_functions[i][j] = NULL;
 	enumeration_functions[SE][PR] = &se_pr;
+	enumeration_functions[SE][ST] = &se_st;
 
 	START_TIMER(start_time);
 	// ArrayList* extension = NULL;
@@ -229,10 +230,15 @@ int main(int argc, char *argv[]) {
 			unsupported_feature(prob_type,ext_type);
 		else {
 			extension = enumeration_functions[problem_type][extension_type](input_af);
-			fprintf(output, "w ");
-			for (int i = 0; i < input_af->size; ++i) {
-				if (extension[i])
-					fprintf(output, "%d ", i+1);
+			if (extension) {
+				fprintf(output, "w ");
+				for (int i = 0; i < input_af->size; ++i) {
+					if (extension[i]) {
+						fprintf(output, "%d ", i+1);
+					}
+				}
+			} else {
+				fprintf(output, "NO\n");
 			}
 			fprintf(output, "\n");
 		}
