@@ -516,7 +516,7 @@ unsigned int count_unit_implications(UnitImplicationNode* head) {
 
 UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) {
 	// printf("Implications before reduction: %d\n", count_unit_implications(impl));
-	impl = reduce_unit_implications(impl);
+	// impl = reduce_unit_implications(impl);
 	// printf("Implications after reduction: %d\n", count_unit_implications(impl));
 	for (SIZE_TYPE i = 0; i < conflicts->size; ++i) {
 		unit_close(conflicts->graph[i], impl);
@@ -534,7 +534,7 @@ UnitImplicationNode* update_conflicts(AF* conflicts, UnitImplicationNode* impl) 
 			}
 		}
 	}
-	// printf("Conflicts updated.\n");
+	printf("Conflicts updated.\n");
 	return impl;
 }
 
@@ -618,7 +618,26 @@ bool next_dominating_closure(BitSet* closure, UnitImplicationNode* imps, AF* att
 	return next;
 }
 
-ListNode* ee_st_nourine(AF* attacks) {
+SIZE_TYPE count_conflicts(AF* conflicts)
+{
+	SIZE_TYPE loops = 0;
+	SIZE_TYPE count = 0;
+	for (SIZE_TYPE i = 0; i < conflicts->size; ++i) {
+		for (SIZE_TYPE j = 0; j < conflicts->size; ++j) {
+			if (CHECK_ARG_ATTACKS_ARG(conflicts, i, j)) {
+				++count;
+				if (i == j) {
+					++loops;
+				}
+			}
+		}
+	}
+	printf("LOOPS %d\n", loops);
+	return count;
+}
+
+ListNode* ee_st_nourine(AF* attacks)
+{
 	AF* attacked = transpose_argumentation_framework(attacks);
 	AF* conflicts = create_conflict_framework(attacks);
 	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
@@ -694,8 +713,10 @@ void se_st_nourine(AF* attacks, BitSet* result) {
 	AF* conflicts = create_conflict_framework(attacks);
 	UnitImplicationNode* imps = create_unit_implications(attacks, attacked, conflicts);
 	do {
+		printf("Conflicts: %u; implications: %u\n", count_conflicts(conflicts), count_unit_implications(imps));
 		imps = update_conflicts(conflicts, imps);
 	} while (remove_conflicts(imps, conflicts));
+	printf("Indirect conflicts: %u\n", count_conflicts(conflicts));
 	// print_unit_implications(imps);
 
 	BitSet* closure = create_bitset(attacks->size);
