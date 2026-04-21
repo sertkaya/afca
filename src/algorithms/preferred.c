@@ -38,6 +38,11 @@
 
 extern int closure_count;
 
+bool *se_pr_camera_ready_kr26(AF* attacks) {
+	bool *ce = ne_co(attacks);
+	printf("Closure count: %d\n", closure_count);
+	return(ce);
+}
 
 bool* se_pr(AF* af) {
 	struct timeval start_time, stop_time;
