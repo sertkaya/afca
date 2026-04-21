@@ -125,6 +125,7 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 
 	if (!current_node) {
 		// first closure has a conflict. stable extension does not exist
+		printf("Closure count: %d\n", closure_count);
 		return(NULL);
 	}
 
@@ -157,6 +158,8 @@ bool* dc_st(AF* attacks, ARG_TYPE argument) {
 				free(candidate_arguments);
 				// free_argumentation_framework(attacks);
 				free_argumentation_framework(attacked_by);
+				printf("Closure count: %d\n", closure_count);
+				printf("node count: %d\n", node_count_stable);
 				return(current_node->set);
 			}
 			// printf("self-defending\n");
