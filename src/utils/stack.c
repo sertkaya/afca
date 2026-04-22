@@ -27,6 +27,7 @@ extern inline void* pop_ptr(Stack* s);
 
 extern inline StackElement* new_stack_element_int(int i);
 extern inline StackElement* new_stack_element_ptr(void* p);
+extern inline void* top_ptr(Stack* p);
 
 Stack *new_stack() {
 	Stack *s = calloc(1, sizeof(Stack));

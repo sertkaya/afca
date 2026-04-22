@@ -39,9 +39,146 @@
 extern int closure_count;
 
 bool *se_pr_camera_ready_kr26(AF* attacks) {
-	bool *ce = ne_co(attacks);
-	printf("Closure count: %d\n", closure_count);
-	return(ce);
+	AF* attacked_by = transpose_argumentation_framework(attacks);
+
+	Stack nodes;
+	init_stack(&nodes);
+
+	// The root node
+	Node *current_node = create_node(attacks->size);
+	memcpy(current_node->unattacked_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+	memcpy(current_node->not_attacker_of_current_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+	memcpy(current_node->allowed_attackers_count, attacked_by->list_sizes, attacked_by->size * sizeof(SIZE_TYPE));
+
+	Stack *update = new_stack();
+
+	// Push the unattacked arguments to the stack. They are defended by every set.
+	for (SIZE_TYPE i = 0; i < attacked_by->size; ++i) {
+		if (attacked_by->list_sizes[i] == 0) {
+			push(update, new_stack_element_int(i));
+		}
+	}
+	// First closure.
+	current_node = pseudo_complete(update, current_node, attacks, attacked_by);
+	free_stack(update);
+
+	if (!current_node) {
+		// first closure has a conflict. preferred extension does not exist
+		printf("Closure count: %d\n", closure_count);
+		return(NULL);
+	}
+
+	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+		if (!current_node->set[i] && !current_node->processed[i] && !IS_IN_CONFLICT_WITH(i, current_node)) {
+			// add this argument to the candidates
+			ARG_TYPE *tmp = realloc(current_node->candidate_arguments, current_node->candidate_arguments_count + 1);
+			assert(tmp != NULL);
+			current_node->candidate_arguments = tmp;
+			current_node->candidate_arguments[current_node->candidate_arguments_count] = i;
+			++current_node->candidate_arguments_count;
+		}
+	}
+	push(&nodes, new_stack_element_ptr(current_node));
+
+	// the candidate arguments to add to the node before closing it
+	// The set "C" in the algorithm
+
+	int node_count_preferred = 0;
+	while (current_node =  top_ptr(&nodes)) {
+		if (current_node->candidate_arguments_count == 0) {
+			if (is_node_self_defending(current_node, attacks)) {
+				/*
+				free_stack(&nodes);
+				// free_argumentation_framework(attacks);
+				free_argumentation_framework(attacked_by);
+				printf("node count: %d\n", node_count_preferred);
+				printf("node depth: %d\n", current_node->depth);
+				printf("closure count: %d\n", closure_count);
+				return(current_node->set);
+				*/
+				break;
+			}
+			current_node = pop_ptr(&nodes);
+			delete_node(current_node);
+			current_node = NULL;
+		}
+		else {
+			++node_count_preferred;
+			ARG_TYPE candidate = current_node->candidate_arguments[--current_node->candidate_arguments_count];
+			current_node->processed[candidate] = true;
+			// candidate is processed,
+			// decrement the allowed-attackers-counts of its victims
+			for (SIZE_TYPE j = 0; j < attacks->list_sizes[candidate]; ++j) {
+				--(current_node->allowed_attackers_count[attacks->lists[candidate][j]]);
+			}
+			Node *child_node = duplicate_node(current_node, attacks->size);
+			++child_node->depth;
+			Stack *update = new_stack();
+			push(update, new_stack_element_int(candidate));
+			child_node = pseudo_complete(update, child_node, attacks, attacked_by);
+			free_stack(update);
+
+			if (!child_node) {
+				// closure has a conflict. stop this branch, try with another candidate
+				// node "child_node" is already deleted in pseudo_complete
+				// upon noticing the conflict. not required to delete here.
+				continue;
+			}
+
+			if (is_node_self_defending(child_node, attacks)) {
+				// printf("self-defending\n");
+				for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+					if (!child_node->set[i] && !child_node->processed[i] && !IS_IN_CONFLICT_WITH(i, child_node)) {
+						// add this argument to the candidates
+						ARG_TYPE *tmp = realloc(child_node->candidate_arguments, child_node->candidate_arguments_count + 1);
+						assert(tmp != NULL);
+						child_node->candidate_arguments = tmp;
+						child_node->candidate_arguments[child_node->candidate_arguments_count] = i;
+						++child_node->candidate_arguments_count;
+					}
+				}
+			}
+			else {
+				// child_node is not self-defending. find the unattacked attacker with the smallest
+				// number of allowed attackers.
+				// printf("not self-defending\n");
+				int min_attacker_count = attacks->size;
+				ARG_TYPE least_attacked_attacker = -1;
+
+				for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
+					if (child_node->attackers[i] && !child_node->victims[i]) {
+						if (child_node->allowed_attackers_count[i] < min_attacker_count) {
+							min_attacker_count = child_node->allowed_attackers_count[i];
+							least_attacked_attacker = i;
+						}
+					}
+				}
+				// add the allowed attackers of least_attacked_attacker to the candidates
+				for (SIZE_TYPE i = 0; i < attacked_by->list_sizes[least_attacked_attacker]; ++i) {
+					ARG_TYPE attacker_of_least_attacked_attacker = attacked_by->lists[least_attacked_attacker][i];
+					if (!IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, child_node) && !child_node->processed[attacker_of_least_attacked_attacker]) {
+						// attacker is allowed, add to candidates
+						// candidate_arguments[attacker_of_least_attacked_attacker] = true;
+						ARG_TYPE *tmp = realloc(child_node->candidate_arguments, child_node->candidate_arguments_count + 1);
+						assert(tmp != NULL);
+						child_node->candidate_arguments = tmp;
+						child_node->candidate_arguments[child_node->candidate_arguments_count] = i;
+						++child_node->candidate_arguments_count;
+					}
+				}
+			}
+			push(&nodes, new_stack_element_ptr(child_node));
+		}
+	}
+
+	// free_argumentation_framework(attacks);
+	free_argumentation_framework(attacked_by);
+	printf("node count: %d\n", node_count_preferred);
+	printf("node depth: %d\n", current_node->depth);
+	printf("closure count: %d\n", closure_count);
+	bool* extension = current_node->set;
+	free_stack(&nodes);
+	return(extension);
 }
 
 bool* se_pr(AF* af) {

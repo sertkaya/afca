@@ -127,5 +127,16 @@ inline unsigned int pop(Stack* s) {
 
 void free_stack(Stack* s);
 
+// returns the top element without popping it if the stack is not empty.
+// otherwise returns NULL
+inline void *top_ptr(Stack* s) {
+	StackElement* e;
+	StackElement** tmp;
+
+	if (s->size == 0)
+		return(NULL);
+
+	return((s->elements[s->size - 1])->p);
+}
 
 #endif /* STACK_H_ */

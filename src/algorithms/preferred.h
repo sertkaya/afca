@@ -20,5 +20,6 @@
 #include "../af/af.h"
 
 bool* se_pr(AF* af);
+bool *se_pr_camera_ready_kr26(AF* attacks);
 
 #endif /* AF_PREFERRED_EXTENSIONS */

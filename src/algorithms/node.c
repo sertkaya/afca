@@ -45,6 +45,9 @@ Node *create_node(SIZE_TYPE size) {
 	s->attackers = calloc(size, sizeof(bool));
 	assert(s->attackers != NULL);
 
+	s->candidate_arguments = NULL;
+	s->candidate_arguments_count = 0;
+
 	s->depth = 0;
 
 	return(s);
@@ -83,6 +86,8 @@ Node *duplicate_node(Node *s, SIZE_TYPE size) {
 	assert(n->attackers != NULL);
 	memcpy(n->attackers, s->attackers, size * sizeof(bool));
 
+	// do not duplicate the set of candidates. the child node will have different candidates.
+
 	n->depth = s->depth;
 
 	return(n);
@@ -105,6 +110,10 @@ void delete_node(Node *s) {
 	s->not_attacker_of_current_count = NULL;
 	free(s->allowed_attackers_count);
 	s->allowed_attackers_count = NULL;
+	if (s->candidate_arguments) {
+		free(s->candidate_arguments);
+		s->candidate_arguments = NULL;
+	}
 	free(s);
 }
 

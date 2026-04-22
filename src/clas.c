@@ -198,7 +198,8 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < ENUMERATION_PROBLEM_TYPE_COUNT; ++i)
 		for (int j = 0; j < EXTENSION_TYPE_COUNT; ++j)
 				enumeration_functions[i][j] = NULL;
-	enumeration_functions[SE][PR] = &se_pr;
+	// enumeration_functions[SE][PR] = &se_pr;
+	enumeration_functions[SE][PR] = &se_pr_camera_ready_kr26;
 	enumeration_functions[SE][ST] = &se_st;
 
 	START_TIMER(start_time);
