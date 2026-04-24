@@ -71,7 +71,7 @@ bool *se_pr_camera_ready_kr26(AF* attacks) {
 	for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
 		if (!current_node->set[i] && !current_node->processed[i] && !IS_IN_CONFLICT_WITH(i, current_node)) {
 			// add this argument to the candidates
-			ARG_TYPE *tmp = realloc(current_node->candidate_arguments, current_node->candidate_arguments_count + 1);
+			ARG_TYPE *tmp = realloc(current_node->candidate_arguments, sizeof(ARG_TYPE) * (current_node->candidate_arguments_count + 1));
 			assert(tmp != NULL);
 			current_node->candidate_arguments = tmp;
 			current_node->candidate_arguments[current_node->candidate_arguments_count] = i;
@@ -104,7 +104,15 @@ bool *se_pr_camera_ready_kr26(AF* attacks) {
 		}
 		else {
 			++node_count_preferred;
-			ARG_TYPE candidate = current_node->candidate_arguments[--current_node->candidate_arguments_count];
+
+			// ARG_TYPE candidate = current_node->candidate_arguments[--current_node->candidate_arguments_count];
+			--current_node->candidate_arguments_count;
+			printf("cand. count: %d\n", current_node->candidate_arguments_count);
+			ARG_TYPE candidate = current_node->candidate_arguments[current_node->candidate_arguments_count];
+			ARG_TYPE *tmp = realloc(current_node->candidate_arguments, sizeof(ARG_TYPE) * current_node->candidate_arguments_count);
+			// assert(tmp != NULL);
+			current_node->candidate_arguments = tmp;
+
 			current_node->processed[candidate] = true;
 			// candidate is processed,
 			// decrement the allowed-attackers-counts of its victims
@@ -130,7 +138,7 @@ bool *se_pr_camera_ready_kr26(AF* attacks) {
 				for (SIZE_TYPE i = 0; i < attacks->size; ++i) {
 					if (!child_node->set[i] && !child_node->processed[i] && !IS_IN_CONFLICT_WITH(i, child_node)) {
 						// add this argument to the candidates
-						ARG_TYPE *tmp = realloc(child_node->candidate_arguments, child_node->candidate_arguments_count + 1);
+						ARG_TYPE *tmp = realloc(child_node->candidate_arguments, sizeof(ARG_TYPE) * (child_node->candidate_arguments_count + 1));
 						assert(tmp != NULL);
 						child_node->candidate_arguments = tmp;
 						child_node->candidate_arguments[child_node->candidate_arguments_count] = i;
@@ -159,7 +167,7 @@ bool *se_pr_camera_ready_kr26(AF* attacks) {
 					if (!IS_IN_CONFLICT_WITH(attacker_of_least_attacked_attacker, child_node) && !child_node->processed[attacker_of_least_attacked_attacker]) {
 						// attacker is allowed, add to candidates
 						// candidate_arguments[attacker_of_least_attacked_attacker] = true;
-						ARG_TYPE *tmp = realloc(child_node->candidate_arguments, child_node->candidate_arguments_count + 1);
+						ARG_TYPE *tmp = realloc(child_node->candidate_arguments, sizeof(ARG_TYPE) * (child_node->candidate_arguments_count + 1));
 						assert(tmp != NULL);
 						child_node->candidate_arguments = tmp;
 						child_node->candidate_arguments[child_node->candidate_arguments_count] = i;
