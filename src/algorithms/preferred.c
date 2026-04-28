@@ -85,6 +85,7 @@ bool *se_pr_camera_ready_kr26(AF* attacks) {
 
 	int node_count_preferred = 0;
 	while (current_node =  top_ptr(&nodes)) {
+		printf("%d %d\n", nodes.size, current_node->candidate_arguments_count);
 		if (current_node->candidate_arguments_count == 0) {
 			if (is_node_self_defending(current_node, attacks)) {
 				/*
@@ -107,7 +108,7 @@ bool *se_pr_camera_ready_kr26(AF* attacks) {
 
 			// ARG_TYPE candidate = current_node->candidate_arguments[--current_node->candidate_arguments_count];
 			--current_node->candidate_arguments_count;
-			printf("cand. count: %d\n", current_node->candidate_arguments_count);
+			// printf("cand. count: %d\n", current_node->candidate_arguments_count);
 			ARG_TYPE candidate = current_node->candidate_arguments[current_node->candidate_arguments_count];
 			ARG_TYPE *tmp = realloc(current_node->candidate_arguments, sizeof(ARG_TYPE) * current_node->candidate_arguments_count);
 			// assert(tmp != NULL);
