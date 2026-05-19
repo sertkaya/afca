@@ -32,7 +32,7 @@ component = []
 while set(component) != set(range(scc_count)):
     component = [random.randrange(scc_count) for i in range(arg_count)]
     
-outer_attacks = [[random.random() < 0.3 for d in range(scc_count)]
+outer_attacks = [[random.random() < 0.5 for d in range(scc_count)]
                  for c in range(scc_count)]
 # dictionary of attacks
 attacks = collections.defaultdict(set)
