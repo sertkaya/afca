@@ -1,4 +1,4 @@
-affca_CFLAGS	=  -Wall -lm
+affca_CFLAGS	=  -Wall -g
 affca_LDFLAGS   = -lm 
 
 bin_PROGRAMS    = affca
